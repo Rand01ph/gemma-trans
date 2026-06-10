@@ -1,0 +1,20 @@
+App/project.yml
+  s_c5f4a0a2c90987::t_c76187e0c71363 33
+  s_c5f4a0a2c90987::t_d5ce6144cb956b 31-32,34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "0ea14cbd1feae79e3db3bbbc9a2b7d98e52d46ec",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
