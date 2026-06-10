@@ -22,7 +22,11 @@ let package = Package(
         ),
         .target(
             name: "GemmaTransServer",
-            dependencies: ["GemmaTransKit", .product(name: "FlyingFox", package: "FlyingFox")]
+            dependencies: [
+                "GemmaTransKit",
+                .product(name: "FlyingFox", package: "FlyingFox"),
+                .product(name: "FlyingSocks", package: "FlyingFox"),
+            ]
         ),
         .executableTarget(
             name: "gemma-trans-cli",

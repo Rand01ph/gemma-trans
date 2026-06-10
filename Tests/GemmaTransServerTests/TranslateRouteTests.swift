@@ -58,6 +58,27 @@ import GemmaTransKit
         #expect((resp as! HTTPURLResponse).statusCode == 503)
     }
 
+    @Test func streamTranslateSendsSSE() async throws {
+        let (base, task) = try await startServer(MockTranslator())
+        defer { task.cancel() }
+        var req = URLRequest(url: base.appendingPathComponent("translate"))
+        req.httpMethod = "POST"
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["text": "Hello", "stream": true])
+        let (bytes, resp) = try await URLSession.shared.bytes(for: req)
+        let http = resp as! HTTPURLResponse
+        #expect(http.statusCode == 200)
+        #expect(http.value(forHTTPHeaderField: "Content-Type")?.contains("text/event-stream") == true)
+        var events: [String] = []
+        for try await line in bytes.lines where line.hasPrefix("data: ") {
+            events.append(String(line.dropFirst(6)))
+            if events.last == "[DONE]" { break }
+        }
+        #expect(events.count == 5)  // 3 个 delta + 1 个 final + [DONE]
+        #expect(events.first?.contains("你好") == true)
+        #expect(events.dropLast().last?.contains("\"translation\"") == true)
+        #expect(events.last == "[DONE]")
+    }
+
     @Test func busyEngineTimesOutWith503() async throws {
         let (base, task) = try await startServer(StuckTranslator(), queueTimeout: 0.2)
         defer { task.cancel() }

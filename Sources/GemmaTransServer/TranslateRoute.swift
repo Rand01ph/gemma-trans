@@ -34,7 +34,31 @@ func registerTranslateRoute(
         }
         do {
             let result = try await translator.translate(req.text, target: req.target)
-            // 流式分支 Task 7 实现；本任务先全部走非流式
+            if req.stream == true {
+                let meta = (detected: result.detected, target: result.target, truncated: result.truncated)
+                let (dataStream, cont) = AsyncStream.makeStream(of: Data.self)
+                Task {
+                    var full = ""
+                    do {
+                        for try await chunk in result.chunks {
+                            full += chunk
+                            cont.yield(SSE.event(["delta": chunk]))
+                        }
+                        cont.yield(SSE.event([
+                            "translation": full.trimmingCharacters(in: .whitespacesAndNewlines),
+                            "detected": meta.detected, "target": meta.target, "truncated": meta.truncated,
+                        ]))
+                    } catch {
+                        cont.yield(SSE.event(["error": "\(error)"]))
+                    }
+                    cont.yield(SSE.done)
+                    cont.finish()
+                }
+                return HTTPResponse(
+                    statusCode: .ok, headers: SSE.headers,
+                    body: HTTPBodySequence(from: SSEBody(stream: dataStream), suggestedBufferSize: 1024)
+                )
+            }
             let text = try await withQueueTimeout(queueTimeout) { try await result.fullText() }
             return try .json([
                 "translation": text,
