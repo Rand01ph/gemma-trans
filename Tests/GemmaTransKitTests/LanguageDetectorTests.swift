@@ -33,4 +33,24 @@ import Testing
         #expect(r.detected == "und")
         #expect(r.target == "zh-Hans")
     }
+
+    @Test func mixedChineseTechTextGoesToEnglish() {
+        // NLLanguageRecognizer 会把含较多英文术语的中文句子误判为 en；
+        // CJK 占比启发式应纠正为中文 → 译英
+        let r = detector.plan(
+            for: "LiteRT-LM 因 unsafe linker flags 不能按版本远程引用，改为本地 vendor 方案。",
+            settings: settings
+        )
+        #expect(r.detected.hasPrefix("zh"))
+        #expect(r.target == "en")
+    }
+
+    @Test func englishWithFewCJKCharsStaysEnglish() {
+        let r = detector.plan(
+            for: "Please review the pull request for the 翻译 feature before merging it tomorrow.",
+            settings: settings
+        )
+        #expect(r.detected == "en")
+        #expect(r.target == "zh-Hans")
+    }
 }

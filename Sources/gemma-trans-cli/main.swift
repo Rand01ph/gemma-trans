@@ -3,6 +3,9 @@ import GemmaTransKit
 import GemmaTransServer
 import LiteRTLM
 
+// 重定向到文件/管道时 print 默认块缓冲，"Model ready" 等状态行会滞留不可见
+setvbuf(stdout, nil, _IOLBF, 0)
+
 let settings: AppSettings = {
     var s = AppSettings.load()
     if let p = ProcessInfo.processInfo.environment["GEMMA_MODEL_PATH"] { s.modelPath = p }

@@ -72,6 +72,10 @@ func registerTranslateRoute(
             return try .json(["error": "model not loaded"], statusCode: .serviceUnavailable)
         } catch TranslationError.queueTimeout {
             return try .json(["error": "engine busy, timed out"], statusCode: .serviceUnavailable)
+        } catch {
+            // 引擎层未知错误（如内存压力下 GPU 分配失败）：透出详情，便于客户端与日志定位
+            GTLog.error("translate failed: \(error)")
+            return try .json(["error": "\(error)"], statusCode: .internalServerError)
         }
     }
 }

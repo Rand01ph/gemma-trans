@@ -79,6 +79,30 @@ import GemmaTransKit
         #expect(events.last == "[DONE]")
     }
 
+    @Test func unknownEngineErrorReturns500WithDetail() async throws {
+        let (base, task) = try await startServer(ExplodingTranslator())
+        defer { task.cancel() }
+        var req = URLRequest(url: base.appendingPathComponent("translate"))
+        req.httpMethod = "POST"
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["text": "hi"])
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        #expect((resp as! HTTPURLResponse).statusCode == 500)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect((json["error"] as? String)?.contains("allocation failed") == true)
+    }
+
+    @Test func midStreamEngineErrorReturns500WithDetail() async throws {
+        let (base, task) = try await startServer(ExplodingTranslator(failInStream: true))
+        defer { task.cancel() }
+        var req = URLRequest(url: base.appendingPathComponent("translate"))
+        req.httpMethod = "POST"
+        req.httpBody = try JSONSerialization.data(withJSONObject: ["text": "hi"])
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        #expect((resp as! HTTPURLResponse).statusCode == 500)
+        let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        #expect((json["error"] as? String)?.contains("allocation failed") == true)
+    }
+
     @Test func busyEngineTimesOutWith503() async throws {
         let (base, task) = try await startServer(StuckTranslator(), queueTimeout: 0.2)
         defer { task.cancel() }

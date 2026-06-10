@@ -57,6 +57,9 @@ func registerChatCompletionsRoute(server: HTTPServer, translator: any Translatio
             ])
         } catch TranslationError.modelNotLoaded {
             return try .json(["error": ["message": "model not loaded"]], statusCode: .serviceUnavailable)
+        } catch {
+            GTLog.error("chat/completions failed: \(error)")
+            return try .json(["error": ["message": "\(error)"]], statusCode: .internalServerError)
         }
     }
 }

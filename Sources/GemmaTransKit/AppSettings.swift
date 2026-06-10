@@ -21,7 +21,7 @@ public struct AppSettings: Sendable {
         port: UInt16 = 8765,
         targetForChinese: String = "en",
         targetDefault: String = "zh-Hans",
-        maxInputChars: Int = 4000
+        maxInputChars: Int = 1500  // 配合 KV cache 2048：1500 CJK 字符 ≈ 1000-1200 token，留足输出空间
     ) {
         self.modelPath = modelPath
         self.port = port

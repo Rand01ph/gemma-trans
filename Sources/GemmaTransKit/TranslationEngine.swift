@@ -18,10 +18,12 @@ public actor TranslationEngine: TranslationService {
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("GemmaTrans").path
         try? FileManager.default.createDirectory(atPath: cacheDir, withIntermediateDirectories: true)
+        // KV cache 2048：翻译片段场景足够（配合 maxInputChars=1500），
+        // 生成期内存占用减半——16GB 机器高内存压力下 4096 曾导致 GPU 分配失败。
         let config = try EngineConfig(
             modelPath: settings.modelPath,
             backend: .gpu,
-            maxNumTokens: 4096,
+            maxNumTokens: 2048,
             cacheDir: cacheDir
         )
         let engine = Engine(engineConfig: config)
@@ -66,6 +68,7 @@ extension Engine {
             }
             continuation.finish()
         } catch {
+            GTLog.error("generation failed: \(error)")
             continuation.finish(throwing: error)
         }
     }
