@@ -1,0 +1,27 @@
+Sources/GemmaTransKit/AppSettings.swift
+  s_c5f4a0a2c90987::t_81559c4a29b86d 74
+  s_c5f4a0a2c90987::t_df6e9ff32b0382 60
+  s_c5f4a0a2c90987::t_d7c10a472c10be 17-18
+  s_c5f4a0a2c90987::t_8608d30d84368d 45
+  s_c5f4a0a2c90987::t_cb850216d866c5 34-35
+App/GemmaTrans/EngineController.swift
+  s_c5f4a0a2c90987::t_983ab6d56629b0 29-43
+App/GemmaTrans/SettingsView.swift
+  s_c5f4a0a2c90987::t_c0ff8361b1f141 21-23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "bbddb85299939e038c95bf765461820f99eeb9c0",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
