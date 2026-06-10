@@ -35,7 +35,7 @@ public struct APIServer: Sendable {
             return try .json(["status": ready ? "ready" : "loading"], statusCode: ready ? .ok : .serviceUnavailable)
         }
         await registerTranslateRoute(server: server, translator: t, queueTimeout: queueTimeout)
-        // Task 8 在此追加 chat/completions 路由
+        await registerChatCompletionsRoute(server: server, translator: t)
     }
 }
 
