@@ -1,0 +1,27 @@
+Package.swift
+  s_c5f4a0a2c90987::t_fb10eee060749c 25-26,29
+Tests/GemmaTransServerTests/TranslateRouteTests.swift
+  s_c5f4a0a2c90987::t_52999841922b8b 77-78
+  s_c5f4a0a2c90987::t_6b6e0151daf308 61-76,79-81
+Sources/GemmaTransServer/TranslateRoute.swift
+  s_c5f4a0a2c90987::t_5b55c0610f24e9 37-61
+Sources/GemmaTransServer/SSEBody.swift
+  s_c5f4a0a2c90987::t_0a58303d8dd72d 1-2,4-47
+  s_c5f4a0a2c90987::t_0f42af5d36264f 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "518311236df9c5b4313902d68765b6f2835233a6",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
