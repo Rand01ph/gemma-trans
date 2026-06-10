@@ -5,7 +5,12 @@ enum SelectionReader {
     /// 读取当前前台 app 的选中文本。先 AX，失败则模拟 ⌘C（保存并恢复剪贴板）。
     static func read() async -> String? {
         if let s = axSelectedText(), !s.isEmpty { return s }
+        #if MAS_BUILD
+        // sandbox 阻止 CGEvent 注入键盘事件；MAS 版取词 AX-only
+        return nil
+        #else
         return await copySelectedText()
+        #endif
     }
 
     static var hasAccessibilityPermission: Bool {

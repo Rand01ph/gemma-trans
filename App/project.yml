@@ -42,3 +42,35 @@ targets:
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_STYLE: Manual
           ENABLE_HARDENED_RUNTIME: YES
+  GemmaTrans-MAS:
+    type: application
+    platform: macOS
+    sources: [GemmaTrans]
+    info:
+      path: GemmaTrans/Info.plist
+      properties:
+        LSUIElement: true
+        CFBundleDisplayName: GemmaTrans
+        CFBundleIconFile: AppIcon
+    entitlements:
+      path: GemmaTrans-MAS.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+        com.apple.security.network.server: true
+        com.apple.security.network.client: true
+        com.apple.security.files.user-selected.read-only: true
+    dependencies:
+      - package: GemmaTransCore
+        product: GemmaTransKit
+      - package: GemmaTransCore
+        product: GemmaTransServer
+      - package: KeyboardShortcuts
+    settings:
+      base:
+        DEVELOPMENT_TEAM: G2XC9VU88M
+        CODE_SIGN_STYLE: Automatic
+        SWIFT_VERSION: "6.0"
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) MAS_BUILD"
