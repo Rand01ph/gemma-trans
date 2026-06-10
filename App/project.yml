@@ -28,5 +28,8 @@ targets:
     settings:
       base:
         ENABLE_APP_SANDBOX: NO
-        CODE_SIGN_IDENTITY: "-"      # ad-hoc 签名，本机使用
+        # 稳定签名身份：ad-hoc 每次重建 cdhash 都变，TCC 辅助功能授权会随重建失效；
+        # Apple Development 证书签名后授权按"团队+Bundle ID"绑定，重建不丢权限
+        DEVELOPMENT_TEAM: G2XC9VU88M
+        CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
