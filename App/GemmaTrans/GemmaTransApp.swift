@@ -25,7 +25,7 @@ struct GemmaTransApp: App {
             Image(systemName: controller.status == .ready ? "character.bubble.fill" : "character.bubble")
         }
         Settings {
-            Text("设置界面（Task 12 实现）").padding()
+            SettingsView()
         }
     }
 }
