@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-10-distribution-design.md
+  s_c5f4a0a2c90987::t_1780bd6214f911 1-45
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "fb9ade7ab2cd373e40b7c2d3f2229fef49923da8",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
