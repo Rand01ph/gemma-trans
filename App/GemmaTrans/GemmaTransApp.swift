@@ -6,6 +6,7 @@ struct GemmaTransApp: App {
 
     init() {
         EngineController.shared.start()
+        HotkeyCenter.install(controller: EngineController.shared)
     }
 
     var body: some Scene {
