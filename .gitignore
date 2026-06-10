@@ -6,3 +6,5 @@ DerivedData/
 .DS_Store
 App/build/
 *.litertlm
+.agents/
+skills-lock.json
