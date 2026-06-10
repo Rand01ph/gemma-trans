@@ -19,6 +19,7 @@ targets:
       properties:
         LSUIElement: true            # menu bar app，不出现在 Dock
         CFBundleDisplayName: GemmaTrans
+        CFBundleIconFile: AppIcon
     dependencies:
       - package: GemmaTransCore
         product: GemmaTransKit
