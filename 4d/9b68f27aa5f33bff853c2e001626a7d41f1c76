@@ -1,0 +1,27 @@
+App/GemmaTrans/Info.plist
+  s_c5f4a0a2c90987::t_7651b69e5dedd7 11-12
+App/GemmaTrans-MAS.entitlements
+  s_c5f4a0a2c90987::t_0f9a68c637fbb3 1-3,14
+  s_c5f4a0a2c90987::t_ba5c4c194a318c 4-13
+App/GemmaTrans/SelectionReader.swift
+  s_c5f4a0a2c90987::t_f768b2c7d71465 8-11,13
+App/project.yml
+  s_c5f4a0a2c90987::t_b78cee0fdc6287 45-56,62-76
+  s_c5f4a0a2c90987::t_7f20d4f0ebe56e 57-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4d9b68f27aa5f33bff853c2e001626a7d41f1c76",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
