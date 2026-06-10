@@ -1,0 +1,21 @@
+docs/superpowers/plans/2026-06-10-gemma-trans.md
+  s_c5f4a0a2c90987::t_c80d3db81b32d5 794-812,821,832-833,835-846,848-859
+  s_c5f4a0a2c90987::t_8f7121b7e80417 1-506,508-793,813-820,822-831,834,847,860-1837
+  s_c5f4a0a2c90987::t_b9ce390c413eb0 507
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "573aa51c522faa602999b4233a30c1af2d09dadb",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
