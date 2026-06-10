@@ -1,0 +1,8 @@
+.build/
+Vendor/
+.swiftpm/
+DerivedData/
+*.xcodeproj
+.DS_Store
+App/build/
+*.litertlm

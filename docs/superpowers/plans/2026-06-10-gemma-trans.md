@@ -14,6 +14,8 @@
 
 ## 已查证的 API 事实（写代码前必读）
 
+- **（执行中校准）LiteRT-LM 不能按远程版本引用**：其 LiteRTLM target 带 `unsafeFlags(["-Xlinker", "-all_load"])`，SPM 拒绝远程版本依赖使用 unsafe flags。解法：git submodule vendor 到 `Vendor/LiteRT-LM`（钉 v0.13.1，SHA a0afb5a），`Package.swift` 用 `.package(path: "Vendor/LiteRT-LM")`。克隆本仓库需 `git clone --recurse-submodules`。Task 11 的 XcodeGen `packages` 同样改为 `path: ../Vendor/LiteRT-LM`（如 app 直接依赖）或仅依赖本地 GemmaTransCore（已传递）。
+
 - LiteRT-LM：`import LiteRTLM`；`EngineConfig(modelPath:backend:maxNumTokens:cacheDir:)`；`Engine(engineConfig:)`；`engine.createConversation(...)` 接受含 `systemMessage: Message(...)` 的 ConversationConfig；流式：`for try await chunk in conversation.sendMessageStream(Message("...")) { chunk.toString }`。**注意：参数名/是否 throws 以包内实际 API 为准，Task 2 spike 的目的之一就是校准这些签名；如有出入，修正后同步更新本计划后续任务中的调用代码。**
 - FlyingFox（已读源码确认）：`HTTPServer(address: .loopback(port:))`；`await server.appendRoute("POST /x") { request in ... }`；请求体 `try await request.bodyData`；JSON 响应 `HTTPResponse(statusCode: .ok, headers: [.contentType: "application/json"], body: data)`；流式响应 `HTTPResponse(statusCode:headers:body: HTTPBodySequence)`，其中 `HTTPBodySequence(from: some AsyncBufferedSequence<UInt8>, suggestedBufferSize:)`（不带 `count` → chunked 编码）。`AsyncBufferedSequence` 协议是 public，但库内置的便捷包装是 package 私有 → 需要自写适配器（Task 7）。
 - 模型文件：`https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm`，文件名 `gemma-4-E4B-it.litertlm`（约 4GB）。Gemma 权重可能需要在 HF 接受许可（`hf auth login` 后下载）。
