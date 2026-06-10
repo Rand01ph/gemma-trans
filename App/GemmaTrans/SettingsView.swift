@@ -29,6 +29,10 @@ struct SettingsView: View {
                 TextField("其他语言翻译为", text: $settings.targetDefault)
             }
             Section("API") {
+                Toggle("启用本地 API（PopClip 等外部工具需要）", isOn: Binding(
+                    get: { EngineController.shared.settings.apiEnabled },
+                    set: { EngineController.shared.setAPIEnabled($0) }
+                ))
                 TextField("端口", value: $settings.port, format: .number.grouping(.never))
             }
             Section("性能") {
@@ -52,6 +56,8 @@ struct SettingsView: View {
                 KeyboardShortcuts.Recorder("划词翻译", name: .translateSelection)
             }
             Button("保存（重启 app 生效）") {
+                // API 开关即时生效且由 EngineController 持有真值，防止本视图的陈旧副本覆盖
+                settings.apiEnabled = EngineController.shared.settings.apiEnabled
                 settings.save()
                 saved = true
             }

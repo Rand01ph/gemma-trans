@@ -19,7 +19,7 @@ enum HotkeyCenter {
             SelectionReader.promptForPermission()
             return
         }
-        guard case .ready = controller.status, let engine = controller.engine else {
+        guard controller.engineStatus == .ready, let engine = controller.engine else {
             NSSound.beep()
             return
         }

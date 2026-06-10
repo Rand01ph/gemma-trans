@@ -5,63 +5,87 @@ import GemmaTransServer
 
 @MainActor @Observable
 final class EngineController {
-    enum Status: Equatable {
-        case loading
-        case ready
-        case failed(String)
-    }
+    enum EngineStatus: Equatable { case loading, ready, failed(String) }
+    enum APIStatus: Equatable { case disabled, running(UInt16), failed(String) }
 
     static let shared = EngineController()
 
-    private(set) var status: Status = .loading
+    private(set) var engineStatus: EngineStatus = .loading
+    private(set) var apiStatus: APIStatus = .disabled
     private(set) var engine: TranslationEngine?
     private var serverTask: Task<Void, Error>?
-    let settings = AppSettings.load()
+    private(set) var settings = AppSettings.load()
 
     func start() {
-        status = .loading
+        engineStatus = .loading
         Task {
-            // 单实例守卫：端口上已有活的 GemmaTrans（app 或 CLI serve）就不再加载第二份模型
-            if await Self.isPortServing(settings.port) {
-                self.status = .failed("端口 \(settings.port) 已有 GemmaTrans 实例在运行")
-                GTLog.error("startup aborted: port \(settings.port) already serving")
+            // 单实例守卫（验明正身）：仅真正的 GemmaTrans 实例才放弃启动，防双模型加载；
+            // 无关 HTTP 服务占用端口不影响引擎，仅 API 启动时自然失败
+            if await Self.isGemmaTransServing(settings.port) {
+                engineStatus = .failed("端口 \(settings.port) 已有 GemmaTrans 实例在运行")
+                GTLog.error("startup aborted: another GemmaTrans on \(settings.port)")
                 return
             }
             let engine = TranslationEngine(settings: settings)
             do {
                 try await engine.load()
                 self.engine = engine
-                let port = settings.port
-                self.serverTask = Task.detached {
-                    try await APIServer(translator: engine, port: port).run()
-                }
-                self.watchServerTask()
-                self.status = .ready
-                GTLog.info("engine ready, serving on \(port)")
+                engineStatus = .ready
+                GTLog.info("engine ready")
+                if settings.apiEnabled { startServer() }
             } catch {
-                self.status = .failed("\(error)")
+                engineStatus = .failed("\(error)")
                 GTLog.error("engine load failed: \(error)")
             }
         }
     }
 
-    /// server 挂掉（如端口被抢）时把状态打出来，而不是无声失败
-    private func watchServerTask() {
-        guard let task = serverTask else { return }
+    /// 菜单/设置开关入口：即时生效并持久化
+    func setAPIEnabled(_ enabled: Bool) {
+        settings.apiEnabled = enabled
+        settings.save()
+        if enabled {
+            if engineStatus == .ready { startServer() }
+            // 引擎未就绪时由 start() 的 apiEnabled 分支接管
+        } else {
+            serverTask?.cancel()
+            serverTask = nil
+            apiStatus = .disabled
+            GTLog.info("API disabled by user")
+        }
+    }
+
+    private func startServer() {
+        guard let engine, serverTask == nil else { return }
+        let port = settings.port
+        let task: Task<Void, Error> = Task.detached {
+            try await APIServer(translator: engine, port: port).run()
+        }
+        serverTask = task
+        apiStatus = .running(port)
+        GTLog.info("API serving on \(port)")
         Task {
-            do {
-                try await task.value
-            } catch {
-                self.status = .failed("API server: \(error)")
-                GTLog.error("API server died: \(error)")
+            do { try await task.value }
+            catch is CancellationError { /* 用户关闭，状态已在 setAPIEnabled 置 disabled */ }
+            catch {
+                // 仅在仍处运行态时标记失败（避免覆盖用户主动关闭后的状态）
+                if case .running = self.apiStatus {
+                    self.apiStatus = .failed("端口 \(port) 不可用")
+                    self.serverTask = nil
+                    GTLog.error("API server died: \(error)")
+                }
             }
         }
     }
 
-    private static func isPortServing(_ port: UInt16) async -> Bool {
+    private static func isGemmaTransServing(_ port: UInt16) async -> Bool {
         guard let url = URL(string: "http://127.0.0.1:\(port)/health") else { return false }
         var req = URLRequest(url: url)
         req.timeoutInterval = 1
-        return (try? await URLSession.shared.data(for: req)) != nil
+        guard let (data, _) = try? await URLSession.shared.data(for: req),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return false
+        }
+        return json["service"] as? String == "gemmatrans"
     }
 }
