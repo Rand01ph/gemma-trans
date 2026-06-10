@@ -1,0 +1,23 @@
+Tests/GemmaTransServerTests/ChatCompletionsRouteTests.swift
+  s_c5f4a0a2c90987::t_894cba8c5a972e 1-69
+Sources/GemmaTransServer/ChatCompletionsRoute.swift
+  s_c5f4a0a2c90987::t_9e4c027edb07d7 1-73
+Sources/GemmaTransServer/APIServer.swift
+  s_c5f4a0a2c90987::t_76c5211f10c40d 38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "adb383869c7c956d0547f030e4f6a57655e32e3d",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
