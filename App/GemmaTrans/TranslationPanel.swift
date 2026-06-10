@@ -31,11 +31,15 @@ final class TranslationPanel {
     }
 
     private func present(model: TranslationViewModel) {
-        let view = TranslationView(model: model, onClose: { [weak self] in self?.close() })
+        let view = TranslationView(
+            model: model,
+            onClose: { [weak self] in self?.close() },
+            onContentHeight: { [weak self] h in self?.adjustHeight(contentHeight: h) }
+        )
         let hosting = NSHostingController(rootView: view)
 
         let panel = NSPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 180),
+            contentRect: NSRect(x: 0, y: 0, width: PanelGeometry.panelWidth, height: PanelGeometry.minHeight),
             styleMask: [.nonactivatingPanel, .titled, .closable, .fullSizeContentView],
             backing: .buffered, defer: false
         )
@@ -52,6 +56,25 @@ final class TranslationPanel {
         self.panel?.close()
         self.panel = panel
         panel.orderFrontRegardless()
+    }
+
+    /// 译文流式生长时随内容调高：顶边不动向下生长，70% 屏高封顶，防越出屏幕底部。
+    private func adjustHeight(contentHeight: CGFloat) {
+        guard let panel else { return }
+        let screen = panel.screen ?? NSScreen.main
+        let visibleHeight = screen?.visibleFrame.height ?? 800
+        let target = PanelGeometry.targetHeight(
+            contentHeight: contentHeight, screenVisibleHeight: visibleHeight)
+        guard abs(target - panel.frame.height) >= PanelGeometry.resizeThreshold else { return }
+
+        var frame = panel.frame
+        let topY = frame.maxY
+        frame.size.height = target
+        frame.origin.y = topY - target
+        if let visible = screen?.visibleFrame, frame.minY < visible.minY {
+            frame.origin.y = visible.minY
+        }
+        panel.setFrame(frame, display: true, animate: true)
     }
 }
 
@@ -80,9 +103,17 @@ final class TranslationViewModel {
     }
 }
 
+private struct ContentHeightKey: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = max(value, nextValue())
+    }
+}
+
 struct TranslationView: View {
     let model: TranslationViewModel
     let onClose: () -> Void
+    var onContentHeight: (CGFloat) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -90,6 +121,9 @@ struct TranslationView: View {
                 Text(model.error ?? (model.output.isEmpty ? "…" : model.output))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .textSelection(.enabled)
+                    .background(GeometryReader { geo in
+                        Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
+                    })
             }
             HStack {
                 Text(model.status).font(.caption).foregroundStyle(.secondary)
@@ -103,6 +137,7 @@ struct TranslationView: View {
             }
         }
         .padding(12)
-        .frame(width: 360, height: 180)
+        .frame(width: PanelGeometry.panelWidth)
+        .onPreferenceChange(ContentHeightKey.self) { onContentHeight($0) }
     }
 }
