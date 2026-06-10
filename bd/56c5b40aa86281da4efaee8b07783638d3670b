@@ -1,0 +1,23 @@
+popclip/GemmaTrans.popclipext/Config.yaml
+  s_c5f4a0a2c90987::t_3c1108cab844e3 1-4
+popclip/GemmaTrans.popclipext/translate.sh
+  s_c5f4a0a2c90987::t_07eb097570ee06 1-15
+README.md
+  s_c5f4a0a2c90987::t_59e5795d941f8e 1-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "bd56c5b40aa86281da4efaee8b07783638d3670b",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
