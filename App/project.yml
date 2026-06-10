@@ -1,0 +1,32 @@
+name: GemmaTrans
+options:
+  bundleIdPrefix: com.gemmatrans
+  deploymentTarget:
+    macOS: "14.0"
+packages:
+  GemmaTransCore:
+    path: ../
+  KeyboardShortcuts:
+    url: https://github.com/sindresorhus/KeyboardShortcuts
+    from: 2.0.0
+targets:
+  GemmaTrans:
+    type: application
+    platform: macOS
+    sources: [GemmaTrans]
+    info:
+      path: GemmaTrans/Info.plist
+      properties:
+        LSUIElement: true            # menu bar app，不出现在 Dock
+        CFBundleDisplayName: GemmaTrans
+    dependencies:
+      - package: GemmaTransCore
+        product: GemmaTransKit
+      - package: GemmaTransCore
+        product: GemmaTransServer
+      - package: KeyboardShortcuts
+    settings:
+      base:
+        ENABLE_APP_SANDBOX: NO
+        CODE_SIGN_IDENTITY: "-"      # ad-hoc 签名，本机使用
+        SWIFT_VERSION: "6.0"
