@@ -32,7 +32,10 @@ public struct APIServer: Sendable {
         let t = translator
         await server.appendRoute("GET /health") { _ in
             let ready = await t.isReady
-            return try .json(["status": ready ? "ready" : "loading"], statusCode: ready ? .ok : .serviceUnavailable)
+            return try .json(
+                ["status": ready ? "ready" : "loading", "service": "gemmatrans"],
+                statusCode: ready ? .ok : .serviceUnavailable
+            )
         }
         await registerTranslateRoute(server: server, translator: t, queueTimeout: queueTimeout)
         await registerChatCompletionsRoute(server: server, translator: t)

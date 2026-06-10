@@ -12,6 +12,8 @@ public struct AppSettings: Sendable {
     /// 按机器内存自动推导引擎参数（EngineTuning）；关闭后用 manualMaxNumTokens + maxInputChars
     public var autoTuning: Bool
     public var manualMaxNumTokens: Int
+    /// 本地 HTTP API（PopClip 等外部工具用）；划词翻译是进程内调用，不受此开关影响
+    public var apiEnabled: Bool
 
     public static let defaultModelDirectory = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -26,7 +28,8 @@ public struct AppSettings: Sendable {
         targetDefault: String = "zh-Hans",
         maxInputChars: Int = 1500,  // 手动模式用；1500 CJK 字符 ≈ 1000-1200 token，配 KV 2048 留足输出
         autoTuning: Bool = true,
-        manualMaxNumTokens: Int = 2048
+        manualMaxNumTokens: Int = 2048,
+        apiEnabled: Bool = true
     ) {
         self.modelPath = modelPath
         self.port = port
@@ -35,6 +38,7 @@ public struct AppSettings: Sendable {
         self.maxInputChars = maxInputChars
         self.autoTuning = autoTuning
         self.manualMaxNumTokens = manualMaxNumTokens
+        self.apiEnabled = apiEnabled
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）
@@ -48,6 +52,7 @@ public struct AppSettings: Sendable {
         if d.object(forKey: "autoTuning") != nil { s.autoTuning = d.bool(forKey: "autoTuning") }
         if d.integer(forKey: "manualMaxNumTokens") > 0 { s.manualMaxNumTokens = d.integer(forKey: "manualMaxNumTokens") }
         if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
+        if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
         return s
     }
 
@@ -60,5 +65,6 @@ public struct AppSettings: Sendable {
         d.set(autoTuning, forKey: "autoTuning")
         d.set(manualMaxNumTokens, forKey: "manualMaxNumTokens")
         d.set(maxInputChars, forKey: "maxInputChars")
+        d.set(apiEnabled, forKey: "apiEnabled")
     }
 }

@@ -21,6 +21,7 @@ import GemmaTransKit
         #expect((resp as! HTTPURLResponse).statusCode == 200)
         let json = try JSONSerialization.jsonObject(with: data) as! [String: Any]
         #expect(json["status"] as? String == "ready")
+        #expect(json["service"] as? String == "gemmatrans")  // 单实例探测靠它验明正身
     }
 
     @Test func translateReturnsTranslation() async throws {
