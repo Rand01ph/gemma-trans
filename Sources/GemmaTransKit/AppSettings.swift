@@ -9,6 +9,9 @@ public struct AppSettings: Sendable {
     /// 其他语言的目标语言
     public var targetDefault: String
     public var maxInputChars: Int
+    /// 按机器内存自动推导引擎参数（EngineTuning）；关闭后用 manualMaxNumTokens + maxInputChars
+    public var autoTuning: Bool
+    public var manualMaxNumTokens: Int
 
     public static let defaultModelDirectory = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -21,13 +24,17 @@ public struct AppSettings: Sendable {
         port: UInt16 = 8765,
         targetForChinese: String = "en",
         targetDefault: String = "zh-Hans",
-        maxInputChars: Int = 1500  // 配合 KV cache 2048：1500 CJK 字符 ≈ 1000-1200 token，留足输出空间
+        maxInputChars: Int = 1500,  // 手动模式用；1500 CJK 字符 ≈ 1000-1200 token，配 KV 2048 留足输出
+        autoTuning: Bool = true,
+        manualMaxNumTokens: Int = 2048
     ) {
         self.modelPath = modelPath
         self.port = port
         self.targetForChinese = targetForChinese
         self.targetDefault = targetDefault
         self.maxInputChars = maxInputChars
+        self.autoTuning = autoTuning
+        self.manualMaxNumTokens = manualMaxNumTokens
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）
@@ -38,6 +45,9 @@ public struct AppSettings: Sendable {
         if d.integer(forKey: "port") > 0 { s.port = UInt16(d.integer(forKey: "port")) }
         if let v = d.string(forKey: "targetForChinese"), !v.isEmpty { s.targetForChinese = v }
         if let v = d.string(forKey: "targetDefault"), !v.isEmpty { s.targetDefault = v }
+        if d.object(forKey: "autoTuning") != nil { s.autoTuning = d.bool(forKey: "autoTuning") }
+        if d.integer(forKey: "manualMaxNumTokens") > 0 { s.manualMaxNumTokens = d.integer(forKey: "manualMaxNumTokens") }
+        if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
         return s
     }
 
@@ -47,5 +57,8 @@ public struct AppSettings: Sendable {
         d.set(Int(port), forKey: "port")
         d.set(targetForChinese, forKey: "targetForChinese")
         d.set(targetDefault, forKey: "targetDefault")
+        d.set(autoTuning, forKey: "autoTuning")
+        d.set(manualMaxNumTokens, forKey: "manualMaxNumTokens")
+        d.set(maxInputChars, forKey: "maxInputChars")
     }
 }

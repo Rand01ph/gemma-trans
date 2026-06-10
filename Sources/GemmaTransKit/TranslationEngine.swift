@@ -6,6 +6,10 @@ public actor TranslationEngine: TranslationService {
     private var engine: Engine?
     private var lastGeneration: Task<Void, Never>?
     private let detector = LanguageDetector()
+    private var resolvedTuning: EngineTuning?
+
+    /// 设置页展示用（actor 属性，外部 await 访问）
+    public var currentTuning: EngineTuning? { resolvedTuning }
 
     public init(settings: AppSettings) {
         self.settings = settings
@@ -18,12 +22,27 @@ public actor TranslationEngine: TranslationService {
         let cacheDir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("GemmaTrans").path
         try? FileManager.default.createDirectory(atPath: cacheDir, withIntermediateDirectories: true)
-        // KV cache 2048：翻译片段场景足够（配合 maxInputChars=1500），
-        // 生成期内存占用减半——16GB 机器高内存压力下 4096 曾导致 GPU 分配失败。
+        let tuning: EngineTuning
+        if settings.autoTuning {
+            let modelSize = ((try? FileManager.default.attributesOfItem(atPath: settings.modelPath))?[.size] as? NSNumber)
+                .map(\.uint64Value) ?? (4 << 30)
+            tuning = EngineTuning.recommended(
+                physicalMemory: SystemMemory.physical(),
+                availableMemory: SystemMemory.available(),
+                modelFileSize: modelSize
+            )
+            GTLog.info("auto tuning: kv=\(tuning.maxNumTokens) input=\(tuning.maxInputChars) " +
+                       "(ram=\(SystemMemory.physical() >> 30)GB avail=\((SystemMemory.available() ?? 0) >> 30)GB)")
+        } else {
+            tuning = EngineTuning(maxNumTokens: settings.manualMaxNumTokens, maxInputChars: settings.maxInputChars)
+            GTLog.info("manual tuning: kv=\(tuning.maxNumTokens) input=\(tuning.maxInputChars)")
+        }
+        resolvedTuning = tuning
+
         let config = try EngineConfig(
             modelPath: settings.modelPath,
             backend: .gpu,
-            maxNumTokens: 2048,
+            maxNumTokens: tuning.maxNumTokens,
             cacheDir: cacheDir
         )
         let engine = Engine(engineConfig: config)
@@ -36,8 +55,9 @@ public actor TranslationEngine: TranslationService {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw TranslationError.emptyInput }
 
-        let truncated = trimmed.count > settings.maxInputChars
-        let input = truncated ? String(trimmed.prefix(settings.maxInputChars)) : trimmed
+        let maxChars = resolvedTuning?.maxInputChars ?? settings.maxInputChars
+        let truncated = trimmed.count > maxChars
+        let input = truncated ? String(trimmed.prefix(maxChars)) : trimmed
         let plan = detector.plan(for: input, target: target, settings: settings)
         let prompt = PromptBuilder.userPrompt(text: input, target: plan.target)
 
