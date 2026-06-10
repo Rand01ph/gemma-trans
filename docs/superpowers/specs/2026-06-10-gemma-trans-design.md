@@ -49,7 +49,7 @@ Swift Package workspace + Xcode app 工程，三层：
 - 取词策略：优先 Accessibility API（`AXUIElement` 焦点元素的 selected text）；失败（如部分 Electron 应用）则模拟 ⌘C（CGEvent）兜底，取词前保存剪贴板、取词后恢复。
 - 浮窗：非激活式 `NSPanel`，出现在鼠标位置附近，流式渲染译文（本地模型首字延迟明显，流式为刚需），Esc 或点击外部关闭，提供"复制"按钮。
 - 首次启动引导授权"辅助功能"权限。
-- 不上架 App Store（嵌 HTTP server + AX 权限需关闭 sandbox），本地构建直接使用。
+- 本期不开启 App Sandbox，本地构建直接使用；分发方式见"后续路线图"。
 
 ## 数据流
 
@@ -76,9 +76,18 @@ Swift Package workspace + Xcode app 工程，三层：
 - **LiteRT-LM Swift 成熟度未知**（2026 年新框架）：M1 第一个任务即最小 spike——CLI 完成一次真实翻译。若不可行，备选 MLX-Swift（Apple 官方，同样支持 Gemma 4），架构其余部分不变。
 - E4B 常驻约 4-5GB 内存：M2 16GB 下可接受。
 
+## 后续路线图（本期 M1/M2 不做，已确认可行）
+
+- **公证分发（M3 候选）**：Developer ID 签名 + `notarytool` 公证后直接分发。无技术障碍（直分不要求 sandbox），仅需 Apple Developer 账号。
+- **OCR / 截图翻译（M3 候选）**：截图选区后两条路线——
+  1. 系统 Vision 框架（`VNRecognizeTextRequest`）OCR 出文字再交给引擎翻译：快、对密集文字可靠、零额外模型开销；
+  2. 利用 Gemma 4 原生多模态能力，截图直接作为图像输入交给模型（LiteRT-LM Swift 支持图像输入）：一步到位、可理解版式语境，但视觉编码增加延迟。
+  实施时两条路线做 A/B 对比后定默认。
+- **App Store 上架（远期，届时评估）**：MAS 强制 sandbox。本地 HTTP server（`network.server` entitlement）与模型下载均可行；辅助功能取词有先例（Magnet、PopClip 均在 MAS 上且依赖辅助功能权限），技术可行但存在审核不确定性。先公证直分，后评估 MAS。
+
 ## 明确不做（YAGNI）
 
-翻译历史记录、OCR 截图翻译、多模型切换 UI（仅保留路径配置）、App Store 上架与公证分发、闲置自动卸载模型、自动更新。
+翻译历史记录、多模型切换 UI（仅保留路径配置）、闲置自动卸载模型、自动更新。
 
 ## 参考
 
