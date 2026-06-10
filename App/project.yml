@@ -43,6 +43,9 @@ targets:
           CODE_SIGN_IDENTITY: "Developer ID Application"
           CODE_SIGN_STYLE: Manual
           ENABLE_HARDENED_RUNTIME: YES
+          # 公证要求：签名带安全时间戳；去掉 build 动作默认注入的 get-task-allow 调试 entitlement
+          OTHER_CODE_SIGN_FLAGS: "--timestamp"
+          CODE_SIGN_INJECT_BASE_ENTITLEMENTS: NO
   GemmaTrans-MAS:
     type: application
     platform: macOS
