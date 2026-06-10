@@ -1,0 +1,50 @@
+Sources/gemma-trans-cli/main.swift
+  s_c5f4a0a2c90987::t_a318d5bbbce043 6-8
+Tests/GemmaTransServerTests/TranslateRouteTests.swift
+  s_c5f4a0a2c90987::t_d48e9d37d7b886 82-105
+Sources/GemmaTransKit/AppSettings.swift
+  s_c5f4a0a2c90987::t_df3e53daed8ee4 24
+Tests/GemmaTransKitTests/LanguageDetectorTests.swift
+  s_c5f4a0a2c90987::t_65c29502bfa898 36-55
+App/GemmaTrans/EngineController.swift
+  s_c5f4a0a2c90987::t_6b1b6a9b35aafa 24-29,38,40,43-56,60-65
+Sources/GemmaTransKit/LanguageDetector.swift
+  s_c5f4a0a2c90987::t_c651d2fc44ac11 16-17,21-22,30,35-39
+  s_c5f4a0a2c90987::t_dabc9233846668 18-20
+  s_c5f4a0a2c90987::t_2a7faa12786716 31-34
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_c5f4a0a2c90987::t_774d0ab20dd338 71
+  s_c5f4a0a2c90987::t_c97129f47c8038 21-22,26
+popclip/GemmaTrans.popclipext/translate.sh
+  s_c5f4a0a2c90987::t_5ad47a7a0f5b0f 4,13-21,23
+Sources/GemmaTransKit/GTLog.swift
+  s_c5f4a0a2c90987::t_f6614652e746f0 1-32
+Tests/GemmaTransServerTests/MockTranslator.swift
+  s_c5f4a0a2c90987::t_72870dc649afee 35-53
+Package.resolved
+  s_c5f4a0a2c90987::t_1f418fe667fce4 2,12-19
+  s_c5f4a0a2c90987::t_6568c5e9f0349e 20
+Sources/GemmaTransServer/TranslateRoute.swift
+  s_c5f4a0a2c90987::t_37a9bf9e0351b4 75-78
+README.md
+  s_c5f4a0a2c90987::t_e17c108abbbc84 81-83
+  s_c5f4a0a2c90987::t_fbd3b13819c8da 65
+Sources/GemmaTransServer/ChatCompletionsRoute.swift
+  s_c5f4a0a2c90987::t_847e5a7857537f 60-62
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9749557cde27eeb508f81ad18849a2c9e54e0b4b",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
