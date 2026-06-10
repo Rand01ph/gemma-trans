@@ -17,7 +17,7 @@ public enum SystemMemory {
             }
         }
         guard result == KERN_SUCCESS else { return nil }
-        let pageSize = UInt64(vm_kernel_page_size)
+        let pageSize = UInt64(sysconf(_SC_PAGESIZE))  // vm_kernel_page_size 是全局 var，Swift 6 并发检查不允许
         return (UInt64(info.free_count) + UInt64(info.inactive_count)) * pageSize
     }
 }
