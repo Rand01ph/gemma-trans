@@ -1,0 +1,21 @@
+Sources/GemmaTransKit/LanguageDetector.swift
+  s_c5f4a0a2c90987::t_a36f78ad4e8497 1-24
+Tests/GemmaTransKitTests/LanguageDetectorTests.swift
+  s_c5f4a0a2c90987::t_541b52dcfd8809 1-36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "50608733b2653deecced241203c90b0e9cb04ee2",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
