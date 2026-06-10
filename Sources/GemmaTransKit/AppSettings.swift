@@ -14,6 +14,8 @@ public struct AppSettings: Sendable {
     public var manualMaxNumTokens: Int
     /// 本地 HTTP API（PopClip 等外部工具用）；划词翻译是进程内调用，不受此开关影响
     public var apiEnabled: Bool
+    /// 自选模型文件的 security-scoped bookmark（sandbox 下 NSOpenPanel 授权重启失效，靠它恢复）
+    public var modelBookmark: Data?
 
     public static let defaultModelDirectory = FileManager.default
         .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -29,7 +31,8 @@ public struct AppSettings: Sendable {
         maxInputChars: Int = 1500,  // 手动模式用；1500 CJK 字符 ≈ 1000-1200 token，配 KV 2048 留足输出
         autoTuning: Bool = true,
         manualMaxNumTokens: Int = 2048,
-        apiEnabled: Bool = true
+        apiEnabled: Bool = true,
+        modelBookmark: Data? = nil
     ) {
         self.modelPath = modelPath
         self.port = port
@@ -39,6 +42,7 @@ public struct AppSettings: Sendable {
         self.autoTuning = autoTuning
         self.manualMaxNumTokens = manualMaxNumTokens
         self.apiEnabled = apiEnabled
+        self.modelBookmark = modelBookmark
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）
@@ -53,6 +57,7 @@ public struct AppSettings: Sendable {
         if d.integer(forKey: "manualMaxNumTokens") > 0 { s.manualMaxNumTokens = d.integer(forKey: "manualMaxNumTokens") }
         if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
         if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
+        s.modelBookmark = d.data(forKey: "modelBookmark")
         return s
     }
 
@@ -66,5 +71,6 @@ public struct AppSettings: Sendable {
         d.set(manualMaxNumTokens, forKey: "manualMaxNumTokens")
         d.set(maxInputChars, forKey: "maxInputChars")
         d.set(apiEnabled, forKey: "apiEnabled")
+        d.set(modelBookmark, forKey: "modelBookmark")
     }
 }

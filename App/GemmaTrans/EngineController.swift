@@ -26,6 +26,21 @@ final class EngineController {
                 GTLog.error("startup aborted: another GemmaTrans on \(settings.port)")
                 return
             }
+            if let bookmark = settings.modelBookmark {
+                var stale = false
+                if let url = try? URL(
+                    resolvingBookmarkData: bookmark, options: .withSecurityScope,
+                    relativeTo: nil, bookmarkDataIsStale: &stale) {
+                    _ = url.startAccessingSecurityScopedResource()  // app 生命周期内持有，不主动 stop
+                    settings.modelPath = url.path
+                    if stale {
+                        settings.modelBookmark = try? url.bookmarkData(
+                            options: .withSecurityScope,
+                            includingResourceValuesForKeys: nil, relativeTo: nil)
+                        settings.save()
+                    }
+                }
+            }
             let engine = TranslationEngine(settings: settings)
             do {
                 try await engine.load()

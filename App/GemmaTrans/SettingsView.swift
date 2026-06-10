@@ -18,6 +18,9 @@ struct SettingsView: View {
                         panel.canChooseDirectories = false
                         if panel.runModal() == .OK, let url = panel.url {
                             settings.modelPath = url.path
+                            settings.modelBookmark = try? url.bookmarkData(
+                                options: .withSecurityScope,
+                                includingResourceValuesForKeys: nil, relativeTo: nil)
                         }
                     }
                 }
