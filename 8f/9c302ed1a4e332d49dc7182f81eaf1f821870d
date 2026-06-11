@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-12-ios-ui-redesign.md
+  s_b5203e260e0fc3::t_4756a8eac67d67 1-330
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8f9c302ed1a4e332d49dc7182f81eaf1f821870d",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
