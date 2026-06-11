@@ -40,4 +40,12 @@ import Testing
         let t = EngineTuning.recommended(physicalMemory: 16 * GB, availableMemory: nil)
         #expect(t.variant == .gemma4E4B4bit)
     }
+
+    /// iOS 设备档位：A17 Pro+ iPhone 为 8GB RAM，必须命中 E2B/1024/700（iOS spec 依赖此行为）
+    @Test func iPhone8GBHitsE2BTier() {
+        let t = EngineTuning.recommended(physicalMemory: 8 << 30, availableMemory: nil)
+        #expect(t.variant == .gemma4E2B4bit)
+        #expect(t.maxTokens == 1024)
+        #expect(t.maxInputChars == 700)
+    }
 }
