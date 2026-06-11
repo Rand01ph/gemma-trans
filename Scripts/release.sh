@@ -3,9 +3,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-PROFILE="gemmatrans-notary"
 APP_DIR="App"
 VERSION=$(grep 'MARKETING_VERSION' $APP_DIR/project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
+# 免钥匙串：直接用 API 密钥文件（notarytool 的 keychain profile 在部分环境下读不回）
+NOTARY_KEY="$HOME/.appstoreconnect/private/AuthKey_V288NX3YTW.p8"
+NOTARY_KEY_ID="V288NX3YTW"
+NOTARY_ISSUER="69a6de88-60c6-47e3-e053-5b8c7c11a4d1"
 
 # 前置检查
 if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
@@ -13,9 +16,8 @@ if ! security find-identity -v -p codesigning | grep -q "Developer ID Applicatio
     echo "   Xcode → Settings → Accounts → Manage Certificates → + → Developer ID Application"
     exit 1
 fi
-if ! xcrun notarytool history --keychain-profile "$PROFILE" >/dev/null 2>&1; then
-    echo "❌ 公证凭据未配置。先执行："
-    echo "   xcrun notarytool store-credentials $PROFILE --key <p8> --key-id <KeyID> --issuer <IssuerID>"
+if [ ! -f "$NOTARY_KEY" ]; then
+    echo "❌ 公证密钥不存在：$NOTARY_KEY"
     exit 1
 fi
 
@@ -34,7 +36,7 @@ echo "==> 打包并提交公证（可能数分钟）"
 mkdir -p ../dist
 ZIP="../dist/GemmaTrans-$VERSION.zip"
 ditto -c -k --keepParent "$APP" "$ZIP"
-xcrun notarytool submit "$ZIP" --keychain-profile "$PROFILE" --wait
+xcrun notarytool submit "$ZIP" --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER" --wait
 
 echo "==> 装订并重新打包"
 xcrun stapler staple "$APP"
