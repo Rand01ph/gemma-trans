@@ -39,6 +39,14 @@ Para 翻译均已接入。这是 iOS 上步数最少（选中 → 翻译，2 步
 - 扩展进程生命周期不可控 → 连续取词可能每次冷载（E2B 冷载预估 3-4s），需实测是否复用热进程
 - 全部不可行 → 回退初版方案：快捷指令分享表单 + App Intent 后台翻译 + 通知保底
 
+## 模型分发（真机 spike 发现的硬约束）
+
+国内网络下 HF 模型下载不可达：`model.safetensors` 被 302 到 Xet CDN
+（`cas-bridge.xethub.hf.co`），直连被重置、hf-mirror 镜像透传同样撞墙（2026-06-11
+iPhone 真机实测，-1005/-1001）。**v1 上架前必须解决模型托管**——候选：ModelScope /
+自托管 CDN / App 内置（超出蜂窝 OTA 限制需 Wi-Fi）。spike 阶段绕行：Mac 经
+`gemma-trans-cli download-e2b` 代下，devicectl 推入 App Group 容器。
+
 ## 设备与模型
 
 - 模型：仅 **Gemma 4 E2B-4bit（约 1.4GB）**；EngineTuning 增加 iOS 档（maxTokens 1024 /
