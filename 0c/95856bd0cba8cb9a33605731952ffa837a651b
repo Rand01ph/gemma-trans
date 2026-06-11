@@ -1,0 +1,21 @@
+Sources/GemmaTransKit/AppSettings.swift
+  s_b5203e260e0fc3::t_55f99a912ca001 38-39,52-53
+Tests/GemmaTransKitTests/AppSettingsTests.swift
+  s_b5203e260e0fc3::t_0e4af10c7c43ac 1-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "0c95856bd0cba8cb9a33605731952ffa837a651b",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
