@@ -15,11 +15,23 @@ enum ModelStore {
         return container.appendingPathComponent("models", isDirectory: true)
     }
 
-    /// 模型是否已下载完成。目录布局由 swift-huggingface HubCache 决定：
-    /// <cacheDirectory>/models--mlx-community--gemma-4-e2b-it-4bit/
-    /// 扩展据此决定「直接加载」还是提示「先打开主 app 下载」——扩展内绝不触发 1.4GB 下载。
+    /// 下载完成标记文件。目录存在 ≠ 下载完整：主 app 下载中途被杀时
+    /// HubCache 的 models--… 目录已在盘上，仅凭目录判断会把半成品当成可加载。
+    /// 标记由引擎加载成功后落盘（EngineHolder 成功路径调 markModelComplete）。
+    /// 文件名含 e2b——与 EngineHolder 固定的 E2B variant 构成一对不变量，改其一必改其二。
+    static var completionMarker: URL {
+        cacheDirectory.appendingPathComponent(".e2b-download-complete")
+    }
+
+    /// 引擎加载成功后调用：模型确认完整才落标记
+    static func markModelComplete() {
+        try? Data().write(to: completionMarker)
+    }
+
+    /// 模型是否已下载完成（判完成标记，而非目录是否存在）。
+    /// 扩展据此决定「直接加载」还是提示「先打开主 app 下载」——
+    /// 「扩展内绝不触发 1.4GB 下载」的不变量靠这个标记保证。
     static var modelDownloaded: Bool {
-        let dir = cacheDirectory.appendingPathComponent("models--mlx-community--gemma-4-e2b-it-4bit")
-        return FileManager.default.fileExists(atPath: dir.path)
+        FileManager.default.fileExists(atPath: completionMarker.path)
     }
 }

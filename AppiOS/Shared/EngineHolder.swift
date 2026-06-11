@@ -28,13 +28,22 @@ final class EngineHolder {
         let engine = TranslationEngine(settings: settings)
         loadTask = Task {
             do {
-                try await engine.load(cacheDirectory: ModelStore.cacheDirectory) { fraction in
+                // spec 决策：iOS 固定 E2B-4bit 档，不走 autoTuning——16GB 的 M 系 iPad 上
+                // EngineTuning.recommended 会选 E4B，与 ModelStore 硬编码的 e2b 目录名错位，
+                // 扩展会永久误报「模型未下载」。该 variant 与 ModelStore.modelDownloaded 的
+                // 目录名/标记构成一对不变量：改其一必改其二。
+                try await engine.load(
+                    cacheDirectory: ModelStore.cacheDirectory,
+                    tuningOverride: EngineTuning(variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700)
+                ) { fraction in
                     Task { @MainActor in
                         let pct = Int(fraction * 100)
                         EngineHolder.shared.status = pct < 100 ? .downloading(pct) : .loading
                     }
                 }
                 self.engine = engine
+                // 引擎加载成功 ⇒ 模型文件确认完整，落盘标记供扩展判定「已下载」
+                ModelStore.markModelComplete()
                 self.status = .ready
                 GTLog.info("iOS engine ready")
             } catch {

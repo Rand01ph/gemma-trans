@@ -794,6 +794,7 @@ struct TranslationPanelView: View {
         output = ""; failed = nil; done = false
         EngineHolder.shared.ensureLoaded()
         while holder.status != .ready {
+            if Task.isCancelled { return }  // 面板收起 .task 被取消，否则 sleep 抛 CancellationError 被吞、循环变热自旋
             if case .failed(let msg) = holder.status {
                 failed = "引擎加载失败：\(msg)"
                 return
