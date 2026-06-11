@@ -1,0 +1,24 @@
+README.md
+  s_c5f4a0a2c90987::t_db6073f5d74fa1 98
+  s_c5f4a0a2c90987::t_5a72d8632c0643 3,6,8,12,15-19,22
+docs/store-listing.md
+  s_c5f4a0a2c90987::t_71b230dbb82be9 31
+  s_c5f4a0a2c90987::t_ff1bb18d4847bc 41
+  s_c5f4a0a2c90987::t_cde65ff122bd0c 17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "66043471314d1481d1356bfa2a564c0a27cae32f",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
