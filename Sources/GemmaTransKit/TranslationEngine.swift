@@ -28,12 +28,19 @@ public actor TranslationEngine: TranslationService {
     /// 加载模型（首次自动从 HuggingFace 下载，progress 回调驱动 UI 显示百分比）
     /// - Parameter cacheDirectory: 模型缓存目录；nil 用 HubCache 默认位置（macOS 现状）。
     ///   iOS 传 App Group 容器目录，使主 app 与翻译扩展共享同一份模型文件。
+    /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
+    ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧按 e2b
+    ///   目录名判断「模型已下载」的逻辑错位；nil 时行为与既有 macOS 调用完全一致。
     public func load(
         cacheDirectory: URL? = nil,
+        tuningOverride: EngineTuning? = nil,
         progress: @Sendable @escaping (Double) -> Void = { _ in }
     ) async throws {
         let tuning: EngineTuning
-        if settings.autoTuning {
+        if let tuningOverride {
+            tuning = tuningOverride
+            GTLog.info("override tuning: variant=\(tuning.variant.rawValue) maxTokens=\(tuning.maxTokens) input=\(tuning.maxInputChars)")
+        } else if settings.autoTuning {
             tuning = EngineTuning.recommended(
                 physicalMemory: SystemMemory.physical(),
                 availableMemory: SystemMemory.available()
