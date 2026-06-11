@@ -1,0 +1,19 @@
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_c5f4a0a2c90987::t_ce0a8e0a05c388 53,56-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "96e57ab363b92bbf9c061073e2cbdbe15ec08bb6",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
