@@ -1,0 +1,41 @@
+AppiOS/GemmaTransiOS.entitlements
+  s_b5203e260e0fc3::t_c0f256f5dff2aa 1-14
+AppiOS/TranslationProvider.entitlements
+  s_b5203e260e0fc3::t_c0f256f5dff2aa 1-12
+AppiOS/GemmaTransiOS/GemmaTransiOSApp.swift
+  s_b5203e260e0fc3::t_ca02160cad71cf 1-8
+AppiOS/Shared/ModelStore.swift
+  s_b5203e260e0fc3::t_03c6c8e1293976 1-25
+AppiOS/project.yml
+  s_b5203e260e0fc3::t_1fb58bd766a8c0 1-69
+AppiOS/GemmaTransiOS/Info.plist
+  s_b5203e260e0fc3::t_c0f256f5dff2aa 1-34
+AppiOS/GemmaTransiOS/ContentView.swift
+  s_b5203e260e0fc3::t_456533faa70c89 1-68
+AppiOS/Shared/EngineHolder.swift
+  s_b5203e260e0fc3::t_62784b9d41a9f6 1-47
+AppiOS/TranslationProvider/TranslationProviderExtension.swift
+  s_b5203e260e0fc3::t_b919b1173f3516 1-12,14-15,23-31,34-86
+  s_b5203e260e0fc3::t_ec201dc1e67af3 13,16-22
+  s_b5203e260e0fc3::t_599d65b1052396 32-33
+AppiOS/TranslationProvider/Info.plist
+  s_b5203e260e0fc3::t_c0f256f5dff2aa 1-27
+.gitignore
+  s_b5203e260e0fc3::t_8d5909eaf6f839 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4113e7f920f3ad0f7df2d465fe0814a9dde5e451",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
