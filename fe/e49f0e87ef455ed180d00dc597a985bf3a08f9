@@ -1,0 +1,19 @@
+docs/superpowers/plans/2026-06-11-ios-default-translation-app.md
+  s_b5203e260e0fc3::t_c2ab0373dc7037 1-1121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "fee49f0e87ef455ed180d00dc597a985bf3a08f9",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
