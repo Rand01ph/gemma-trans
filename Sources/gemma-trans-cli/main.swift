@@ -2,6 +2,11 @@ import Foundation
 import GemmaTransKit
 import GemmaTransServer
 import LiteRTLM
+import MLXLLM
+import MLXLMCommon
+import MLXHuggingFace
+import HuggingFace
+import Tokenizers
 
 // 重定向到文件/管道时 print 默认块缓冲，"Model ready" 等状态行会滞留不可见
 setvbuf(stdout, nil, _IOLBF, 0)
@@ -17,6 +22,8 @@ let mode = CommandLine.arguments.dropFirst().first ?? "serve"
 switch mode {
 case "spike":
     await runSpike(settings: settings)
+case "spike-mlx":
+    await runSpikeMLX()
 case "serve":
     let engine = TranslationEngine(settings: settings)
     print("Loading model: \(settings.modelPath)")
@@ -69,5 +76,39 @@ extension Engine {
         for try await chunk in conversation.sendMessageStream(Message(prompt)) {
             print(chunk.toString, terminator: "")
         }
+    }
+}
+
+/// MLX spike：官方 mlx-swift-lm 加载 Gemma 4 e4b-4bit（首次自动下载约 2.3GB）并流式翻译。
+func runSpikeMLX() async {
+    do {
+        let clock = ContinuousClock()
+        print("Loading MLX gemma-4-e4b-it-4bit (首次自动下载约 2.3GB)…")
+        let loadStart = clock.now
+        let model = try await #huggingFaceLoadModelContainer(
+            configuration: LLMRegistry.gemma4_e4b_it_4bit
+        ) { progress in
+            print("download: \(Int(progress.fractionCompleted * 100))%", terminator: "\r")
+        }
+        print("\nModel ready in \(clock.now - loadStart)")
+
+        let session = ChatSession(
+            model,
+            instructions: PromptBuilder.systemPrompt,
+            generateParameters: GenerateParameters(maxTokens: 512)
+        )
+        let genStart = clock.now
+        let prompt = PromptBuilder.userPrompt(
+            text: "The quick brown fox jumps over the lazy dog.", target: "zh-Hans")
+        var chars = 0
+        for try await chunk in session.streamResponse(to: prompt) {
+            print(chunk, terminator: "")
+            chars += chunk.count
+        }
+        let elapsed = clock.now - genStart
+        print("\n--- MLX spike OK: \(chars) chars in \(elapsed) ---")
+    } catch {
+        print("MLX SPIKE FAILED: \(error)")
+        exit(1)
     }
 }

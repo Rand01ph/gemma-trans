@@ -14,6 +14,9 @@ let package = Package(
         // 本地路径依赖不受此限制。钉在 v0.13.1。
         .package(path: "Vendor/LiteRT-LM"),
         .package(url: "https://github.com/swhitty/FlyingFox.git", from: "0.26.0"),
+        .package(url: "https://github.com/ml-explore/mlx-swift-lm", from: "3.31.3"),
+        .package(url: "https://github.com/huggingface/swift-huggingface", from: "0.9.0"),
+        .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
     ],
     targets: [
         .target(
@@ -30,7 +33,14 @@ let package = Package(
         ),
         .executableTarget(
             name: "gemma-trans-cli",
-            dependencies: ["GemmaTransKit", "GemmaTransServer"]
+            dependencies: [
+                "GemmaTransKit", "GemmaTransServer",
+                .product(name: "MLXLLM", package: "mlx-swift-lm"),
+                .product(name: "MLXLMCommon", package: "mlx-swift-lm"),
+                .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
+                .product(name: "HuggingFace", package: "swift-huggingface"),
+                .product(name: "Tokenizers", package: "swift-transformers"),
+            ]
         ),
         .testTarget(name: "GemmaTransKitTests", dependencies: ["GemmaTransKit"]),
         .testTarget(name: "GemmaTransServerTests", dependencies: ["GemmaTransServer"]),

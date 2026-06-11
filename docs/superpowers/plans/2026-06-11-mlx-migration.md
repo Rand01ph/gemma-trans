@@ -10,7 +10,13 @@
 
 **Spec:** `docs/superpowers/specs/2026-06-11-mlx-migration-design.md`
 
-**已校准 API（源码级，/tmp/mlx-lm-check）**：`LLMModelFactory.shared.loadContainer(configuration:progressHandler:)`（Progress 回调）；`ChatSession(model, instructions: String?, generateParameters: GenerateParameters(maxTokens: Int?))`；`session.streamResponse(to: prompt) -> AsyncThrowingStream<String, Error>`。签名如有出入以包内为准并回写本计划。
+**已校准 API（源码级，/tmp/mlx-lm-check）**：`ChatSession(model, instructions: String?, generateParameters: GenerateParameters(maxTokens: Int?))`；`session.streamResponse(to: prompt) -> AsyncThrowingStream<String, Error>`。
+
+**执行中校准（2026-06-11，实测）**：
+1. 模型加载入口是 **`#huggingFaceLoadModelContainer(configuration:progressHandler:)` 宏**（MLXHuggingFace 产品）；裸 `LLMModelFactory.loadContainer` 需要显式 Downloader。消费方必须自带依赖：`swift-huggingface`（产品 HuggingFace）+ `swift-transformers`（产品 Tokenizers），并在调用文件 import 两者（宏展开引用）。
+2. **SwiftPM 命令行无法编译 Metal 着色器**（mlx-swift README 明示）：`swift run`/`swift test` 下 MLX 运行时报 "Failed to load the default metallib"。CLI 与含 MLX 运行时的集成测试必须经 **xcodebuild** 构建/运行（`xcodebuild -scheme gemma-trans-cli -skipMacroValidation build`）；纯单测（不触 Metal）仍可 swift test。README 的 serve 启动命令相应改为 xcodebuild 构建产物。
+3. Xcode 26 的 **Metal Toolchain 是按需组件**，首次需 `xcodebuild -downloadComponent MetalToolchain`（app/CLI 构建均依赖）。
+4. xcodebuild 跑 SPM 宏需 `-skipMacroValidation`（或 Xcode GUI 信任一次）。
 
 ---
 
