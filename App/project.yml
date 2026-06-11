@@ -21,6 +21,8 @@ targets:
         CFBundleDisplayName: GemmaTrans
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "3"
     dependencies:
       - package: GemmaTransCore
         product: GemmaTransKit
@@ -57,6 +59,8 @@ targets:
         CFBundleDisplayName: GemmaTrans
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
+        CFBundleShortVersionString: "1.0"
+        CFBundleVersion: "3"
     entitlements:
       path: GemmaTrans-MAS.entitlements
       properties:
