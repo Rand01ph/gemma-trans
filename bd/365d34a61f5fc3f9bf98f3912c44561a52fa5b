@@ -1,0 +1,21 @@
+Package.swift
+  s_b5203e260e0fc3::t_a8308f31b1ce37 6
+Tests/GemmaTransKitTests/EngineTuningTests.swift
+  s_b5203e260e0fc3::t_a8308f31b1ce37 43-50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "bd365d34a61f5fc3f9bf98f3912c44561a52fa5b",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
