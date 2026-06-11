@@ -25,18 +25,20 @@ public actor TranslationEngine: TranslationService {
 
     public var isReady: Bool { model != nil }
 
-    /// 加载模型（首次自动从 HuggingFace 下载，progress 回调驱动 UI 显示百分比）
-    /// - Parameter cacheDirectory: 模型缓存目录；nil 用 HubCache 默认位置（macOS 现状）。
-    ///   iOS 传 App Group 容器目录，使主 app 与翻译扩展共享同一份模型文件。
-    /// - Parameter hubHost: Hub 下载端点；nil 走环境检测（HF_ENDPOINT），即 huggingface.co。
-    ///   约束：国内网络 huggingface.co 常不可达（下载卡死），iOS 设置页提供镜像开关，
-    ///   开启后传 hf-mirror.com 经镜像下载；macOS 现状两参皆 nil，行为严格不变。
+    /// 加载模型（首次自动下载，progress 回调驱动 UI 显示百分比）
+    /// - Parameter cacheDirectory: 模型缓存目录。非 nil（iOS/CLI）走自研 ModelDownloader
+    ///   （双源 + 断点续传 + 字节级进度），iOS 传 App Group 容器目录使主 app 与翻译扩展
+    ///   共享同一份模型文件；nil 维持 HF 宏的默认缓存路径（macOS 现状——存量用户模型
+    ///   已在 HF 缓存里，不能强制重下，macOS 切新路径另案处理）。
+    /// - Parameter modelSource: 下载源，仅 cacheDirectory != nil 时生效。
+    ///   约束：国内网络 huggingface.co（Xet CDN）不可达且 hf-mirror 已失效，
+    ///   iOS 设置页开关切 ModelScope 国内源。
     /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
-    ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧 e2b
-    ///   下载完成标记文件的判定错位；nil 时行为与既有 macOS 调用完全一致。
+    ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧固定的
+    ///   E2B 仓库目录判定错位；nil 时行为与既有 macOS 调用完全一致。
     public func load(
         cacheDirectory: URL? = nil,
-        hubHost: URL? = nil,
+        modelSource: ModelSource = .huggingFace,
         tuningOverride: EngineTuning? = nil,
         progress: @Sendable @escaping (Double) -> Void = { _ in }
     ) async throws {
@@ -67,16 +69,21 @@ public actor TranslationEngine: TranslationService {
             case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
             }
         let loaded: ModelContainer
-        if cacheDirectory != nil || hubHost != nil {
-            let cache = cacheDirectory.map { HubCache(cacheDirectory: $0) } ?? .default
-            let hub = hubHost.map { HubClient(host: $0, cache: cache) } ?? HubClient(cache: cache)
-            loaded = try await loadModelContainer(
-                from: #hubDownloader(hub),
-                using: #huggingFaceTokenizerLoader(),
-                configuration: configuration
-            ) { p in
-                progress(p.fractionCompleted)
+        if let cacheDirectory {
+            // 自研下载路径：repo 由 variant 推导（与 EngineHolder 的 tuningOverride 构成
+            // variant↔repo 名不变量），快照不完整才触发下载，下载源按 modelSource 切换
+            let repo = switch tuning.variant {
+            case .gemma4E4B4bit: "mlx-community/gemma-4-e4b-it-4bit"
+            case .gemma4E2B4bit: "mlx-community/gemma-4-e2b-it-4bit"
             }
+            let snapshotDir = ModelDownloader.snapshotDirectory(in: cacheDirectory, repo: repo)
+            if !ModelDownloader.isComplete(snapshotDir) {
+                _ = try await ModelDownloader.download(
+                    repo: repo, from: modelSource, into: cacheDirectory, progress: progress)
+            }
+            // 本地目录加载：EOS 等生成配置由快照内 generation_config.json 提供
+            loaded = try await loadModelContainer(
+                from: snapshotDir, using: #huggingFaceTokenizerLoader())
         } else {
             loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
                 progress(p.fractionCompleted)
