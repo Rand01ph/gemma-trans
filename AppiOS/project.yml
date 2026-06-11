@@ -28,6 +28,9 @@ targets:
         UIRequiredDeviceCapabilities: [iphone-performance-gaming-tier]
         UILaunchScreen: {}
         ITSAppUsesNonExemptEncryption: false
+        CFBundleURLTypes:
+          - CFBundleURLName: com.gemmatrans.translate
+            CFBundleURLSchemes: [gemmatrans]
     entitlements:
       path: GemmaTransiOS.entitlements
       properties:

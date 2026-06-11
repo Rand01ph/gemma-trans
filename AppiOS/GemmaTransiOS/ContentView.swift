@@ -6,6 +6,9 @@ struct ContentView: View {
     @State private var input = ""
     @State private var output = ""
     @State private var translating = false
+    /// 翻译面板跳板（gemmatrans://translate）送来的待翻译文本：
+    /// 引擎未就绪时先挂起，status 变 .ready 后（onChange）自动消费
+    @State private var pendingText: String?
     /// 国内源开关：写入共享 defaults，EngineHolder 加载时经 ModelStore.modelSource 读取
     @AppStorage(ModelStore.sourceKey, store: UserDefaults(suiteName: ModelStore.settingsSuite))
     private var useCNSource = false
@@ -48,6 +51,28 @@ struct ContentView: View {
             case .loading:
                 break  // 下载→加载的中间态，维持现状即可
             }
+            // 跳板挂起的文本：引擎就绪即消费（与上面防锁屏逻辑互不影响）
+            if newStatus == .ready, let text = pendingText {
+                pendingText = nil
+                input = text
+                translate()
+            }
+        }
+        .onOpenURL { handleIncomingURL($0) }
+    }
+
+    /// 翻译面板跳板入口：gemmatrans://translate?text=...
+    private func handleIncomingURL(_ url: URL) {
+        guard let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              comps.host == "translate",
+              let text = comps.queryItems?.first(where: { $0.name == "text" })?.value,
+              !text.isEmpty else { return }
+        input = text
+        if holder.status == .ready {
+            translate()
+        } else {
+            pendingText = text
+            holder.loadIfDownloaded()  // 冷启动时 .task 也会调，幂等
         }
     }
 
