@@ -1,0 +1,44 @@
+Sources/GemmaTransKit/ModelDownloader.swift
+  s_b5203e260e0fc3::t_958109d090d54b 3-14
+  s_b5203e260e0fc3::t_70cc98927ed049 92,99
+  s_b5203e260e0fc3::t_04d7ffd6485a82 121-127,133,141,144
+App/GemmaTrans/EngineController.swift
+  s_b5203e260e0fc3::t_d7c252ad5693a2 8
+  s_b5203e260e0fc3::t_f998469db5cf42 38,40-42
+Sources/gemma-trans-cli/main.swift
+  s_b5203e260e0fc3::t_148e1b55f15437 51
+  s_b5203e260e0fc3::t_693755bd8fca6b 85
+  s_b5203e260e0fc3::t_ea6c2303885e6b 8-18
+  s_b5203e260e0fc3::t_7425fb08b4205d 32
+AppiOS/Shared/EngineHolder.swift
+  s_b5203e260e0fc3::t_3bdc756bd98336 56,58-59
+  s_b5203e260e0fc3::t_3be6e7c6f118ef 11
+  s_b5203e260e0fc3::t_fa7b5050a01393 41
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_b5203e260e0fc3::t_0befac055da85c 28
+  s_b5203e260e0fc3::t_2f29c185927ced 42
+  s_b5203e260e0fc3::t_98fb23348f808e 100-101
+App/GemmaTrans/GemmaTransApp.swift
+  s_b5203e260e0fc3::t_c9964792d4895c 48-57
+  s_b5203e260e0fc3::t_b9d9dcb3bc59b1 2
+  s_b5203e260e0fc3::t_4a9e1b0c205334 18-19
+AppiOS/GemmaTransiOS/ContentView.swift
+  s_b5203e260e0fc3::t_878e273bfa6c54 69,71
+  s_b5203e260e0fc3::t_b89d34a1e3a500 91-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c1164b7443d4f5fceef5e30e324ed0a4d7fa4adf",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
