@@ -1,0 +1,207 @@
+2026-06-11 03:41:16 +0000 [MT] Initial pipeline context: <IDEDistributionProcessingPipelineContext: 0xb47891500; archive(resolved)="<IDEArchive: 0xb478f8230>", distributionTask(resolved)="2", distributionDestination(resolved)="1", distributionMethod(resolved)="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team(resolved)="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	Chain (15, self inclusive):
+	<IDEDistributionProcessingPipelineContext: 0xb47891500; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionProcessingPipelineContext: 0xb47890c00; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46366a80; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46366800; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46366580; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46366300; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46366080; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46365e00; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46365b80; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46364780; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46364500; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46364280; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="<IDEProvisioningBasicTeam: 0xb4638a620; teamID='G2XC9VU88M', teamName='(null)'>">
+	<IDEDistributionContext: 0xb46364000; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="(null)">
+	<IDEDistributionContext: 0x10175e8b0; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="<IDEDistributionMethodMacAppStoreDistribution: 0xb479b8120>", team="(null)">
+	<IDEDistributionContext: 0x10178c280; archive = "<IDEArchive: 0xb478f8230>", distributionMethod="(null)", team="(null)">
+</IDEDistributionProcessingPipelineContext: 0xb47891500>
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionCreateDestRootStep
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionCopyItemStep
+2026-06-11 03:41:16 +0000 [MT] Running /usr/bin/ditto '-V' '/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app' '/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app'
+2026-06-11 03:41:16 +0000  >>> Copying /tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app 
+2026-06-11 03:41:16 +0000  copying file ./Contents/_CodeSignature/CodeResources ... 
+2026-06-11 03:41:16 +0000  11100 bytes for ./Contents/_CodeSignature/CodeResources
+2026-06-11 03:41:16 +0000  copying file ./Contents/MacOS/GemmaTrans ... 
+2026-06-11 03:41:16 +0000  3001408 bytes for ./Contents/MacOS/GemmaTrans
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/AppIcon.icns ... 
+2026-06-11 03:41:16 +0000  238952 bytes for ./Contents/Resources/AppIcon.icns
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/de.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  752 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/de.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ar.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  930 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ar.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/zh-Hans.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  620 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/zh-Hans.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ja.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  787 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ja.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/zh-TW.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  599 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/zh-TW.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/en.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  657 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/en.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/es.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  751 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/es.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/it.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  749 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/it.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/sk.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  727 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/sk.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/cs.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  656 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/cs.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ko.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  758 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ko.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/hu.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  769 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/hu.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/pt-BR.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  663 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/pt-BR.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ru.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  973 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/ru.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/fr.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  752 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/fr.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/nl.lproj/Localizable.strings ... 
+2026-06-11 03:41:16 +0000  722 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Resources/nl.lproj/Localizable.strings
+2026-06-11 03:41:16 +0000  copying file ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Info.plist ... 
+2026-06-11 03:41:16 +0000  1162 bytes for ./Contents/Resources/KeyboardShortcuts_KeyboardShortcuts.bundle/Contents/Info.plist
+2026-06-11 03:41:16 +0000  copying file ./Contents/Frameworks/libCLiteRTLM_mac.dylib ... 
+2026-06-11 03:41:16 +0000  133654528 bytes for ./Contents/Frameworks/libCLiteRTLM_mac.dylib
+2026-06-11 03:41:16 +0000  copying file ./Contents/Info.plist ... 
+2026-06-11 03:41:16 +0000  1524 bytes for ./Contents/Info.plist
+2026-06-11 03:41:16 +0000  copying file ./Contents/PkgInfo ... 
+2026-06-11 03:41:16 +0000  8 bytes for ./Contents/PkgInfo
+2026-06-11 03:41:16 +0000 [MT] /usr/bin/ditto exited with 0
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionEmbedProfileStep
+2026-06-11 03:41:16 +0000 [MT] Skipping profile for item: <IDEDistributionItem: 0xb479a5200; bundleID='(null)', path='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a51a0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e7cc0; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='(null)', teamID='G2XC9VU88M', identifier='CLiteRTLM_dylib', executablePath='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', hardenedRuntime='0'>'>
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionInfoPlistStep
+2026-06-11 03:41:16 +0000 [MT] Skipping step: IDEDistributionInfoPlistStep because it said so
+2026-06-11 03:41:16 +0000 [MT] Skipping setting DTXcodeBuildDistribution because toolsBuildVersionName was nil.
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionItemRemovalStep
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionAppThinningPlistStep
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionSymbolsStep
+2026-06-11 03:41:16 +0000 [MT] Writing /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Symbols/62F1B9F6-970B-34F8-87FD-1D63D8EE6133.symbols
+2026-06-11 03:41:16 +0000 [MT] Writing /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Symbols/6A318BBE-B765-31CA-9861-D0E6B947AFD8.symbols
+2026-06-11 03:41:16 +0000 [MT] Writing /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Symbols/62F1B9F6-970B-34F8-87FD-1D63D8EE6133.symbols
+2026-06-11 03:41:16 +0000 [MT] Writing /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Symbols/6A318BBE-B765-31CA-9861-D0E6B947AFD8.symbols
+2026-06-11 03:41:16 +0000 [MT] Upload Symbols Failed
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionCopyAppleProvidedContentStep
+2026-06-11 03:41:16 +0000 [MT] Running /usr/bin/ditto '-V' '/tmp/GemmaTrans.xcarchive/Signatures' '/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Signatures'
+2026-06-11 03:41:16 +0000  >>> Copying /tmp/GemmaTrans.xcarchive/Signatures 
+2026-06-11 03:41:16 +0000  copying file ./CLiteRTLM_mac.xcframework-macos.signature ... 
+2026-06-11 03:41:16 +0000  405 bytes for ./CLiteRTLM_mac.xcframework-macos.signature
+2026-06-11 03:41:16 +0000 [MT] /usr/bin/ditto exited with 0
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionAppThinningStep
+2026-06-11 03:41:16 +0000 [MT] Skipping step: IDEDistributionAppThinningStep because it said so
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionArchThinningStep
+2026-06-11 03:41:16 +0000 [MT] Archs to thin for item /tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib are []
+2026-06-11 03:41:16 +0000 [MT] Archs to thin for item /tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app are []
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionODRStep
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionStripXattrsStep
+2026-06-11 03:41:16 +0000 [MT] Skipping stripping extended attributes because the codesign step will strip them.
+2026-06-11 03:41:16 +0000 [MT] Skipping stripping extended attributes because the codesign step will strip them.
+2026-06-11 03:41:16 +0000 [MT] Processing step: IDEDistributionCodesignStep
+2026-06-11 03:41:16 +0000 [MT] Entitlements for <IDEDistributionItem: 0xb479a5200; bundleID='(null)', path='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a51a0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e7cc0; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='(null)', teamID='G2XC9VU88M', identifier='CLiteRTLM_dylib', executablePath='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', hardenedRuntime='0'>'>: {
+}
+2026-06-11 03:41:16 +0000 [MT] Associated App Clip Identifiers Filter: Skipping because "com.apple.developer.associated-appclip-app-identifiers" is not present
+2026-06-11 03:41:16 +0000 [MT] Entitlements for <IDEDistributionItem: 0xb479a5200; bundleID='(null)', path='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a51a0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e6e80; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='(null)', teamID='G2XC9VU88M', identifier='CLiteRTLM_dylib', executablePath='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', hardenedRuntime='0'>'> are: {
+}
+2026-06-11 03:41:16 +0000 [MT] Writing entitlements for <IDEDistributionItem: 0xb479a5200; bundleID='(null)', path='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a51a0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e6e80; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='(null)', teamID='G2XC9VU88M', identifier='CLiteRTLM_dylib', executablePath='<DVTFilePath:0xb478f8f50:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>', hardenedRuntime='0'>'> to: /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/entitlements~~~FMhxD4
+2026-06-11 03:41:16 +0000 [MT] invoking codesign: <NSConcreteTask: 0xb45e7e210; launchPath='/usr/bin/codesign', arguments='(
+    "-f",
+    "-s",
+    0D844491C0FC8D3E0A7EE4B43F264212DBB4CB80,
+    "--entitlements",
+    "/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/entitlements~~~FMhxD4",
+    "--preserve-metadata=identifier,flags,runtime,launch-constraints,library-constraints",
+    "--generate-entitlement-der",
+    "--strip-disallowed-xattrs",
+    "-vvv",
+    "/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib"
+)'>
+2026-06-11 03:41:24 +0000 [MT] codesign output: /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib: replacing existing signature
+/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib: signed Mach-O universal (x86_64 arm64) [CLiteRTLM_dylib]
+2026-06-11 03:41:24 +0000 [MT] Entitlements for <IDEDistributionItem: 0xb479a5260; bundleID='com.gemmatrans.GemmaTrans', path='<DVTFilePath:0xb478cd620:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a52c0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e7cc0; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='{
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.network.client" = 1;
+    "com.apple.security.network.server" = 1;
+}', teamID='G2XC9VU88M', identifier='com.gemmatrans.GemmaTrans', executablePath='<DVTFilePath:0xb478cebe0:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/MacOS/GemmaTrans'>', hardenedRuntime='0'>'>: {
+    "com.apple.application-identifier" = "G2XC9VU88M.com.gemmatrans.GemmaTrans";
+    "com.apple.developer.team-identifier" = G2XC9VU88M;
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.network.client" = 1;
+    "com.apple.security.network.server" = 1;
+}
+2026-06-11 03:41:24 +0000 [MT] Associated App Clip Identifiers Filter: Skipping because "com.apple.developer.associated-appclip-app-identifiers" is not present
+2026-06-11 03:41:24 +0000 [MT] Entitlements for <IDEDistributionItem: 0xb479a5260; bundleID='com.gemmatrans.GemmaTrans', path='<DVTFilePath:0xb478cd620:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a52c0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e7000; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='{
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.network.client" = 1;
+    "com.apple.security.network.server" = 1;
+}', teamID='G2XC9VU88M', identifier='com.gemmatrans.GemmaTrans', executablePath='<DVTFilePath:0xb478cebe0:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/MacOS/GemmaTrans'>', hardenedRuntime='0'>'> are: {
+    "com.apple.application-identifier" = "G2XC9VU88M.com.gemmatrans.GemmaTrans";
+    "com.apple.developer.team-identifier" = G2XC9VU88M;
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.network.client" = 1;
+    "com.apple.security.network.server" = 1;
+}
+2026-06-11 03:41:24 +0000 [MT] Writing entitlements for <IDEDistributionItem: 0xb479a5260; bundleID='com.gemmatrans.GemmaTrans', path='<DVTFilePath:0xb478cd620:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app'>', codeSigningInfo='<_DVTCodeSigningInformation_Path: 0xb479a52c0; isSigned='1', isAdHocSigned='0', signingCertificate='<DVTSigningCertificate: 0xb467e7000; name='Apple Development: Yawei Tan (EMNMH82YGU)', hash='D76648374C872CC4DB855642B9954442E57FE51B', serialNumber='30EF7C4FA90BD2E74384CD16987EE98', certificateKinds='(
+    "1.2.840.113635.100.6.1.12",
+    "1.2.840.113635.100.6.1.2"
+), issueDate='2026-03-26 11:07:56 +0000''>', entitlements='{
+    "com.apple.security.app-sandbox" = 1;
+    "com.apple.security.files.user-selected.read-only" = 1;
+    "com.apple.security.network.client" = 1;
+    "com.apple.security.network.server" = 1;
+}', teamID='G2XC9VU88M', identifier='com.gemmatrans.GemmaTrans', executablePath='<DVTFilePath:0xb478cebe0:'/tmp/GemmaTrans.xcarchive/Products/Applications/GemmaTrans.app/Contents/MacOS/GemmaTrans'>', hardenedRuntime='0'>'> to: /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/entitlements~~~4V3KLA
+2026-06-11 03:41:24 +0000 [MT] invoking codesign: <NSConcreteTask: 0xb45e7f7f0; launchPath='/usr/bin/codesign', arguments='(
+    "-f",
+    "-s",
+    0D844491C0FC8D3E0A7EE4B43F264212DBB4CB80,
+    "--entitlements",
+    "/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/entitlements~~~4V3KLA",
+    "--preserve-metadata=identifier,flags,runtime,launch-constraints,library-constraints",
+    "--generate-entitlement-der",
+    "--strip-disallowed-xattrs",
+    "-vvv",
+    "/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app"
+)'>
+2026-06-11 03:41:24 +0000 [MT] codesign output: /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app: replacing existing signature
+/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app: signed app bundle with Mach-O universal (x86_64 arm64) [com.gemmatrans.GemmaTrans]
+2026-06-11 03:41:24 +0000 [MT] Processing step: IDEDistributionZipODRItemStep
+2026-06-11 03:41:24 +0000 [MT] Skipping step: IDEDistributionZipODRItemStep because it said so
+2026-06-11 03:41:24 +0000 [MT] Skipping step: IDEDistributionZipODRItemStep because it said so
+2026-06-11 03:41:24 +0000 [MT] Processing step: IDEDistributionCreatePKGStep
+2026-06-11 03:41:24 +0000 [MT] Running /usr/bin/productbuild '--sign' '3rd Party Mac Developer Installer: Yawei Tan (G2XC9VU88M)' '--symbolication' '/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Symbols' '--component' '/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app' '/Applications' '--extra-signatures' '/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Signatures' '/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Packages/GemmaTrans.pkg'
+2026-06-11 03:41:33 +0000  productbuild: Adding component at /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app
+productbuild: Signing product with identity "3rd Party Mac Developer Installer: Yawei Tan (G2XC9VU88M)" from keychain /Users/tanyawei/Library/Keychains/login.keychain-db
+productbuild: Adding certificate "Apple Worldwide Developer Relations Certification Authority"
+productbuild: Adding certificate "Apple Root CA"
+productbuild: Wrote product to /var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Packages/GemmaTrans.pkg
+productbuild: Supported OS versions: [Min: 14.0, Before: None]
+2026-06-11 03:41:33 +0000 [MT] /usr/bin/productbuild exited with 0
+2026-06-11 03:41:33 +0000 [MT] Processing step: IDEDistributionAppStoreInformationStep
+2026-06-11 03:41:33 +0000 [MT] Skipping step: IDEDistributionAppStoreInformationStep because it said so
+2026-06-11 03:41:33 +0000 [MT] Processing step: IDEDistributionGenerateProcessedDistributionItems
+2026-06-11 03:41:33 +0000 [MT] IDEDistributionItem init <DVTFilePath:0xb47d0d960:'/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>
+2026-06-11 03:41:33 +0000 [MT] [OPTIONAL] Didn't find info dictionary for <DVTFilePath:0xb47d0d960:'/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>: Error Domain=DVTFoundationNSBundleAdditionsErrorDomain Code=1 "Couldn't load Info dictionary for <DVTFilePath:0xb47d0d960:'/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>" UserInfo={NSLocalizedDescription=Couldn't load Info dictionary for <DVTFilePath:0xb47d0d960:'/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>}
+2026-06-11 03:41:33 +0000 [MT] [OPTIONAL] Can't have a profile, not a bundle at <DVTFilePath:0xb47d0d960:'/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app/Contents/Frameworks/libCLiteRTLM_mac.dylib'>
+2026-06-11 03:41:33 +0000 [MT] IDEDistributionItem init <DVTFilePath:0xb47b0c300:'/var/folders/kc/2wysq3x90gx6b0rwdtjmc6bc0000gn/T/XcodeDistPipeline.~~~NuDe0f/Root/Applications/GemmaTrans.app'>
+2026-06-11 03:41:33 +0000 [MT] Processing step: IDEDistributionCreateManifestStep
+2026-06-11 03:41:33 +0000 [MT] Skipping step: IDEDistributionCreateManifestStep because it said so

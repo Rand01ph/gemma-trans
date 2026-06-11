@@ -5,12 +5,12 @@ import GemmaTransServer
 
 @MainActor @Observable
 final class EngineController {
-    enum EngineStatus: Equatable { case loading, ready, failed(String) }
+    enum EngineStatus: Equatable { case loading, downloading(Int), ready, failed(String) }
     enum APIStatus: Equatable { case disabled, running(UInt16), failed(String) }
 
     static let shared = EngineController()
 
-    private(set) var engineStatus: EngineStatus = .loading
+    var engineStatus: EngineStatus = .loading  // 下载进度闭包需写入，放开 setter（仅 App 内部使用）
     private(set) var apiStatus: APIStatus = .disabled
     private(set) var engine: TranslationEngine?
     private var serverTask: Task<Void, Error>?
@@ -26,24 +26,14 @@ final class EngineController {
                 GTLog.error("startup aborted: another GemmaTrans on \(settings.port)")
                 return
             }
-            if let bookmark = settings.modelBookmark {
-                var stale = false
-                if let url = try? URL(
-                    resolvingBookmarkData: bookmark, options: .withSecurityScope,
-                    relativeTo: nil, bookmarkDataIsStale: &stale) {
-                    _ = url.startAccessingSecurityScopedResource()  // app 生命周期内持有，不主动 stop
-                    settings.modelPath = url.path
-                    if stale {
-                        settings.modelBookmark = try? url.bookmarkData(
-                            options: .withSecurityScope,
-                            includingResourceValuesForKeys: nil, relativeTo: nil)
-                        settings.save()
-                    }
-                }
-            }
             let engine = TranslationEngine(settings: settings)
             do {
-                try await engine.load()
+                try await engine.load { fraction in
+                    Task { @MainActor in
+                        let pct = Int(fraction * 100)
+                        if pct < 100 { EngineController.shared.engineStatus = .downloading(pct) }
+                    }
+                }
                 self.engine = engine
                 engineStatus = .ready
                 GTLog.info("engine ready")

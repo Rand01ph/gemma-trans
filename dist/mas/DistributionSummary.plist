@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>GemmaTrans.pkg</key>
+	<array>
+		<dict>
+			<key>architectures</key>
+			<array>
+				<string>x86_64</string>
+				<string>arm64</string>
+			</array>
+			<key>buildNumber</key>
+			<string>1</string>
+			<key>certificate</key>
+			<dict>
+				<key>SHA1</key>
+				<string>0D844491C0FC8D3E0A7EE4B43F264212DBB4CB80</string>
+				<key>dateExpires</key>
+				<string>2027/6/10</string>
+				<key>type</key>
+				<string>Apple Distribution</string>
+			</dict>
+			<key>embeddedBinaries</key>
+			<array>
+				<dict>
+					<key>architectures</key>
+					<array>
+						<string>x86_64</string>
+						<string>arm64</string>
+					</array>
+					<key>certificate</key>
+					<dict>
+						<key>SHA1</key>
+						<string>0D844491C0FC8D3E0A7EE4B43F264212DBB4CB80</string>
+						<key>dateExpires</key>
+						<string>2027/6/10</string>
+						<key>type</key>
+						<string>Apple Distribution</string>
+					</dict>
+					<key>name</key>
+					<string>libCLiteRTLM_mac.dylib</string>
+					<key>symbols</key>
+					<true/>
+					<key>team</key>
+					<dict>
+						<key>id</key>
+						<string>G2XC9VU88M</string>
+						<key>name</key>
+						<string></string>
+					</dict>
+				</dict>
+			</array>
+			<key>entitlements</key>
+			<dict>
+				<key>com.apple.application-identifier</key>
+				<string>G2XC9VU88M.com.gemmatrans.GemmaTrans</string>
+				<key>com.apple.developer.team-identifier</key>
+				<string>G2XC9VU88M</string>
+				<key>com.apple.security.app-sandbox</key>
+				<true/>
+				<key>com.apple.security.files.user-selected.read-only</key>
+				<true/>
+				<key>com.apple.security.network.client</key>
+				<true/>
+				<key>com.apple.security.network.server</key>
+				<true/>
+			</dict>
+			<key>name</key>
+			<string>GemmaTrans.app</string>
+			<key>profile</key>
+			<dict>
+				<key>UUID</key>
+				<string>4477613d-d718-4598-b61d-495d195e9027</string>
+				<key>dateExpires</key>
+				<string>2027/6/10</string>
+				<key>name</key>
+				<string>GemmaTrans MAS</string>
+			</dict>
+			<key>symbols</key>
+			<true/>
+			<key>team</key>
+			<dict>
+				<key>id</key>
+				<string>G2XC9VU88M</string>
+				<key>name</key>
+				<string></string>
+			</dict>
+			<key>versionNumber</key>
+			<string>1.0</string>
+		</dict>
+	</array>
+</dict>
+</plist>

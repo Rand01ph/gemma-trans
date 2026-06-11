@@ -10,22 +10,9 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("模型") {
-                HStack {
-                    TextField("模型路径", text: $settings.modelPath)
-                    Button("选择…") {
-                        let panel = NSOpenPanel()
-                        panel.canChooseFiles = true
-                        panel.canChooseDirectories = false
-                        if panel.runModal() == .OK, let url = panel.url {
-                            settings.modelPath = url.path
-                            settings.modelBookmark = try? url.bookmarkData(
-                                options: .withSecurityScope,
-                                includingResourceValuesForKeys: nil, relativeTo: nil)
-                        }
-                    }
-                }
-                Link("下载 Gemma 4 E4B (.litertlm)",
-                     destination: URL(string: "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm")!)
+                LabeledContent("当前模型", value: "Gemma 4 (4-bit · 按内存自动选 E4B/E2B)")
+                Text("首次启动自动从 Hugging Face 下载（约 1.5–2.4GB）。国内网络可在启动前设置 HF_ENDPOINT 镜像。")
+                    .font(.caption).foregroundStyle(.secondary)
             }
             Section("翻译") {
                 TextField("中文翻译为（语言代码）", text: $settings.targetForChinese)
@@ -43,13 +30,12 @@ struct SettingsView: View {
                 if settings.autoTuning {
                     let auto = EngineTuning.recommended(
                         physicalMemory: SystemMemory.physical(),
-                        availableMemory: SystemMemory.available(),
-                        modelFileSize: 4 << 30
+                        availableMemory: SystemMemory.available()
                     )
-                    Text("当前推荐：KV cache \(auto.maxNumTokens) tokens · 输入上限 \(auto.maxInputChars) 字符")
+                    Text("当前推荐：\(auto.variant == .gemma4E4B4bit ? "E4B" : "E2B") · 生成上限 \(auto.maxTokens) tokens · 输入上限 \(auto.maxInputChars) 字符")
                         .foregroundStyle(.secondary)
                 } else {
-                    TextField("KV cache (tokens)", value: $settings.manualMaxNumTokens,
+                    TextField("生成上限 (tokens)", value: $settings.manualMaxTokens,
                               format: .number.grouping(.never))
                     TextField("输入上限（字符）", value: $settings.maxInputChars,
                               format: .number.grouping(.never))

@@ -14,6 +14,8 @@ struct GemmaTransApp: App {
             switch controller.engineStatus {
             case .loading:
                 Text("引擎：模型加载中…")
+            case .downloading(let pct):
+                Text("引擎：模型下载中 \(pct)%")
             case .ready:
                 Text("引擎：就绪")
             case .failed(let msg):
