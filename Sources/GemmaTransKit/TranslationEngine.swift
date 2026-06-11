@@ -26,7 +26,12 @@ public actor TranslationEngine: TranslationService {
     public var isReady: Bool { model != nil }
 
     /// 加载模型（首次自动从 HuggingFace 下载，progress 回调驱动 UI 显示百分比）
-    public func load(progress: @Sendable @escaping (Double) -> Void = { _ in }) async throws {
+    /// - Parameter cacheDirectory: 模型缓存目录；nil 用 HubCache 默认位置（macOS 现状）。
+    ///   iOS 传 App Group 容器目录，使主 app 与翻译扩展共享同一份模型文件。
+    public func load(
+        cacheDirectory: URL? = nil,
+        progress: @Sendable @escaping (Double) -> Void = { _ in }
+    ) async throws {
         let tuning: EngineTuning
         if settings.autoTuning {
             tuning = EngineTuning.recommended(
@@ -50,8 +55,20 @@ public actor TranslationEngine: TranslationService {
             case .gemma4E4B4bit: LLMRegistry.gemma4_e4b_it_4bit
             case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
             }
-        let loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
-            progress(p.fractionCompleted)
+        let loaded: ModelContainer
+        if let cacheDirectory {
+            let hub = HubClient(cache: HubCache(cacheDirectory: cacheDirectory))
+            loaded = try await loadModelContainer(
+                from: #hubDownloader(hub),
+                using: #huggingFaceTokenizerLoader(),
+                configuration: configuration
+            ) { p in
+                progress(p.fractionCompleted)
+            }
+        } else {
+            loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
+                progress(p.fractionCompleted)
+            }
         }
         // 预热：首次生成触发 Metal 内核编译（冷启可超 30s，曾致首单超时 500）。
         // 在置 ready 前用 1-token 生成把编译做完，用户首单即快。
