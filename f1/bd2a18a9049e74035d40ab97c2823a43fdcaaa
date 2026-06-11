@@ -1,0 +1,19 @@
+AppiOS/TranslationProvider/TranslationProviderExtension.swift
+  s_b5203e260e0fc3::t_fb8bbd7a014f6d 11,23-26,28-29,35-36,39-55,57-63,67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "f1bd2a18a9049e74035d40ab97c2823a43fdcaaa",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
