@@ -60,8 +60,9 @@ Expected: 全绿（iOS 平台声明不影响 macOS 构建）
 
 - [ ] **Step 5: Kit 的 iOS 交叉编译检查**
 
-Run（repo 根目录）: `xcodebuild -scheme GemmaTransKit -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build 2>&1 | tail -5`
+Run（repo 根目录）: `xcodebuild -scheme GemmaTransKit -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO -skipMacroValidation build 2>&1 | tail -5`
 Expected: `** BUILD SUCCEEDED **`（Kit 全部源文件是 Foundation/Darwin/os，无 AppKit；MLX 官方支持 iOS）
+注意：`-skipMacroValidation` 是必需的——mlx-swift-lm 使用 `MLXHuggingFaceMacros`，该宏在 Xcode 工作区 GUI 中需手动授信后才生效；`-skipMacroValidation` 是 xcodebuild CLI/CI 环境下绕过此交互门的官方方式，不影响构建产物安全性（宏本身已由 SPM 校验 checksum）。
 若个别文件报 macOS-only API：用 `#if os(macOS)` 包住该 API 并保持 iOS 路径可用，不要整文件排除。
 
 - [ ] **Step 6: Commit**
