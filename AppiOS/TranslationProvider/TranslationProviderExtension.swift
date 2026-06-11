@@ -49,7 +49,7 @@ struct SpikePanelView: View {
             return
         }
         let t0 = Date()
-        EngineHolder.shared.ensureLoaded()
+        EngineHolder.shared.loadIfDownloaded()
         while EngineHolder.shared.status != .ready {
             if Task.isCancelled { return }  // 面板收起 .task 被取消，否则 sleep 抛 CancellationError 被吞、循环变热自旋
             if case .failed(let msg) = EngineHolder.shared.status {

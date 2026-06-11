@@ -6,6 +6,9 @@ struct ContentView: View {
     @State private var input = ""
     @State private var output = ""
     @State private var translating = false
+    /// 国内镜像开关：写入共享 defaults，EngineHolder 加载时经 ModelStore.hubHost 读取
+    @AppStorage(ModelStore.mirrorKey, store: UserDefaults(suiteName: ModelStore.settingsSuite))
+    private var useMirror = false
 
     var body: some View {
         NavigationStack {
@@ -33,12 +36,23 @@ struct ContentView: View {
             .padding()
             .navigationTitle("GemmaTrans")
         }
-        .task { holder.ensureLoaded() }
+        .task { holder.loadIfDownloaded() }
     }
 
     @ViewBuilder private var statusHeader: some View {
         switch holder.status {
-        case .idle, .loading:
+        case .idle:
+            // 模型未下载：显式确认后才下 1.4GB（真机反馈：启动即自动下载太粗暴）
+            VStack(alignment: .leading, spacing: 8) {
+                Label("模型未下载（约 1.4GB，建议 Wi-Fi）", systemImage: "arrow.down.circle")
+                Toggle("使用国内镜像（hf-mirror.com）", isOn: $useMirror)
+                Text("国内网络建议开启")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button("下载模型") { holder.download() }
+                    .buttonStyle(.borderedProminent)
+            }
+        case .loading:
             Label("正在加载模型…", systemImage: "hourglass")
         case .downloading(let pct):
             ProgressView(value: Double(pct), total: 100) { Text("下载模型 \(pct)%") }

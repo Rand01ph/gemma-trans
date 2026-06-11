@@ -34,4 +34,11 @@ enum ModelStore {
     static var modelDownloaded: Bool {
         FileManager.default.fileExists(atPath: completionMarker.path)
     }
+
+    /// 国内镜像开关（共享 defaults，主 app 写、引擎加载读）；hf-mirror.com 是 HF 官方认可的反代镜像
+    static let mirrorKey = "useHFMirror"
+    static var hubHost: URL? {
+        UserDefaults(suiteName: settingsSuite)?.bool(forKey: mirrorKey) == true
+            ? URL(string: "https://hf-mirror.com") : nil
+    }
 }

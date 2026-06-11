@@ -20,8 +20,23 @@ final class EngineHolder {
     private(set) var engine: TranslationEngine?
     private var loadTask: Task<Void, Never>?
 
+    /// 启动路径：模型已下载才加载，绝不触发下载（真机反馈：启动即自动下 1.4GB 太粗暴）。
+    /// 未下载时置 .idle，由 UI 呈现「下载模型」按钮等用户显式触发 download()。
+    func loadIfDownloaded() {
+        guard ModelStore.modelDownloaded else {
+            if loadTask == nil { status = .idle }
+            return
+        }
+        startLoad()
+    }
+
+    /// 用户显式触发：允许下载（首次会从 Hub 拉 1.4GB 权重）
+    func download() {
+        startLoad()
+    }
+
     /// 幂等：并发/重复调用只触发一次加载；失败后可再调重试
-    func ensureLoaded() {
+    private func startLoad() {
         guard loadTask == nil else { return }
         status = ModelStore.modelDownloaded ? .loading : .downloading(0)
         let settings = AppSettings.load(suiteName: ModelStore.settingsSuite)
@@ -34,6 +49,7 @@ final class EngineHolder {
                 // 目录名/标记构成一对不变量：改其一必改其二。
                 try await engine.load(
                     cacheDirectory: ModelStore.cacheDirectory,
+                    hubHost: ModelStore.hubHost,
                     tuningOverride: EngineTuning(variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700)
                 ) { fraction in
                     Task { @MainActor in
