@@ -22,7 +22,7 @@ fi
 echo "==> 构建 Release $VERSION"
 cd $APP_DIR
 xcodegen generate >/dev/null
-xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Release \
+xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Release -skipMacroValidation \
     -derivedDataPath build-release build | tail -2
 APP="build-release/Build/Products/Release/GemmaTrans.app"
 
