@@ -1,0 +1,20 @@
+Scripts/release.sh
+  s_c5f4a0a2c90987::t_13db973f014acd 39
+  s_c5f4a0a2c90987::t_963a12b8391aa4 8-11,19-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "d385bfdd5a43cc388d3e789c601605c2fa9a8f09",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
