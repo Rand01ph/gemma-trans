@@ -11,8 +11,11 @@ struct SettingsView: View {
         Form {
             Section("模型") {
                 LabeledContent("当前模型", value: "Gemma 4 (4-bit · 按内存自动选 E4B/E2B)")
-                Text("首次启动自动从 Hugging Face 下载（约 1.5–2.4GB）。国内网络可在启动前设置 HF_ENDPOINT 镜像。")
+                Text("首次启动自动下载（约 1.5–2.4GB），支持断点续传。")
                     .font(.caption).foregroundStyle(.secondary)
+                Toggle("使用国内源（ModelScope）下载模型", isOn: $settings.useCNSource)
+                Text("国内网络无法直连 HuggingFace 时开启；切换后下次下载生效")
+                    .font(.footnote).foregroundStyle(.secondary)
             }
             Section("翻译") {
                 TextField("中文翻译为（语言代码）", text: $settings.targetForChinese)

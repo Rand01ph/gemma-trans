@@ -18,6 +18,9 @@ final class EngineController {
 
     func start() {
         engineStatus = .loading
+        // 重读设置：重试前用户可能在设置页切了国内源开关，「下次下载生效」靠这里兑现
+        // （apiEnabled 由 setAPIEnabled 即时落盘，重读不会回退用户操作）
+        settings = AppSettings.load()
         Task {
             // 单实例守卫（验明正身）：仅真正的 GemmaTrans 实例才放弃启动，防双模型加载；
             // 无关 HTTP 服务占用端口不影响引擎，仅 API 启动时自然失败
@@ -27,11 +30,16 @@ final class EngineController {
                 return
             }
             let engine = TranslationEngine(settings: settings)
+            let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
             do {
-                try await engine.load { fraction in
-                    Task { @MainActor in
-                        let pct = Int(fraction * 100)
-                        if pct < 100 { EngineController.shared.engineStatus = .downloading(pct) }
+                // 网络错误退避重试 + 断点续传（共享实现见 Kit EngineLoadSupport.swift）：
+                // 此前下载断线即变砖，整 app 只能重启
+                try await withNetworkRetry {
+                    try await engine.load(modelSource: source) { fraction in
+                        Task { @MainActor in
+                            let pct = Int(fraction * 100)
+                            if pct < 100 { EngineController.shared.engineStatus = .downloading(pct) }
+                        }
                     }
                 }
                 self.engine = engine
@@ -39,10 +47,19 @@ final class EngineController {
                 GTLog.info("engine ready")
                 if settings.apiEnabled { startServer() }
             } catch {
-                engineStatus = .failed("\(error)")
+                // UI 只放短句人话（共享映射），完整错误进日志；菜单提供「重试加载引擎」
+                engineStatus = .failed(engineLoadFailureMessage(for: error))
                 GTLog.error("engine load failed: \(error)")
             }
         }
+    }
+
+    /// 菜单「重试加载引擎」入口：仅失败态可重入（加载中/就绪时误触不重启流程），
+    /// start() 内的端口单实例守卫照常生效
+    func retry() {
+        guard case .failed = engineStatus else { return }
+        GTLog.info("engine retry requested by user")
+        start()
     }
 
     /// 菜单/设置开关入口：即时生效并持久化

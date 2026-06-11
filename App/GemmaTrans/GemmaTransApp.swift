@@ -20,6 +20,7 @@ struct GemmaTransApp: App {
                 Text("引擎：就绪")
             case .failed(let msg):
                 Text("引擎失败: \(msg)")
+                Button("重试加载引擎") { EngineController.shared.retry() }
             }
             switch controller.apiStatus {
             case .disabled:
