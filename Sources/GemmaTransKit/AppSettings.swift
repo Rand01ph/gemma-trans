@@ -14,6 +14,9 @@ public struct AppSettings: Sendable {
     public var manualMaxTokens: Int
     /// 本地 HTTP API（PopClip 等外部工具用）；划词翻译是进程内调用，不受此开关影响
     public var apiEnabled: Bool
+    /// 模型下载走国内源（ModelScope）。国内网络 HF 的 Xet CDN 不可达、hf-mirror 已失效。
+    /// key 与 iOS 共享 defaults 的同名开关一致（ModelStore.sourceKey / ContentView @AppStorage）。
+    public var useCNSource: Bool
 
     public static let suiteName = "com.gemmatrans.app"
 
@@ -24,7 +27,8 @@ public struct AppSettings: Sendable {
         maxInputChars: Int = 1500,
         autoTuning: Bool = true,
         manualMaxTokens: Int = 2048,
-        apiEnabled: Bool = true
+        apiEnabled: Bool = true,
+        useCNSource: Bool = false
     ) {
         self.port = port
         self.targetForChinese = targetForChinese
@@ -33,6 +37,7 @@ public struct AppSettings: Sendable {
         self.autoTuning = autoTuning
         self.manualMaxTokens = manualMaxTokens
         self.apiEnabled = apiEnabled
+        self.useCNSource = useCNSource
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
@@ -46,6 +51,7 @@ public struct AppSettings: Sendable {
         if d.integer(forKey: "manualMaxTokens") > 0 { s.manualMaxTokens = d.integer(forKey: "manualMaxTokens") }
         if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
         if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
+        if d.object(forKey: "useCNSource") != nil { s.useCNSource = d.bool(forKey: "useCNSource") }
         return s
     }
 
@@ -58,5 +64,6 @@ public struct AppSettings: Sendable {
         d.set(manualMaxTokens, forKey: "manualMaxTokens")
         d.set(maxInputChars, forKey: "maxInputChars")
         d.set(apiEnabled, forKey: "apiEnabled")
+        d.set(useCNSource, forKey: "useCNSource")
     }
 }
