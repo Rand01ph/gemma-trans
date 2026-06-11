@@ -1,0 +1,25 @@
+AppiOS/Shared/ModelStore.swift
+  s_b5203e260e0fc3::t_cfa17e7d859481 18-33,35
+AppiOS/Shared/EngineHolder.swift
+  s_b5203e260e0fc3::t_b24909733aafb9 31-38,45-46
+docs/superpowers/plans/2026-06-11-ios-default-translation-app.md
+  s_b5203e260e0fc3::t_fad3466242c53a 797
+AppiOS/TranslationProvider/TranslationProviderExtension.swift
+  s_b5203e260e0fc3::t_209cbd5e7cbf13 54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "974b84b62bfbd230892b2bd593703916f98b1ef7",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
