@@ -50,10 +50,15 @@ public actor TranslationEngine: TranslationService {
             case .gemma4E4B4bit: LLMRegistry.gemma4_e4b_it_4bit
             case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
             }
-        model = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
+        let loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
             progress(p.fractionCompleted)
         }
-        GTLog.info("mlx model loaded: \(configuration.name)")
+        // 预热：首次生成触发 Metal 内核编译（冷启可超 30s，曾致首单超时 500）。
+        // 在置 ready 前用 1-token 生成把编译做完，用户首单即快。
+        let warmup = ChatSession(loaded, generateParameters: GenerateParameters(maxTokens: 1))
+        _ = try? await warmup.respond(to: "hi")
+        model = loaded
+        GTLog.info("mlx model loaded+warmed: \(configuration.name)")
     }
 
     public func translate(_ text: String, target: String?) async throws -> TranslationStreamResult {
