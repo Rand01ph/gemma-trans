@@ -35,8 +35,8 @@ public struct AppSettings: Sendable {
         self.apiEnabled = apiEnabled
     }
 
-    /// 从 UserDefaults 读取（缺省值兜底）
-    public static func load() -> AppSettings {
+    /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
+    public static func load(suiteName: String = Self.suiteName) -> AppSettings {
         guard let d = UserDefaults(suiteName: suiteName) else { return AppSettings() }
         var s = AppSettings()
         if d.integer(forKey: "port") > 0 { s.port = UInt16(d.integer(forKey: "port")) }
@@ -49,8 +49,8 @@ public struct AppSettings: Sendable {
         return s
     }
 
-    public func save() {
-        guard let d = UserDefaults(suiteName: Self.suiteName) else { return }
+    public func save(suiteName: String = Self.suiteName) {
+        guard let d = UserDefaults(suiteName: suiteName) else { return }
         d.set(Int(port), forKey: "port")
         d.set(targetForChinese, forKey: "targetForChinese")
         d.set(targetDefault, forKey: "targetDefault")
