@@ -1,0 +1,36 @@
+Package.swift
+  s_c5f4a0a2c90987::t_170d56bb92c10d 17
+  s_c5f4a0a2c90987::t_6a65fe865cf443 36-39,43
+  s_c5f4a0a2c90987::t_bb46681a22a16d 18-19
+  s_c5f4a0a2c90987::t_9a7843ab99e15a 40
+  s_c5f4a0a2c90987::t_7ba46270aa7dc1 41-42
+docs/superpowers/plans/2026-06-11-mlx-migration.md
+  s_c5f4a0a2c90987::t_fb15fdf160a0d0 13-19
+Package.resolved
+  s_c5f4a0a2c90987::t_3e8ccc8dcf2eab 21-22,24,26
+  s_c5f4a0a2c90987::t_61532f965b87f8 2,4-12,38-100,119-145
+  s_c5f4a0a2c90987::t_20c9e04dd6932f 23,25,27-37,101-118,146
+Sources/gemma-trans-cli/main.swift
+  s_c5f4a0a2c90987::t_ceaaae2c3edd7d 7
+  s_c5f4a0a2c90987::t_4fd8c7a63441eb 25-26
+  s_c5f4a0a2c90987::t_20c9e04dd6932f 81-87,89-114
+  s_c5f4a0a2c90987::t_2b4de3807bf352 88
+  s_c5f4a0a2c90987::t_22476459ffa1ce 5-6
+  s_c5f4a0a2c90987::t_a39bc4e56c1417 8-9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c18dea40b5a2b63cac3d1e7112d98ad07ce95c47",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
