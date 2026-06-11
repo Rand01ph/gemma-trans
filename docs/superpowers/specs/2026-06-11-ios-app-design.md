@@ -76,6 +76,18 @@ iPhone 真机实测，-1005/-1001）。**v1 上架前必须解决模型托管**�
 是否复用热进程；④ GPU 不可用时 MLX CPU 模式速度；⑤ 全不可行 → 回退快捷指令方案。
 结论回写本 spec。
 
+## Spike 结果（2026-06-11 真机 iPhone 17 Pro / iOS 27.0）
+
+- **模型体积修正：E2B-4bit 实为 3.58GB**（spec 原写 1.4GB 是错的；EngineTuning.estimatedBytes
+  同样低估一倍以上，遗留问题待修）
+- 主 app：ModelScope 国内源下载 3.6GB 成功（断点续传实测生效）；**加载+Metal 预热约 5s**；
+  MLX GPU 推理正常
+- 默认翻译 App 链路全通：entitlement 自动签名通过（无需特批）、选中→翻译弹出我们的面板
+- **扩展进程内存额度实测 221 MB**（增配 entitlement 对扩展无效，app 专属）→ 加载模型即被
+  jetsam 击杀 → **方案 A（扩展内直跑）NO-GO，任何本地 LLM 都不可能在扩展内运行**
+- 模型分发：HF Xet CDN 国内不可达、hf-mirror 已不代理 Xet 仓库；**ModelScope 为国内源**
+  （自研 ModelDownloader 双源+字节级进度已实现并实测）
+
 ## 不做（YAGNI v1）
 
 PiP 剪贴板悬浮窗（v2 候选，对标 Para；审核逐案放行）；快捷指令 / App Intent 入口及操作
