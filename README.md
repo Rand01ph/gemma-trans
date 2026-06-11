@@ -1,33 +1,25 @@
 # GemmaTrans
 
-macOS 本地大模型划词翻译。基于 Google **Gemma 4 E4B** + **LiteRT-LM**（Metal GPU 加速），完全离线运行：
+macOS 本地大模型划词翻译。基于 Google **Gemma 4**（4-bit 量化）+ **MLX-Swift**（Apple Silicon 原生加速），完全离线运行：
 
 - **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + **OpenAI 兼容** `/v1/chat/completions`，PopClip、Bob、Raycast 等工具直连
-- **menu bar app**（M2）：全局热键划词翻译，浮窗流式显示译文
+- **menu bar app**：全局热键划词翻译，浮窗流式显示译文
 - **智能双向**：自动检测语言——中文 → 英文，其他语言 → 中文（目标语言可配置）
+- **模型自动下载**：首次启动从 Hugging Face 自动拉取（约 1.5–2.4GB，按内存自动选 E4B/E2B 变体）
 
 ## 快速开始
 
-### 1. 准备依赖与模型
+### 构建并启动 API 服务
 
 ```bash
-git clone <本仓库> && cd gemma-trans
-./Scripts/bootstrap.sh   # 浅克隆 LiteRT-LM（SPM unsafe flags 限制，必须本地引用）
-
-# 下载模型（约 4GB，Hugging Face 需要已接受 Gemma 许可）
-mkdir -p ~/Library/Application\ Support/GemmaTrans/models
-curl -L -C - -o ~/Library/Application\ Support/GemmaTrans/models/gemma-4-E4B-it.litertlm \
-  "https://huggingface.co/litert-community/gemma-4-E4B-it-litert-lm/resolve/main/gemma-4-E4B-it.litertlm"
+git clone https://github.com/Rand01ph/gemma-trans && cd gemma-trans
+# MLX 的 Metal 着色器需要 xcodebuild（首次如提示缺 Metal 工具链：xcodebuild -downloadComponent MetalToolchain）
+xcodebuild -scheme gemma-trans-cli -destination 'platform=macOS' -skipMacroValidation -derivedDataPath .build-cli build
+.build-cli/Build/Products/Debug/gemma-trans-cli serve
+# 首次自动下载模型 → Model ready. Listening on http://127.0.0.1:8765
 ```
 
-### 2. 启动 API 服务
-
-```bash
-swift run gemma-trans-cli serve
-# Model ready. Listening on http://127.0.0.1:8765
-```
-
-可用 `GEMMA_MODEL_PATH=/path/to/model.litertlm` 覆盖模型路径；`swift run gemma-trans-cli spike` 跑一次最小可行性验证。
+国内网络可用镜像：启动前 `export HF_ENDPOINT=https://hf-mirror.com`。`gemma-trans-cli spike` 跑一次最小验证。
 
 ### 3. 调用
 
@@ -103,7 +95,7 @@ open build/Build/Products/Debug/GemmaTrans.app
 ## 架构
 
 ```
-GemmaTransKit     核心库：LiteRT-LM 引擎封装、语言检测（NaturalLanguage）、提示词
+GemmaTransKit     核心库：MLX-Swift 引擎封装、语言检测（NaturalLanguage）、提示词、按内存自动调优
 GemmaTransServer  HTTP 层：FlyingFox，/translate + OpenAI 兼容 + SSE
 gemma-trans-cli   命令行：spike / serve
 ```

@@ -14,7 +14,7 @@
 - **开发者友好**：可选开启本地 API（OpenAI 兼容），PopClip、Bob、Raycast 等工具直连
 - **按机器自动调优**：根据内存自动配置引擎参数，16GB 起步流畅运行
 
-首次使用需下载 Gemma 4 模型文件（约 4GB，应用内引导），并授予"辅助功能"权限用于读取选中文本。需要 Apple Silicon Mac。
+首次启动自动下载 Gemma 4 模型（约 2.4GB），并授予"辅助功能"权限用于读取选中文本。需要 Apple Silicon Mac。
 
 ### English
 
@@ -28,7 +28,7 @@ Select text anywhere, press a hotkey, and the translation streams into a floatin
 - **Developer friendly**: optional local OpenAI-compatible API for PopClip, Bob, Raycast and more
 - **Auto-tuned**: engine parameters adapt to your machine's memory; runs smoothly from 16GB
 
-First run requires downloading the Gemma 4 model (~4GB, guided in-app) and granting Accessibility permission to read selected text. Requires Apple Silicon.
+First launch auto-downloads the Gemma 4 model (~2.4GB) and asks for Accessibility permission to read selected text. Requires Apple Silicon.
 
 ## 2. 审核备注（App Review Notes）
 
@@ -38,7 +38,7 @@ First run requires downloading the Gemma 4 model (~4GB, guided in-app) and grant
 >
 > **Network usage**: the only network operation is the one-time model download from Hugging Face (user-initiated, in-app guidance). Translation itself performs zero network requests. The optional local HTTP server binds to 127.0.0.1 only and exists so the user's own tools (e.g. PopClip) can call the translator.
 >
-> **To test**: launch the app → menu bar icon appears → Settings shows a model-download link (~4GB). After the model loads (status "就绪/ready"), select any text in Notes/Safari and press Option+D. A floating panel shows the streamed translation. If you prefer not to download 4GB, the Accessibility flow and UI can still be inspected; translation requires the model.
+> **To test**: launch the app → menu bar icon appears and the Gemma 4 model (~2.4GB) downloads automatically (progress shown in the menu). Once the status shows ready, select any text in Notes/Safari and press Option+D; grant Accessibility permission when prompted. A floating panel streams the translation.
 
 ## 3. 隐私政策（全文，可挂任意静态页面）
 
