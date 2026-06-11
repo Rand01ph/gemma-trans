@@ -1,0 +1,39 @@
+Tests/GemmaTransKitTests/EngineIntegrationTests.swift
+  s_c5f4a0a2c90987::t_a3990be65fb201 27-38,42
+  s_c5f4a0a2c90987::t_740d27b3c00404 39-41
+App/GemmaTrans/HotkeyCenter.swift
+  s_c5f4a0a2c90987::t_ef98e78046b788 26-27
+  s_c5f4a0a2c90987::t_773d1ccef35f82 28
+.gitignore
+  s_c5f4a0a2c90987::t_8fc0ec22b55ef4 11-12
+App/GemmaTrans/Info.plist
+  s_c5f4a0a2c90987::t_4969767710b2bb 28
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_c5f4a0a2c90987::t_3064233833c998 72,80
+  s_c5f4a0a2c90987::t_66a7c877f72bd6 70,74,81-82
+  s_c5f4a0a2c90987::t_c650996dd21c59 8,15-16
+  s_c5f4a0a2c90987::t_6cf64d933f5fe8 92-94
+App/GemmaTrans/TranslationPanel.swift
+  s_c5f4a0a2c90987::t_9fb666b3cfa4d0 30-31,37-38
+  s_c5f4a0a2c90987::t_75d153d4c48c62 103-104,112-114
+  s_c5f4a0a2c90987::t_ef3c7dc5606026 9
+  s_c5f4a0a2c90987::t_45f598a8ff6c3a 108
+App/project.yml
+  s_c5f4a0a2c90987::t_4969767710b2bb 56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8ae03cf8283eb090bcc1e37c217eda77d28f1dc1",
+  "prompts": {},
+  "sessions": {
+    "s_c5f4a0a2c90987": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d04d19fa-5011-4318-8702-4351eb3e6a48",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": null
+    }
+  }
+}
