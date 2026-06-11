@@ -37,6 +37,18 @@ struct ContentView: View {
             .navigationTitle("GemmaTrans")
         }
         .task { holder.loadIfDownloaded() }
+        .onChange(of: holder.status) { _, newStatus in
+            // 锁屏/挂起会掐断 1.4GB 长连接（真机 NSURLError -1005 的来源之一）：
+            // 下载期间禁用自动锁屏，结束（就绪/失败/回到 idle）即恢复
+            switch newStatus {
+            case .downloading:
+                UIApplication.shared.isIdleTimerDisabled = true
+            case .ready, .failed, .idle:
+                UIApplication.shared.isIdleTimerDisabled = false
+            case .loading:
+                break  // 下载→加载的中间态，维持现状即可
+            }
+        }
     }
 
     @ViewBuilder private var statusHeader: some View {
@@ -55,12 +67,24 @@ struct ContentView: View {
         case .loading:
             Label("正在加载模型…", systemImage: "hourglass")
         case .downloading(let pct):
-            ProgressView(value: Double(pct), total: 100) { Text("下载模型 \(pct)%") }
+            VStack(alignment: .leading, spacing: 4) {
+                ProgressView(value: Double(pct), total: 100) { Text("下载模型 \(pct)%") }
+                Text("下载期间请保持 App 在前台")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
         case .ready:
             Label("引擎就绪（本地 Gemma）", systemImage: "checkmark.circle")
                 .foregroundStyle(.green)
         case .failed(let msg):
-            Label(msg, systemImage: "xmark.octagon").foregroundStyle(.red)
+            VStack(alignment: .leading, spacing: 8) {
+                Label(msg, systemImage: "xmark.octagon")
+                    .foregroundStyle(.red)
+                    .lineLimit(2)
+                // 模型已下载完成时 download() 自然走纯加载路径，失败重试统一调它
+                Button("重试") { holder.download() }
+                    .buttonStyle(.bordered)
+            }
         }
     }
 
