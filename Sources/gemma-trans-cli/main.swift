@@ -5,6 +5,17 @@ import GemmaTransServer
 // 重定向到文件/管道时 print 默认块缓冲，"Model ready" 等状态行会滞留不可见
 setvbuf(stdout, nil, _IOLBF, 0)
 
+/// 「download: 35% (1.2/3.4 GB)」；字节未知（HF 宏路径）时只打百分比
+func printDownloadProgress(_ p: DownloadProgress) {
+    let pct = Int(p.fraction * 100)
+    if let done = p.completedBytes, let total = p.totalBytes {
+        let bytes = String(format: "%.1f/%.1f GB", Double(done) / 1e9, Double(total) / 1e9)
+        print("download: \(pct)% (\(bytes))", terminator: "\r")
+    } else {
+        print("download: \(pct)%", terminator: "\r")
+    }
+}
+
 // 注意：MLX 的 Metal 着色器无法用 `swift build` 编译，本 CLI 需经 xcodebuild 构建：
 //   xcodebuild -scheme gemma-trans-cli -destination 'platform=macOS' -skipMacroValidation build
 let settings = AppSettings.load()
@@ -18,7 +29,7 @@ case "spike":
     do {
         let loadStart = clock.now
         try await engine.load { p in
-            print("download: \(Int(p * 100))%", terminator: "\r")
+            printDownloadProgress(p)
         }
         print("\nModel ready in \(clock.now - loadStart)")
         let genStart = clock.now
@@ -37,7 +48,7 @@ case "serve":
     print("Loading model (首次自动下载约 1.5-2.4GB)…")
     do {
         try await engine.load { p in
-            print("download: \(Int(p * 100))%", terminator: "\r")
+            printDownloadProgress(p)
         }
     } catch {
         print("模型加载失败: \(error)")
@@ -71,7 +82,7 @@ case "download-e2b":
             modelSource: source,
             tuningOverride: EngineTuning(variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700)
         ) { p in
-            print("download: \(Int(p * 100))%", terminator: "\r")
+            printDownloadProgress(p)
         }
         print("\nE2B 下载完成且已验证可加载（含预热）：\(dir)")
     } catch {

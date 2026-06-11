@@ -1,5 +1,17 @@
 import Foundation
 
+/// 下载进度。HF 宏路径只有 fraction（字节数未知）；自研下载器两者都有。
+public struct DownloadProgress: Sendable, Equatable {
+    public let fraction: Double
+    public let completedBytes: Int64?
+    public let totalBytes: Int64?
+    public init(fraction: Double, completedBytes: Int64? = nil, totalBytes: Int64? = nil) {
+        self.fraction = fraction
+        self.completedBytes = completedBytes
+        self.totalBytes = totalBytes
+    }
+}
+
 /// 模型下载源。HF 的 Xet CDN（cas-bridge.xethub.hf.co）国内不可达、hf-mirror.com 已失效，
 /// 故提供 ModelScope（魔搭）作为国内源——同一仓库名在两源的文件清单与字节数完全一致（真机/真网已验证）。
 public enum ModelSource: String, Sendable {
@@ -77,14 +89,14 @@ public enum ModelDownloader {
     /// - 已存在且字节数相符的文件跳过（计入进度基数）
     /// - 每文件先写 `<file>.part`，已有 N 字节则带 `Range: bytes=N-` 续传（ModelScope 206 已实测）；
     ///   完成校验字节数后改名为正式文件，不符删 .part 抛错
-    /// - progress 按 累计字节/总字节 回调（字节级真实进度）
+    /// - progress 按 累计字节/总字节 回调（字节级真实进度，completed/total 都有值）
     /// - 单文件失败内部重试 2 次后抛出；上层（EngineHolder/调用方）退避重试时
     ///   重调本函数即从断点继续，进度天然包含已落盘部分
     public static func download(
         repo: String,
         from source: ModelSource,
         into base: URL,
-        progress: @Sendable @escaping (Double) -> Void
+        progress: @Sendable @escaping (DownloadProgress) -> Void
     ) async throws -> URL {
         let fm = FileManager.default
         let dir = snapshotDirectory(in: base, repo: repo)
@@ -106,13 +118,19 @@ public enum ModelDownloader {
         let ordered = files.sorted { $0.size < $1.size }
         let totalBytes = ordered.reduce(Int64(0)) { $0 + $1.size }
         var doneBytes: Int64 = 0
-        progress(0)
+        // 自研路径字节数已知：completed/total 都给（UI 据此显示「已下/总量」）
+        let report: @Sendable (Int64) -> Void = { completed in
+            progress(DownloadProgress(
+                fraction: fraction(completed, of: totalBytes),
+                completedBytes: completed, totalBytes: totalBytes))
+        }
+        report(0)
 
         for file in ordered {
             let dest = dir.appendingPathComponent(file.path)
             if fileSize(at: dest) == file.size {
                 doneBytes += file.size  // 已有完整文件：跳过下载，计入进度基数
-                progress(fraction(doneBytes, of: totalBytes))
+                report(doneBytes)
                 continue
             }
             try fm.createDirectory(
@@ -120,10 +138,10 @@ public enum ModelDownloader {
             let url = fileURL(repo: repo, path: file.path, source: source)
             let base = doneBytes
             try await fetchWithRetry(file, from: url, to: dest, session: session) { fileBytes in
-                progress(fraction(base + fileBytes, of: totalBytes))
+                report(base + fileBytes)
             }
             doneBytes += file.size
-            progress(fraction(doneBytes, of: totalBytes))
+            report(doneBytes)
         }
 
         let manifest = Dictionary(uniqueKeysWithValues: ordered.map { ($0.path, $0.size) })

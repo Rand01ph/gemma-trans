@@ -5,7 +5,7 @@ import GemmaTransServer
 
 @MainActor @Observable
 final class EngineController {
-    enum EngineStatus: Equatable { case loading, downloading(Int), ready, failed(String) }
+    enum EngineStatus: Equatable { case loading, downloading(DownloadProgress), ready, failed(String) }
     enum APIStatus: Equatable { case disabled, running(UInt16), failed(String) }
 
     static let shared = EngineController()
@@ -35,10 +35,11 @@ final class EngineController {
                 // 网络错误退避重试 + 断点续传（共享实现见 Kit EngineLoadSupport.swift）：
                 // 此前下载断线即变砖，整 app 只能重启
                 try await withNetworkRetry {
-                    try await engine.load(modelSource: source) { fraction in
+                    try await engine.load(modelSource: source) { progress in
                         Task { @MainActor in
-                            let pct = Int(fraction * 100)
-                            if pct < 100 { EngineController.shared.engineStatus = .downloading(pct) }
+                            if progress.fraction < 1.0 {
+                                EngineController.shared.engineStatus = .downloading(progress)
+                            }
                         }
                     }
                 }

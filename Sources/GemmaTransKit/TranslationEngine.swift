@@ -25,7 +25,7 @@ public actor TranslationEngine: TranslationService {
 
     public var isReady: Bool { model != nil }
 
-    /// 加载模型（首次自动下载，progress 回调驱动 UI 显示百分比）
+    /// 加载模型（首次自动下载，progress 回调驱动 UI 显示百分比 + 已下/总字节量）
     /// - Parameter cacheDirectory: 模型缓存目录。非 nil（iOS/CLI）走自研 ModelDownloader
     ///   （双源 + 断点续传 + 字节级进度），iOS 传 App Group 容器目录使主 app 与翻译扩展
     ///   共享同一份模型文件；nil（macOS）走默认目录三级策略（见 load 内注释）：
@@ -39,7 +39,7 @@ public actor TranslationEngine: TranslationService {
         cacheDirectory: URL? = nil,
         modelSource: ModelSource = .huggingFace,
         tuningOverride: EngineTuning? = nil,
-        progress: @Sendable @escaping (Double) -> Void = { _ in }
+        progress: @Sendable @escaping (DownloadProgress) -> Void = { _ in }
     ) async throws {
         let tuning: EngineTuning
         if let tuningOverride {
@@ -97,7 +97,8 @@ public actor TranslationEngine: TranslationService {
                     from: snapshotDir, using: #huggingFaceTokenizerLoader())
             } else if Self.legacyHFCacheHasModel(repo: repo) {
                 loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
-                    progress(p.fractionCompleted)
+                    // HF 宏路径只有比例没有字节数：completed/total 置 nil，UI 退化为只显示百分比
+                    progress(DownloadProgress(fraction: p.fractionCompleted))
                 }
             } else {
                 let dir = try await ModelDownloader.download(

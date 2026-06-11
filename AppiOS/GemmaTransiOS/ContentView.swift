@@ -66,9 +66,9 @@ struct ContentView: View {
             }
         case .loading:
             Label("正在加载模型…", systemImage: "hourglass")
-        case .downloading(let pct):
+        case .downloading(let progress):
             VStack(alignment: .leading, spacing: 4) {
-                ProgressView(value: Double(pct), total: 100) { Text("下载模型 \(pct)%") }
+                ProgressView(value: progress.fraction) { Text(Self.downloadLabel(progress)) }
                 Text("下载期间请保持 App 在前台")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -86,6 +86,16 @@ struct ContentView: View {
                     .buttonStyle(.bordered)
             }
         }
+    }
+
+    /// 「下载模型 35%（1.2 / 3.4 GB）」；字节未知（HF 宏路径）时只显示百分比
+    private static func downloadLabel(_ progress: DownloadProgress) -> String {
+        let pct = Int(progress.fraction * 100)
+        guard let done = progress.completedBytes, let total = progress.totalBytes else {
+            return "下载模型 \(pct)%"
+        }
+        let bytes = String(format: "%.1f / %.1f GB", Double(done) / 1e9, Double(total) / 1e9)
+        return "下载模型 \(pct)%（\(bytes)）"
     }
 
     private func translate() {

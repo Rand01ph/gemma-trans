@@ -1,4 +1,5 @@
 import SwiftUI
+import GemmaTransKit
 
 @main
 struct GemmaTransApp: App {
@@ -14,8 +15,8 @@ struct GemmaTransApp: App {
             switch controller.engineStatus {
             case .loading:
                 Text("引擎：模型加载中…")
-            case .downloading(let pct):
-                Text("引擎：模型下载中 \(pct)%")
+            case .downloading(let progress):
+                Text("引擎：模型下载中 \(Self.downloadText(progress))")
             case .ready:
                 Text("引擎：就绪")
             case .failed(let msg):
@@ -43,5 +44,15 @@ struct GemmaTransApp: App {
         Settings {
             SettingsView()
         }
+    }
+
+    /// 「35%（1.2/3.4 GB）」；字节未知（HF 宏路径）时只显示百分比
+    private static func downloadText(_ progress: DownloadProgress) -> String {
+        let pct = Int(progress.fraction * 100)
+        guard let done = progress.completedBytes, let total = progress.totalBytes else {
+            return "\(pct)%"
+        }
+        let bytes = String(format: "%.1f/%.1f GB", Double(done) / 1e9, Double(total) / 1e9)
+        return "\(pct)%（\(bytes)）"
     }
 }

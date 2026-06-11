@@ -8,7 +8,7 @@ import GemmaTransKit
 final class EngineHolder {
     enum Status: Equatable {
         case idle
-        case downloading(Int)   // 百分比
+        case downloading(DownloadProgress)  // 比例 + 已下/总字节（HF 宏路径字节为 nil）
         case loading            // 权重进显存 + 1-token 预热
         case ready
         case failed(String)
@@ -38,7 +38,7 @@ final class EngineHolder {
     /// 幂等：并发/重复调用只触发一次加载；失败后可再调重试
     private func startLoad() {
         guard loadTask == nil else { return }
-        status = ModelStore.modelDownloaded ? .loading : .downloading(0)
+        status = ModelStore.modelDownloaded ? .loading : .downloading(DownloadProgress(fraction: 0))
         let settings = AppSettings.load(suiteName: ModelStore.settingsSuite)
         let engine = TranslationEngine(settings: settings)
         loadTask = Task {
@@ -53,10 +53,10 @@ final class EngineHolder {
                         cacheDirectory: ModelStore.cacheDirectory,
                         modelSource: ModelStore.modelSource,
                         tuningOverride: EngineTuning(variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700)
-                    ) { fraction in
+                    ) { progress in
                         Task { @MainActor in
-                            let pct = Int(fraction * 100)
-                            EngineHolder.shared.status = pct < 100 ? .downloading(pct) : .loading
+                            EngineHolder.shared.status =
+                                progress.fraction < 1.0 ? .downloading(progress) : .loading
                         }
                     }
                 }
