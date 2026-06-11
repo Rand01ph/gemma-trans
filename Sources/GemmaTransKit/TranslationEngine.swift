@@ -29,8 +29,8 @@ public actor TranslationEngine: TranslationService {
     /// - Parameter cacheDirectory: 模型缓存目录；nil 用 HubCache 默认位置（macOS 现状）。
     ///   iOS 传 App Group 容器目录，使主 app 与翻译扩展共享同一份模型文件。
     /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
-    ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧按 e2b
-    ///   目录名判断「模型已下载」的逻辑错位；nil 时行为与既有 macOS 调用完全一致。
+    ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧 e2b
+    ///   下载完成标记文件的判定错位；nil 时行为与既有 macOS 调用完全一致。
     public func load(
         cacheDirectory: URL? = nil,
         tuningOverride: EngineTuning? = nil,
