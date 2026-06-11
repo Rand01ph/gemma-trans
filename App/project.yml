@@ -53,7 +53,7 @@ targets:
     info:
       path: GemmaTrans/Info.plist
       properties:
-        LSUIElement: true
+        LSUIElement: false
         CFBundleDisplayName: GemmaTrans
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity

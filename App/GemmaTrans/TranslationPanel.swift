@@ -6,6 +6,7 @@ import GemmaTransKit
 final class TranslationPanel {
     static let shared = TranslationPanel()
     private var panel: NSPanel?
+    private var currentModel: TranslationViewModel?
 
     func show(text: String, engine: TranslationEngine) {
         let model = TranslationViewModel()
@@ -26,11 +27,15 @@ final class TranslationPanel {
     }
 
     func close() {
+        currentModel?.cancel()
+        currentModel = nil
         panel?.close()
         panel = nil
     }
 
     private func present(model: TranslationViewModel) {
+        currentModel?.cancel()  // 取消上一个浮窗的翻译消费，让被取代的生成尽快收尾
+        currentModel = model
         let view = TranslationView(
             model: model,
             onClose: { [weak self] in self?.close() },
@@ -95,11 +100,18 @@ final class TranslationViewModel {
                     output += chunk
                 }
                 status = "\(result.detected) → \(result.target)"
+            } catch is CancellationError {
+                // 被新请求取代，旧浮窗已关闭，无需展示
             } catch {
                 self.error = "\(error)"
                 status = ""
+                GTLog.error("translation failed: \(error)")
             }
         }
+    }
+
+    func cancel() {
+        task?.cancel()
     }
 }
 

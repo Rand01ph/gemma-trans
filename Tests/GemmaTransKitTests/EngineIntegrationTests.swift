@@ -24,4 +24,20 @@ import Foundation
         #expect(!text.isEmpty)
         print("译文: \(text)")
     }
+
+    /// 去抖依据：生成进行中 isGenerating 为真，完整消费后归假
+    @Test(.enabled(if: modelPath != nil))
+    func isGeneratingReflectsInflightWork() async throws {
+        var settings = AppSettings()
+        settings.modelPath = Self.modelPath!
+        let engine = TranslationEngine(settings: settings)
+        try await engine.load()
+        #expect(await engine.isGenerating == false)
+        let result = try await engine.translate("Good evening", target: nil)
+        #expect(await engine.isGenerating == true)   // 生成已排队，尚未消费
+        _ = try await result.fullText()
+        // 计数器在生成任务收尾时归零，比流结束晚极小一段；最终一致即可（去抖按秒计，无影响）
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(await engine.isGenerating == false)
+    }
 }

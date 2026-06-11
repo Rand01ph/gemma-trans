@@ -5,11 +5,15 @@ public actor TranslationEngine: TranslationService {
     private let settings: AppSettings
     private var engine: Engine?
     private var lastGeneration: Task<Void, Never>?
+    private var activeGenerations = 0
     private let detector = LanguageDetector()
     private var resolvedTuning: EngineTuning?
 
     /// 设置页展示用（actor 属性，外部 await 访问）
     public var currentTuning: EngineTuning? { resolvedTuning }
+
+    /// 是否有生成正在排队或进行（去抖用：避免热键连按在串行队列里堆积，导致可见浮窗长时间挨饿）
+    public var isGenerating: Bool { activeGenerations > 0 }
 
     public init(settings: AppSettings) {
         self.settings = settings
@@ -63,13 +67,19 @@ public actor TranslationEngine: TranslationService {
 
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let previous = lastGeneration
+        activeGenerations += 1
         lastGeneration = Task {
-            await previous?.value  // 串行：等上一个生成完
+            await previous?.value  // 串行：LiteRT 单飞，等上一个生成自然结束
             await engine.generate(prompt: prompt, system: PromptBuilder.systemPrompt, into: continuation)
+            self.generationFinished()
         }
         return TranslationStreamResult(
             detected: plan.detected, target: plan.target, truncated: truncated, chunks: stream
         )
+    }
+
+    private func generationFinished() {
+        activeGenerations -= 1
     }
 }
 
@@ -79,6 +89,9 @@ extension Engine {
         prompt: String, system: String,
         into continuation: AsyncThrowingStream<String, Error>.Continuation
     ) async {
+        // 注意：不在循环内打断 LiteRT（conversation.cancel / 提前 break 会污染共享引擎，
+        // 导致紧随其后的真生成产不出 token）。被取代的请求在 translate() 里于生成前就跳过了，
+        // 真正在飞的这一次让它自然跑完——消费方已离开时 yield 自动丢弃，无害。
         do {
             let conversation = try createConversation(
                 with: ConversationConfig(systemMessage: Message(system, role: .system))

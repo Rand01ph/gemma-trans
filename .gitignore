@@ -8,3 +8,5 @@ App/build/
 *.litertlm
 .agents/
 skills-lock.json
+App/build-mas/
+App/build-release/

@@ -23,6 +23,9 @@ enum HotkeyCenter {
             NSSound.beep()
             return
         }
+        // 去抖：上一次翻译还在生成时忽略连按，避免在 LiteRT 串行队列里堆积，
+        // 导致可见浮窗排在多个过期生成后面、长时间显示空白（PopClip 单发不受影响）
+        if await engine.isGenerating { return }
         guard let text = await SelectionReader.read(),
               !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             TranslationPanel.shared.showMessage("未检测到选中文本")
