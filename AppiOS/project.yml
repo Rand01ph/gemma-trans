@@ -59,8 +59,9 @@ targets:
     entitlements:
       path: TranslationProvider.entitlements
       properties:
+        # increased-memory-limit 是 app 专属 capability，扩展 App ID 签不进 profile
+        # （真机实测报 "not a valid entitlement"）；扩展内存额度只能 os_proc_available_memory 实测
         com.apple.security.application-groups: [group.com.gemmatrans]
-        com.apple.developer.kernel.increased-memory-limit: true
     dependencies:
       - package: GemmaTransCore
         product: GemmaTransKit
