@@ -47,18 +47,28 @@ case "serve":
     let api = APIServer(translator: engine, port: settings.port)
     try await api.run()
 case "download-e2b":
-    // iOS 真机 spike 配套：国内网络 HF Xet CDN（cas-bridge.xethub.hf.co）被墙，
-    // 手机端下载不可达。此命令在 Mac 上用与 iOS 完全相同的代码路径（HubCache 布局 +
-    // E2B 档）下载到指定目录，再经 devicectl 推入手机 App Group 容器。
-    // 端点可用 HF_ENDPOINT 环境变量切镜像。
-    guard let dir = CommandLine.arguments.dropFirst(2).first else {
-        print("usage: gemma-trans-cli download-e2b <cache-dir>")
+    // iOS 真机配套：国内网络 HF Xet CDN（cas-bridge.xethub.hf.co）被墙、hf-mirror 已失效，
+    // 手机端直连 HF 不可达。此命令在 Mac 上用与 iOS 完全相同的代码路径（ModelDownloader
+    // 快照布局 + E2B 档）下载到指定目录，再经 devicectl 推入手机 App Group 容器。
+    // 第三个参数选下载源：hf（HuggingFace）| ms（ModelScope，默认，国内可达且支持断点续传）。
+    let args = CommandLine.arguments.dropFirst(2)
+    guard let dir = args.first else {
+        print("usage: gemma-trans-cli download-e2b <cache-dir> [hf|ms]")
+        exit(2)
+    }
+    let source: ModelSource
+    switch args.dropFirst().first ?? "ms" {
+    case "hf": source = .huggingFace
+    case "ms": source = .modelScope
+    default:
+        print("usage: gemma-trans-cli download-e2b <cache-dir> [hf|ms]")
         exit(2)
     }
     let engine = TranslationEngine(settings: settings)
     do {
         try await engine.load(
             cacheDirectory: URL(fileURLWithPath: dir),
+            modelSource: source,
             tuningOverride: EngineTuning(variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700)
         ) { p in
             print("download: \(Int(p * 100))%", terminator: "\r")
@@ -69,6 +79,6 @@ case "download-e2b":
         exit(1)
     }
 default:
-    print("usage: gemma-trans-cli [spike|serve|download-e2b]")
+    print("usage: gemma-trans-cli [spike|serve|download-e2b <cache-dir> [hf|ms]]")
     exit(2)
 }
