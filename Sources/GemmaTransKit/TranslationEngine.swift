@@ -28,11 +28,15 @@ public actor TranslationEngine: TranslationService {
     /// 加载模型（首次自动从 HuggingFace 下载，progress 回调驱动 UI 显示百分比）
     /// - Parameter cacheDirectory: 模型缓存目录；nil 用 HubCache 默认位置（macOS 现状）。
     ///   iOS 传 App Group 容器目录，使主 app 与翻译扩展共享同一份模型文件。
+    /// - Parameter hubHost: Hub 下载端点；nil 走环境检测（HF_ENDPOINT），即 huggingface.co。
+    ///   约束：国内网络 huggingface.co 常不可达（下载卡死），iOS 设置页提供镜像开关，
+    ///   开启后传 hf-mirror.com 经镜像下载；macOS 现状两参皆 nil，行为严格不变。
     /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
     ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧 e2b
     ///   下载完成标记文件的判定错位；nil 时行为与既有 macOS 调用完全一致。
     public func load(
         cacheDirectory: URL? = nil,
+        hubHost: URL? = nil,
         tuningOverride: EngineTuning? = nil,
         progress: @Sendable @escaping (Double) -> Void = { _ in }
     ) async throws {
@@ -63,8 +67,9 @@ public actor TranslationEngine: TranslationService {
             case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
             }
         let loaded: ModelContainer
-        if let cacheDirectory {
-            let hub = HubClient(cache: HubCache(cacheDirectory: cacheDirectory))
+        if cacheDirectory != nil || hubHost != nil {
+            let cache = cacheDirectory.map { HubCache(cacheDirectory: $0) } ?? .default
+            let hub = hubHost.map { HubClient(host: $0, cache: cache) } ?? HubClient(cache: cache)
             loaded = try await loadModelContainer(
                 from: #hubDownloader(hub),
                 using: #huggingFaceTokenizerLoader(),
