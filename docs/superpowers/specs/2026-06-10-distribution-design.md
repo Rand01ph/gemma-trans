@@ -27,7 +27,8 @@
   - `com.apple.security.files.user-selected.read-only: true`（自选模型文件）
   - 签名 `Apple Distribution` + provisioning（Xcode 自动管理）。
 - **Spike（M3b 第一任务，结果决定后续）**：构建 MAS target 本机运行，授予辅助功能后实测：① AX 读选中文本；② 模拟 ⌘C。预期 ① 可行（PopClip/Magnet 先例）、② 被 sandbox 拦截。若 ② 不可用：MAS 构建经编译开关（`MAS_BUILD` Swift flag）禁用 ⌘C 兜底，取词 AX-only，商店描述注明部分 Electron app 取词受限。
-- **Spike 实测结论（2026-06-10，自动化部分）**：✅ sandbox 内引擎加载成功（容器路径模型，硬链接验证）；✅ Metal/WebGPU GPU 推理正常（真实翻译通过）；✅ `network.server` 生效（127.0.0.1:8765 可达）；✅ 自动调优在沙盒内工作（内存压力降档生效）；✅ GPU 编译缓存写入容器内 Caches。⌘C 兜底已按预期经 `MAS_BUILD` 禁用未实测（sandbox 公开规则即禁止 CGEvent 注入）。待用户 GUI 验证：AX 取词热键路径、Electron app 降级提示。
+- **Spike 实测结论（2026-06-10/11，含 GUI 验证）**：✅ sandbox 内引擎加载成功；✅ Metal/WebGPU GPU 推理正常（真实翻译通过）；✅ `network.server` 生效；✅ 自动调优在沙盒内工作；✅ GPU 缓存写入容器内 Caches。
+  - **取词关键结论（2026-06-11 实测，纠正先前推测）**：沙盒 **拒绝 AX 读取选中文本**（`kAXSelectedTextAttribute` 返回空，日志确凿），但 **CGEvent 模拟 ⌘C 取词在授予辅助功能权限后完全可用**（与 MAS 上 Bob 等划词工具同机制，GUI 实测弹出译文）。因此 **MAS 版无需任何降级**：与直分版共用 `SelectionReader.read()` 同一条 AX→⌘C 兜底链，沙盒里 AX 必然落到 ⌘C 兜底。先前"sandbox 禁止 CGEvent 注入"的假设作废，`MAS_BUILD` 编译开关随之移除。
 - **Security-scoped bookmark**：sandbox 下 NSOpenPanel 授权重启失效。`AppSettings` 增加 `modelBookmark: Data?`；设置页选择模型文件时保存 bookmark，引擎加载前 resolve + `startAccessingSecurityScopedResource`。默认容器内路径不受影响。
 - **产出与上传**：`xcodebuild archive` + `-exportArchive`（method `app-store`）产出 `.pkg`；上传用 Transporter.app（用户拖拽）或 `xcrun altool` 可用时走 CLI。
 - **文案（我起草，用户粘贴）**：商店描述（中英）、审核备注（辅助功能用途 = 读取用户主动选中的文本用于本地翻译；模型本地推理、零网络上传）、隐私政策（不收集任何数据）。

@@ -79,4 +79,3 @@ targets:
         CURRENT_PROJECT_VERSION: "1"
         PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
         PRODUCT_NAME: GemmaTrans
-        SWIFT_ACTIVE_COMPILATION_CONDITIONS: "$(inherited) MAS_BUILD"
