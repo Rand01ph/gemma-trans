@@ -210,7 +210,7 @@ Expected: 全绿（默认参数 nil，macOS 行为不变）
 
 - [ ] **Step 3: iOS 交叉编译复查**
 
-Run: `xcodebuild -scheme GemmaTransKit -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO build 2>&1 | tail -3`
+Run: `xcodebuild -scheme GemmaTransKit -destination 'generic/platform=iOS' CODE_SIGNING_ALLOWED=NO -skipMacroValidation build 2>&1 | tail -3`
 Expected: `** BUILD SUCCEEDED **`
 
 - [ ] **Step 4: Commit**
@@ -583,7 +583,7 @@ AppiOS/build/
 
 ```bash
 cd AppiOS && xcodegen generate
-xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS \
+xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS -skipMacroValidation \
   -destination 'generic/platform=iOS' -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO build 2>&1 | tail -5
 ```
@@ -611,7 +611,7 @@ git commit -m "feat: AppiOS 脚手架——主 app + TranslationUIProvider 扩�
 ```bash
 xcrun devicectl list devices   # 取 <UDID>
 cd AppiOS
-xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS \
+xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS -skipMacroValidation \
   -destination "platform=iOS,id=<UDID>" -derivedDataPath build \
   -allowProvisioningUpdates build 2>&1 | tail -5
 ```
@@ -856,7 +856,7 @@ final class TranslationProviderExtension: TranslationUIProviderExtension {
 
 ```bash
 cd AppiOS && xcodegen generate
-xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS \
+xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS -skipMacroValidation \
   -destination 'generic/platform=iOS' -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO build 2>&1 | tail -3
 ```
@@ -1030,7 +1030,7 @@ struct SettingsSheet: View {
 
 ```bash
 cd AppiOS && xcodegen generate
-xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS \
+xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS -skipMacroValidation \
   -destination 'generic/platform=iOS' -derivedDataPath build \
   CODE_SIGNING_ALLOWED=NO build 2>&1 | tail -3
 ```
@@ -1089,7 +1089,7 @@ cp /tmp/AppIcon.iconset/icon_512x512@2x.png \
 
 ```bash
 cd AppiOS && xcodegen generate
-xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS \
+xcodebuild -project GemmaTransiOS.xcodeproj -scheme GemmaTransiOS -skipMacroValidation \
   -destination 'generic/platform=iOS' -archivePath build/GemmaTransiOS.xcarchive \
   -allowProvisioningUpdates archive 2>&1 | tail -3
 cat > /tmp/export-ios.plist <<'EOF'
