@@ -28,11 +28,10 @@ public actor TranslationEngine: TranslationService {
     /// 加载模型（首次自动下载，progress 回调驱动 UI 显示百分比）
     /// - Parameter cacheDirectory: 模型缓存目录。非 nil（iOS/CLI）走自研 ModelDownloader
     ///   （双源 + 断点续传 + 字节级进度），iOS 传 App Group 容器目录使主 app 与翻译扩展
-    ///   共享同一份模型文件；nil 维持 HF 宏的默认缓存路径（macOS 现状——存量用户模型
-    ///   已在 HF 缓存里，不能强制重下，macOS 切新路径另案处理）。
-    /// - Parameter modelSource: 下载源，仅 cacheDirectory != nil 时生效。
-    ///   约束：国内网络 huggingface.co（Xet CDN）不可达且 hf-mirror 已失效，
-    ///   iOS 设置页开关切 ModelScope 国内源。
+    ///   共享同一份模型文件；nil（macOS）走默认目录三级策略（见 load 内注释）：
+    ///   新快照 → legacy HF 缓存（存量用户不重下）→ 自研下载器。
+    /// - Parameter modelSource: 下载源。约束：国内网络 huggingface.co（Xet CDN）
+    ///   不可达且 hf-mirror 已失效，设置页开关切 ModelScope 国内源。
     /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
     ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧固定的
     ///   E2B 仓库目录判定错位；nil 时行为与既有 macOS 调用完全一致。
@@ -68,14 +67,14 @@ public actor TranslationEngine: TranslationService {
             case .gemma4E4B4bit: LLMRegistry.gemma4_e4b_it_4bit
             case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
             }
+        // repo 由 variant 推导（与 EngineHolder 的 tuningOverride 构成 variant↔repo 名不变量）
+        let repo = switch tuning.variant {
+        case .gemma4E4B4bit: "mlx-community/gemma-4-e4b-it-4bit"
+        case .gemma4E2B4bit: "mlx-community/gemma-4-e2b-it-4bit"
+        }
         let loaded: ModelContainer
         if let cacheDirectory {
-            // 自研下载路径：repo 由 variant 推导（与 EngineHolder 的 tuningOverride 构成
-            // variant↔repo 名不变量），快照不完整才触发下载，下载源按 modelSource 切换
-            let repo = switch tuning.variant {
-            case .gemma4E4B4bit: "mlx-community/gemma-4-e4b-it-4bit"
-            case .gemma4E2B4bit: "mlx-community/gemma-4-e2b-it-4bit"
-            }
+            // 自研下载路径（iOS/CLI 显式传目录）：快照不完整才触发下载，下载源按 modelSource 切换
             let snapshotDir = ModelDownloader.snapshotDirectory(in: cacheDirectory, repo: repo)
             if !ModelDownloader.isComplete(snapshotDir) {
                 _ = try await ModelDownloader.download(
@@ -85,8 +84,26 @@ public actor TranslationEngine: TranslationService {
             loaded = try await loadModelContainer(
                 from: snapshotDir, using: #huggingFaceTokenizerLoader())
         } else {
-            loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
-                progress(p.fractionCompleted)
+            // macOS 默认路径三级策略：
+            // 1. 新快照已完整 → 直接本地加载（新装用户经自研下载器落盘后的常态）；
+            // 2. legacy HF 缓存已有该仓库 → 维持原 HF 宏路径离线加载——存量用户的模型
+            //    在 ~/.cache/huggingface 里，强切新目录会让他们白下 GB 级权重；
+            // 3. 都没有 → 自研 ModelDownloader 下载到默认目录后本地加载。不再走
+            //    HubClient 下载（其进度回调在大文件期间长期不动 + HF Xet CDN 国内被墙）。
+            let base = Self.defaultModelDirectory()
+            let snapshotDir = ModelDownloader.snapshotDirectory(in: base, repo: repo)
+            if ModelDownloader.isComplete(snapshotDir) {
+                loaded = try await loadModelContainer(
+                    from: snapshotDir, using: #huggingFaceTokenizerLoader())
+            } else if Self.legacyHFCacheHasModel(repo: repo) {
+                loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
+                    progress(p.fractionCompleted)
+                }
+            } else {
+                let dir = try await ModelDownloader.download(
+                    repo: repo, from: modelSource, into: base, progress: progress)
+                loaded = try await loadModelContainer(
+                    from: dir, using: #huggingFaceTokenizerLoader())
             }
         }
         // 预热：首次生成触发 Metal 内核编译（冷启可超 30s，曾致首单超时 500）。
@@ -138,5 +155,27 @@ public actor TranslationEngine: TranslationService {
 
     private func generationFinished() {
         activeGenerations -= 1
+    }
+
+    /// macOS 默认模型目录：~/Library/Application Support/GemmaTrans/models（自动建目录）
+    private static func defaultModelDirectory() -> URL {
+        let dir = FileManager.default
+            .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("GemmaTrans/models", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }
+
+    /// legacy HF 缓存（HubClient 默认路径）是否已有该仓库：目录存在且非空。
+    /// 只看目录非空不做完整性校验——旧路径没有完成标记，宽判保住存量用户离线加载；
+    /// 若旧缓存实际损坏，宏路径加载会失败并走上层重试/报错，不会静默吞掉。
+    /// NSHomeDirectory：iOS 无 homeDirectoryForCurrentUser；沙盒下与 HF 宏展开 ~ 同源。
+    private static func legacyHFCacheHasModel(repo: String) -> Bool {
+        let dir = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+            .appendingPathComponent(".cache/huggingface/hub", isDirectory: true)
+            .appendingPathComponent(
+                "models--\(repo.replacingOccurrences(of: "/", with: "--"))", isDirectory: true)
+        let contents = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        return !contents.isEmpty
     }
 }
