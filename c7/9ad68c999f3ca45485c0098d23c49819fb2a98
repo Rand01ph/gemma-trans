@@ -1,0 +1,26 @@
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_b5203e260e0fc3::t_a9f72cd844cd31 31-34
+  s_b5203e260e0fc3::t_109303e48d8227 159-171,173,175-180
+  s_b5203e260e0fc3::t_9d8c81aac1cebe 172,174
+  s_b5203e260e0fc3::t_44bf1d8baf6907 70-74,77,87-106
+AppiOS/Shared/EngineHolder.swift
+  s_b5203e260e0fc3::t_d9e431504f10fd 46-62,68-69
+Sources/GemmaTransKit/EngineLoadSupport.swift
+  s_b5203e260e0fc3::t_168daa0de0a077 1-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c79ad68c999f3ca45485c0098d23c49819fb2a98",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
