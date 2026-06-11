@@ -1,10 +1,15 @@
 import Foundation
+import GemmaTransKit
 
 /// 主 app 与翻译扩展共享的存储约定（App Group）
 enum ModelStore {
     static let appGroupID = "group.com.gemmatrans"
     /// 共享 UserDefaults suite（设置同步）
     static let settingsSuite = appGroupID
+
+    /// iOS 固定下载 E2B 仓库——与 EngineHolder 固定的 E2B variant 构成一对不变量
+    /// （variant↔repo 名），改其一必改其二。
+    static let repo = "mlx-community/gemma-4-e2b-it-4bit"
 
     /// 模型缓存目录（传给引擎 cacheDirectory），两进程同读
     static var cacheDirectory: URL {
@@ -15,30 +20,20 @@ enum ModelStore {
         return container.appendingPathComponent("models", isDirectory: true)
     }
 
-    /// 下载完成标记文件。目录存在 ≠ 下载完整：主 app 下载中途被杀时
-    /// HubCache 的 models--… 目录已在盘上，仅凭目录判断会把半成品当成可加载。
-    /// 标记由引擎加载成功后落盘（EngineHolder 成功路径调 markModelComplete）。
-    /// 文件名含 e2b——与 EngineHolder 固定的 E2B variant 构成一对不变量，改其一必改其二。
-    static var completionMarker: URL {
-        cacheDirectory.appendingPathComponent(".e2b-download-complete")
-    }
-
-    /// 引擎加载成功后调用：模型确认完整才落标记
-    static func markModelComplete() {
-        try? Data().write(to: completionMarker)
-    }
-
-    /// 模型是否已下载完成（判完成标记，而非目录是否存在）。
+    /// 模型是否已下载完成。判定交给 ModelDownloader 的完成标记（含逐文件字节数校验）：
+    /// 目录存在 ≠ 下载完整——主 app 下载中途被杀的半成品没有标记，字节数被外力破坏也判不完整。
     /// 扩展据此决定「直接加载」还是提示「先打开主 app 下载」——
-    /// 「扩展内绝不触发 1.4GB 下载」的不变量靠这个标记保证。
+    /// 「扩展内绝不触发 3.6GB 下载」的不变量靠这个标记保证。
     static var modelDownloaded: Bool {
-        FileManager.default.fileExists(atPath: completionMarker.path)
+        ModelDownloader.isComplete(
+            ModelDownloader.snapshotDirectory(in: cacheDirectory, repo: repo))
     }
 
-    /// 国内镜像开关（共享 defaults，主 app 写、引擎加载读）；hf-mirror.com 是 HF 官方认可的反代镜像
-    static let mirrorKey = "useHFMirror"
-    static var hubHost: URL? {
-        UserDefaults(suiteName: settingsSuite)?.bool(forKey: mirrorKey) == true
-            ? URL(string: "https://hf-mirror.com") : nil
+    /// 国内源开关（共享 defaults，主 app 写、引擎加载读）。
+    /// HF Xet CDN 国内不可达、hf-mirror.com 已失效，国内网络走 ModelScope（魔搭）。
+    static let sourceKey = "useCNSource"
+    static var modelSource: ModelSource {
+        UserDefaults(suiteName: settingsSuite)?.bool(forKey: sourceKey) == true
+            ? .modelScope : .huggingFace
     }
 }

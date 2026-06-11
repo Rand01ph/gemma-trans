@@ -20,7 +20,7 @@ final class EngineHolder {
     private(set) var engine: TranslationEngine?
     private var loadTask: Task<Void, Never>?
 
-    /// 启动路径：模型已下载才加载，绝不触发下载（真机反馈：启动即自动下 1.4GB 太粗暴）。
+    /// 启动路径：模型已下载才加载，绝不触发下载（真机反馈：启动即自动下 3.6GB 太粗暴）。
     /// 未下载时置 .idle，由 UI 呈现「下载模型」按钮等用户显式触发 download()。
     func loadIfDownloaded() {
         guard ModelStore.modelDownloaded else {
@@ -30,7 +30,7 @@ final class EngineHolder {
         startLoad()
     }
 
-    /// 用户显式触发：允许下载（首次会从 Hub 拉 1.4GB 权重）
+    /// 用户显式触发：允许下载（首次会拉约 3.6GB 权重）
     func download() {
         startLoad()
     }
@@ -45,8 +45,7 @@ final class EngineHolder {
             do {
                 try await loadWithRetry(engine)
                 self.engine = engine
-                // 引擎加载成功 ⇒ 模型文件确认完整，落盘标记供扩展判定「已下载」
-                ModelStore.markModelComplete()
+                // 完成标记由 ModelDownloader 在全部文件校验通过后自行落盘，这里无需再标
                 self.status = .ready
                 GTLog.info("iOS engine ready")
             } catch {
@@ -58,21 +57,21 @@ final class EngineHolder {
         }
     }
 
-    /// 网络类错误自动重试（真机现象：1.4GB 下载途中 NSURLError -1005「连接断开」）。
-    /// swift-huggingface 以 incomplete blob + Range 头断点续传：重调 load 即从断点
-    /// 继续，进度回调含已下载部分——故重试期间 status 保持原值，续传自会推进进度。
+    /// 网络类错误自动重试（真机现象：3.6GB 下载途中 NSURLError -1005「连接断开」）。
+    /// ModelDownloader 以 .part 文件 + Range 头断点续传：重调 load 即从断点
+    /// 继续，字节级进度回调含已落盘部分——故重试期间 status 保持原值，续传自会推进进度。
     private func loadWithRetry(_ engine: TranslationEngine) async throws {
         let backoffSeconds: [UInt64] = [2, 4, 8, 15, 15]  // 最多重试 5 次，退避 min 封顶 15s
         var attempt = 0
         while true {
             do {
                 // spec 决策：iOS 固定 E2B-4bit 档，不走 autoTuning——16GB 的 M 系 iPad 上
-                // EngineTuning.recommended 会选 E4B，与 ModelStore 硬编码的 e2b 目录名错位，
-                // 扩展会永久误报「模型未下载」。该 variant 与 ModelStore.modelDownloaded 的
-                // 目录名/标记构成一对不变量：改其一必改其二。
+                // EngineTuning.recommended 会选 E4B，与 ModelStore 固定的 E2B repo 名错位，
+                // 扩展会永久误报「模型未下载」。该 variant 与 ModelStore.repo
+                // 构成一对不变量（variant↔repo 名）：改其一必改其二。
                 try await engine.load(
                     cacheDirectory: ModelStore.cacheDirectory,
-                    hubHost: ModelStore.hubHost,
+                    modelSource: ModelStore.modelSource,
                     tuningOverride: EngineTuning(variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700)
                 ) { fraction in
                     Task { @MainActor in

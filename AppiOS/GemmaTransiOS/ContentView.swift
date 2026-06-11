@@ -6,9 +6,9 @@ struct ContentView: View {
     @State private var input = ""
     @State private var output = ""
     @State private var translating = false
-    /// 国内镜像开关：写入共享 defaults，EngineHolder 加载时经 ModelStore.hubHost 读取
-    @AppStorage(ModelStore.mirrorKey, store: UserDefaults(suiteName: ModelStore.settingsSuite))
-    private var useMirror = false
+    /// 国内源开关：写入共享 defaults，EngineHolder 加载时经 ModelStore.modelSource 读取
+    @AppStorage(ModelStore.sourceKey, store: UserDefaults(suiteName: ModelStore.settingsSuite))
+    private var useCNSource = false
 
     var body: some View {
         NavigationStack {
@@ -38,7 +38,7 @@ struct ContentView: View {
         }
         .task { holder.loadIfDownloaded() }
         .onChange(of: holder.status) { _, newStatus in
-            // 锁屏/挂起会掐断 1.4GB 长连接（真机 NSURLError -1005 的来源之一）：
+            // 锁屏/挂起会掐断 3.6GB 长连接（真机 NSURLError -1005 的来源之一）：
             // 下载期间禁用自动锁屏，结束（就绪/失败/回到 idle）即恢复
             switch newStatus {
             case .downloading:
@@ -54,10 +54,10 @@ struct ContentView: View {
     @ViewBuilder private var statusHeader: some View {
         switch holder.status {
         case .idle:
-            // 模型未下载：显式确认后才下 1.4GB（真机反馈：启动即自动下载太粗暴）
+            // 模型未下载：显式确认后才下 3.6GB（真机反馈：启动即自动下载太粗暴）
             VStack(alignment: .leading, spacing: 8) {
-                Label("模型未下载（约 1.4GB，建议 Wi-Fi）", systemImage: "arrow.down.circle")
-                Toggle("使用国内镜像（hf-mirror.com）", isOn: $useMirror)
+                Label("模型未下载（约 3.6GB，建议 Wi-Fi）", systemImage: "arrow.down.circle")
+                Toggle("使用国内源（ModelScope）", isOn: $useCNSource)
                 Text("国内网络建议开启")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
