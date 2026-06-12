@@ -103,6 +103,12 @@ iPhone 真机实测，-1005/-1001）。**v1 上架前必须解决模型托管**�
   （iOS 26+ 的 BGContinuedProcessing `.gpu` 目前只放 iPad）。结论：MLX(Metal GPU) 在后台/扩展
   必被 revoke 崩溃，**「不切走当前 app 还跑 GPU 推理」在 iPhone 上彻底死路**，提高设备门槛无解。
   唯一剩余的「不跳转」窄路 = 后台 App Intent + **MLX CPU 模式**（CPU 不受后台限制），速度待 spike。
+- **后台 App Intent 路径 GO（重大）**：openAppWhenRun=false + intent 在主 app target → 走
+  「完整 app 后台无-scene 进程」，**额度实测 6125MB（非扩展级，与 221MB 扩展是两个世界）**。
+  CPU 模式短句翻译：加载 3.0s + 推理 0.2s，不崩、远在 ~30s intent 时限内。「原地不跳转」成立。
+- **iOS 固定 E2B（内存硬约束，非质量取舍）**：后台/前台额度均 ~6GB；E2B 加载后剩 583MB
+  → **实测驻留约 5.4GB**（远超 EngineTuning.estimatedBytes 的 1.5GB 估算）。E4B 驻留 7-8GB
+  会 OOM，**iOS 装不下 E4B，只能 E2B**。划词短句场景 E2B 质量够用。macOS 默认仍 E4B。
 
 ## 不做（YAGNI v1）
 
