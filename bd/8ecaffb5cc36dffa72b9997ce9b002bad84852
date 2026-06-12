@@ -1,0 +1,20 @@
+docs/shortcuts-guide.md
+  s_b5203e260e0fc3::t_17e048ee10623c 51-57
+  s_b5203e260e0fc3::t_d7709b63e3265a 37-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "bd8ecaffb5cc36dffa72b9997ce9b002bad84852",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
