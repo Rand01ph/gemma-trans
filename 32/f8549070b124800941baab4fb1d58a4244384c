@@ -1,0 +1,23 @@
+AppiOS/GemmaTransiOS/GemmaTransiOSApp.swift
+  s_b5203e260e0fc3::t_ed4843ad085e06 6-7,10-19,22-31,33-46
+AppiOS/Shared/ModelStore.swift
+  s_b5203e260e0fc3::t_9d4987251ed75e 39-63
+AppiOS/GemmaTransiOS/ContentView.swift
+  s_b5203e260e0fc3::t_3b23f5ab00fc8c 4-5,8-9,12-17,20,33-35,38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "32f8549070b124800941baab4fb1d58a4244384c",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
