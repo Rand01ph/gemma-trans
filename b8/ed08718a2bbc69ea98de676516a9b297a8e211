@@ -1,0 +1,27 @@
+AppiOS/GemmaTransiOS/Assets.xcassets/Contents.json
+  s_b5203e260e0fc3::t_05dc873e7d9130 1-6
+AppiOS/GemmaTransiOS/Theme.swift
+  s_b5203e260e0fc3::t_0973e0f6055672 1-96
+AppiOS/GemmaTransiOS/Assets.xcassets/AccentColor.colorset/Contents.json
+  s_b5203e260e0fc3::t_55998ff175a8b5 1-38
+AppiOS/project.yml
+  s_b5203e260e0fc3::t_324588835c1e73 50-51
+AppiOS/GemmaTransiOS/Assets.xcassets/AppIcon.appiconset/Contents.json
+  s_b5203e260e0fc3::t_55ccb7b8965be9 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b8ed08718a2bbc69ea98de676516a9b297a8e211",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
