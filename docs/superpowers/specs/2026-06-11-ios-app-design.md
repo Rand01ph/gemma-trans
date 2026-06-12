@@ -98,6 +98,11 @@ iPhone 真机实测，-1005/-1001）。**v1 上架前必须解决模型托管**�
   jetsam 击杀 → **方案 A（扩展内直跑）NO-GO，任何本地 LLM 都不可能在扩展内运行**
 - 模型分发：HF Xet CDN 国内不可达、hf-mirror 已不代理 Xet 仓库；**ModelScope 为国内源**
   （自研 ModelDownloader 双源+字节级进度已实现并实测）
+- **后台 GPU 实测 NO（决定性）**：iPhone 17 Pro / iOS 27.0 探针 `BGTaskScheduler.supportedResources`
+  不含 `.gpu`（前台额度 6141MB，够跑模型）。后台 GPU 不是老机型局限——iPhone **全系**关着
+  （iOS 26+ 的 BGContinuedProcessing `.gpu` 目前只放 iPad）。结论：MLX(Metal GPU) 在后台/扩展
+  必被 revoke 崩溃，**「不切走当前 app 还跑 GPU 推理」在 iPhone 上彻底死路**，提高设备门槛无解。
+  唯一剩余的「不跳转」窄路 = 后台 App Intent + **MLX CPU 模式**（CPU 不受后台限制），速度待 spike。
 
 ## 不做（YAGNI v1）
 
