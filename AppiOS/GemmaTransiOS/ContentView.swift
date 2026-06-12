@@ -1,49 +1,23 @@
 import SwiftUI
 import GemmaTransKit
 
+/// 纯状态路由（spec 2.1）：模型未就绪→OnboardingView 全屏接管；就绪/加载→TranslatorView。
+/// 另负责防锁屏 isIdleTimerDisabled 的 onChange，以及就绪后补触发接力翻译。
 struct ContentView: View {
     @State private var holder = EngineHolder.shared
-    @State private var input = ""
-    @State private var output = ""
-    @State private var translating = false
-    /// 翻译面板跳板（gemmatrans://translate）送来的待翻译文本：
-    /// 引擎未就绪时先挂起，status 变 .ready 后（onChange）自动消费
-    @State private var pendingText: String?
-    /// 国内源开关：写入共享 defaults，EngineHolder 加载时经 ModelStore.modelSource 读取
-    @AppStorage(ModelStore.sourceKey, store: UserDefaults(suiteName: ModelStore.settingsSuite))
-    private var useCNSource = false
+    @State private var model = TranslatorModel.shared
+    @State private var showSettings = false
 
     var body: some View {
-        NavigationStack {
-            VStack(alignment: .leading, spacing: 12) {
-                statusHeader
-                TextField("输入或粘贴要翻译的文本", text: $input, axis: .vertical)
-                    .lineLimit(3...8)
-                    .textFieldStyle(.roundedBorder)
-                HStack {
-                    Button("粘贴") {
-                        if let s = UIPasteboard.general.string { input = s }
-                    }
-                    .buttonStyle(.bordered)
-                    Button("翻译") { translate() }
-                        .buttonStyle(.borderedProminent)
-                        .disabled(holder.status != .ready || translating || input.isEmpty)
-                    // spike 临时入口：前台测 CPU 模式短句翻译速度（不动 GPU 引擎），
-                    // 评估能否压进 App Intent ~30s 后台时限。验证完整套 spike 后删除。
-                    Button("CPU 测速") { cpuSpeedTest() }
-                        .buttonStyle(.bordered)
-                        .disabled(translating)
-                }
-                ScrollView {
-                    Text(output)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .textSelection(.enabled)
-                }
-                Spacer()
+        Group {
+            switch holder.status {
+            case .idle, .downloading, .failed:
+                OnboardingView()
+            case .loading, .ready:
+                TranslatorView(showSettings: $showSettings)
             }
-            .padding()
-            .navigationTitle("GemmaTrans")
         }
+        .animation(.default, value: holder.status)
         .task { holder.loadIfDownloaded() }
         .onChange(of: holder.status) { _, newStatus in
             // 锁屏/挂起会掐断 3.6GB 长连接（真机 NSURLError -1005 的来源之一）：
@@ -56,139 +30,13 @@ struct ContentView: View {
             case .loading:
                 break  // 下载→加载的中间态，维持现状即可
             }
-            // 跳板挂起的文本：引擎就绪即消费（与上面防锁屏逻辑互不影响）
-            if newStatus == .ready, let text = pendingText {
-                pendingText = nil
-                input = text
-                translate()
+            // 接力文本：引擎就绪时若已灌入但因引擎未就绪未译，此刻补触发
+            if newStatus == .ready, !model.input.isEmpty, model.output.isEmpty, !model.isTranslating {
+                model.translate()
             }
         }
-        .onOpenURL { handleIncomingURL($0) }
-    }
-
-    /// 翻译面板跳板入口：gemmatrans://translate?text=...
-    private func handleIncomingURL(_ url: URL) {
-        guard let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
-              comps.host == "translate",
-              let text = comps.queryItems?.first(where: { $0.name == "text" })?.value,
-              !text.isEmpty else { return }
-        input = text
-        if holder.status == .ready {
-            translate()
-        } else {
-            pendingText = text
-            holder.loadIfDownloaded()  // 冷启动时 .task 也会调，幂等
-        }
-    }
-
-    @ViewBuilder private var statusHeader: some View {
-        switch holder.status {
-        case .idle:
-            // 模型未下载：显式确认后才下 3.6GB（真机反馈：启动即自动下载太粗暴）
-            VStack(alignment: .leading, spacing: 8) {
-                Label("模型未下载（约 3.6GB，建议 Wi-Fi）", systemImage: "arrow.down.circle")
-                Toggle("使用国内源（ModelScope）", isOn: $useCNSource)
-                Text("国内网络建议开启")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Button("下载模型") { holder.download() }
-                    .buttonStyle(.borderedProminent)
-            }
-        case .loading:
-            Label("正在加载模型…", systemImage: "hourglass")
-        case .downloading(let progress):
-            VStack(alignment: .leading, spacing: 4) {
-                ProgressView(value: progress.fraction) { Text(Self.downloadLabel(progress)) }
-                Text("下载期间请保持 App 在前台")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-            }
-        case .ready:
-            Label("引擎就绪（本地 Gemma）", systemImage: "checkmark.circle")
-                .foregroundStyle(.green)
-        case .failed(let msg):
-            VStack(alignment: .leading, spacing: 8) {
-                Label(msg, systemImage: "xmark.octagon")
-                    .foregroundStyle(.red)
-                    .lineLimit(2)
-                // 模型已下载完成时 download() 自然走纯加载路径，失败重试统一调它
-                Button("重试") { holder.download() }
-                    .buttonStyle(.bordered)
-            }
-        }
-    }
-
-    /// 「下载模型 35%（1.2 / 3.4 GB）」；字节未知（HF 宏路径）时只显示百分比
-    private static func downloadLabel(_ progress: DownloadProgress) -> String {
-        let pct = Int(progress.fraction * 100)
-        guard let done = progress.completedBytes, let total = progress.totalBytes else {
-            return "下载模型 \(pct)%"
-        }
-        let bytes = String(format: "%.1f / %.1f GB", Double(done) / 1e9, Double(total) / 1e9)
-        return "下载模型 \(pct)%（\(bytes)）"
-    }
-
-    /// spike：前台 CPU 测速。独立临时引擎跑 CPU 模式，计时 load+warm / 首字 / 完成，
-    /// 结果同时进日志（[spike-cpu]）和 output 区。不碰 EngineHolder 的 GPU 引擎。
-    private func cpuSpeedTest() {
-        translating = true
-        output = "CPU 测速中…"
-        let text = input.isEmpty
-            ? "Good morning, how are you? I hope you have a wonderful day."
-            : input
-        Task {
-            do {
-                let t0 = Date()
-                let engine = TranslationEngine(
-                    settings: AppSettings.load(suiteName: ModelStore.settingsSuite))
-                try await engine.load(
-                    cacheDirectory: ModelStore.cacheDirectory,
-                    tuningOverride: EngineTuning(
-                        variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700),
-                    useCPU: true)
-                let loadElapsed = Date().timeIntervalSince(t0)
-                GTLog.info("[spike-cpu] load+warm \(String(format: "%.1f", loadElapsed))s")
-
-                let t1 = Date()
-                let result = try await engine.translate(text, target: nil)
-                var out = ""
-                var firstToken: TimeInterval?
-                for try await chunk in result.chunks {
-                    if firstToken == nil { firstToken = Date().timeIntervalSince(t1) }
-                    out += chunk
-                }
-                let total = Date().timeIntervalSince(t1)
-                let ft = firstToken ?? total
-                let outPrefix = String(out.prefix(40))
-                GTLog.info("[spike-cpu] load=\(String(format: "%.1f", loadElapsed))s " +
-                           "firstToken=\(String(format: "%.1f", ft))s " +
-                           "total=\(String(format: "%.1f", total))s out=\(outPrefix)")
-                output = "CPU 测速结果\n" +
-                    "load+warm: \(String(format: "%.1f", loadElapsed))s\n" +
-                    "首字: \(String(format: "%.1f", ft))s\n" +
-                    "完成: \(String(format: "%.1f", total))s\n\n" +
-                    out
-            } catch {
-                GTLog.error("[spike-cpu] failed: \(error)")
-                output = "CPU 测速失败：\(error)"
-            }
-            translating = false
-        }
-    }
-
-    private func translate() {
-        guard let engine = holder.engine else { return }
-        translating = true
-        output = ""
-        let text = input
-        Task {
-            do {
-                let result = try await engine.translate(text, target: nil)
-                for try await chunk in result.chunks { output += chunk }
-            } catch {
-                output = "翻译失败：\(error)"
-            }
-            translating = false
+        .sheet(isPresented: $showSettings) {
+            SettingsSheet()
         }
     }
 }

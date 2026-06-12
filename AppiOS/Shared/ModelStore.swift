@@ -36,4 +36,29 @@ enum ModelStore {
         UserDefaults(suiteName: settingsSuite)?.bool(forKey: sourceKey) == true
             ? .modelScope : .huggingFace
     }
+
+    // MARK: - 翻译面板接力（扩展写、主 app 读）
+
+    /// 扩展把选中文字写入共享 defaults（文本 + 时间戳），主 app 启动/前台即消费。
+    /// deep link 之外的冗余通道：扩展进程不能保证 deep link 必达，App Group 是兜底。
+    static let handoffTextKey = "pendingHandoffText"
+    static let handoffDateKey = "pendingHandoffDate"
+
+    /// 扩展侧：写入待翻译文本与当前时间戳
+    static func writeHandoff(_ text: String) {
+        guard let d = UserDefaults(suiteName: settingsSuite) else { return }
+        d.set(text, forKey: handoffTextKey)
+        d.set(Date().timeIntervalSince1970, forKey: handoffDateKey)
+    }
+
+    /// 主 app 侧：取出并清除接力文本；超过 maxAge（默认 60s）的陈旧文本丢弃返回 nil
+    static func consumeHandoff(maxAge: TimeInterval = 60) -> String? {
+        guard let d = UserDefaults(suiteName: settingsSuite),
+              let text = d.string(forKey: handoffTextKey), !text.isEmpty else { return nil }
+        let ts = d.double(forKey: handoffDateKey)
+        d.removeObject(forKey: handoffTextKey)
+        d.removeObject(forKey: handoffDateKey)
+        guard ts > 0, Date().timeIntervalSince1970 - ts <= maxAge else { return nil }
+        return text
+    }
 }
