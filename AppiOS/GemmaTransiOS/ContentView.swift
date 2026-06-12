@@ -28,6 +28,11 @@ struct ContentView: View {
                     Button("翻译") { translate() }
                         .buttonStyle(.borderedProminent)
                         .disabled(holder.status != .ready || translating || input.isEmpty)
+                    // spike 临时入口：前台测 CPU 模式短句翻译速度（不动 GPU 引擎），
+                    // 评估能否压进 App Intent ~30s 后台时限。验证完整套 spike 后删除。
+                    Button("CPU 测速") { cpuSpeedTest() }
+                        .buttonStyle(.bordered)
+                        .disabled(translating)
                 }
                 ScrollView {
                     Text(output)
@@ -121,6 +126,54 @@ struct ContentView: View {
         }
         let bytes = String(format: "%.1f / %.1f GB", Double(done) / 1e9, Double(total) / 1e9)
         return "下载模型 \(pct)%（\(bytes)）"
+    }
+
+    /// spike：前台 CPU 测速。独立临时引擎跑 CPU 模式，计时 load+warm / 首字 / 完成，
+    /// 结果同时进日志（[spike-cpu]）和 output 区。不碰 EngineHolder 的 GPU 引擎。
+    private func cpuSpeedTest() {
+        translating = true
+        output = "CPU 测速中…"
+        let text = input.isEmpty
+            ? "Good morning, how are you? I hope you have a wonderful day."
+            : input
+        Task {
+            do {
+                let t0 = Date()
+                let engine = TranslationEngine(
+                    settings: AppSettings.load(suiteName: ModelStore.settingsSuite))
+                try await engine.load(
+                    cacheDirectory: ModelStore.cacheDirectory,
+                    tuningOverride: EngineTuning(
+                        variant: .gemma4E2B4bit, maxTokens: 1024, maxInputChars: 700),
+                    useCPU: true)
+                let loadElapsed = Date().timeIntervalSince(t0)
+                GTLog.info("[spike-cpu] load+warm \(String(format: "%.1f", loadElapsed))s")
+
+                let t1 = Date()
+                let result = try await engine.translate(text, target: nil)
+                var out = ""
+                var firstToken: TimeInterval?
+                for try await chunk in result.chunks {
+                    if firstToken == nil { firstToken = Date().timeIntervalSince(t1) }
+                    out += chunk
+                }
+                let total = Date().timeIntervalSince(t1)
+                let ft = firstToken ?? total
+                let outPrefix = String(out.prefix(40))
+                GTLog.info("[spike-cpu] load=\(String(format: "%.1f", loadElapsed))s " +
+                           "firstToken=\(String(format: "%.1f", ft))s " +
+                           "total=\(String(format: "%.1f", total))s out=\(outPrefix)")
+                output = "CPU 测速结果\n" +
+                    "load+warm: \(String(format: "%.1f", loadElapsed))s\n" +
+                    "首字: \(String(format: "%.1f", ft))s\n" +
+                    "完成: \(String(format: "%.1f", total))s\n\n" +
+                    out
+            } catch {
+                GTLog.error("[spike-cpu] failed: \(error)")
+                output = "CPU 测速失败：\(error)"
+            }
+            translating = false
+        }
     }
 
     private func translate() {
