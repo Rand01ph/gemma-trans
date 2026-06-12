@@ -115,3 +115,11 @@ iPhone 真机实测，-1005/-1001）。**v1 上架前必须解决模型托管**�
 PiP 剪贴板悬浮窗（v2 候选，对标 Para；审核逐案放行）；快捷指令 / App Intent 入口及操作
 按钮、背面轻点、控制中心等触发器玩法（仅作回退预案）；Share Extension；通知保底（面板
 前台呈现，无需通知）；iPad 专属布局；历史记录；iOS 本地 API。
+
+**云端 fallback（v2 候选，2026-06-12 摸底）**：扩展 221MB 跑不了本地模型，但联网调
+OpenRouter（OpenAI 兼容，HTTP 几 KB 不吃内存）可行——**这是让「默认翻译 App + 替换原文」
+在 iOS 落地的唯一路径**（扩展直连云端 → `finish(replacingWithTranslation:)` 替换选中原文）。
+架构顺：`TranslationService` 已是抽象、`GemmaTransServer` 已 OpenAI 兼容，加 `RemoteTranslator`
+即可。障碍：① API key 只能用户自填（内置共享 key 免费额度秒杀+滥用）；② 免费模型限速/易变，
+只能兜底不能主力；③ 文本上传第三方，与「完全本地」卖点冲突，须默认关 + 隐私清单披露。
+v1 保持纯本地定位，搁置。
