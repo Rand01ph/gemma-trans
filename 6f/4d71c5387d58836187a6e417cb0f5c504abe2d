@@ -1,0 +1,23 @@
+App/GemmaTrans/SettingsView.swift
+  s_b5203e260e0fc3::t_c60955947554dd 14
+App/GemmaTrans/GemmaTransApp.swift
+  s_b5203e260e0fc3::t_ec2c7cf307bc0e 16-17,24-28
+App/GemmaTrans/EngineController.swift
+  s_b5203e260e0fc3::t_b3aa1fcc3d68db 8-10,15,20-23,26,30-32,36,45-53,56-57,59-63,68,73-75,77-78,85-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "6f4d71c5387d58836187a6e417cb0f5c504abe2d",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
