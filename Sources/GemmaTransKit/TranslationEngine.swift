@@ -149,10 +149,13 @@ public actor TranslationEngine: TranslationService {
             await previous?.value  // 串行：GPU 单飞，等上一个生成自然结束
             do {
                 // 每次翻译一次性会话：无历史、系统指令固定
+                // 翻译是确定性任务：默认温度 0.6 的采样随机性会偶尔走到「复述原文/跑偏」，
+                // 降到 0.1（近贪心）让模型确定性遵循翻译指令。repetitionPenalty 抑制小模型复读。
                 let session = ChatSession(
                     model,
                     instructions: PromptBuilder.systemPrompt,
-                    generateParameters: GenerateParameters(maxTokens: maxTokens)
+                    generateParameters: GenerateParameters(
+                        maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
                 for try await chunk in session.streamResponse(to: prompt) {
                     continuation.yield(chunk)

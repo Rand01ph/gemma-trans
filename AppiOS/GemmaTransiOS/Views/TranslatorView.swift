@@ -280,7 +280,8 @@ private struct InputCard: View {
 private struct OutputCard: View {
     @Bindable var model: TranslatorModel
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var cursorVisible = true
+    /// 仅调制光标 ▍ 的颜色透明度做闪烁，不改变译文文本内容（否则整段译文会被 crossfade 跟着闪）
+    @State private var cursorOn = true
 
     /// 短译文（≤120 字符）给 title3，长译文 body
     private var outputFont: Font {
@@ -300,10 +301,11 @@ private struct OutputCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // 译文 + 流式光标
+            // 译文 + 流式光标：▍ 的存在只由 isTranslating 决定（内容稳定），
+            // 闪烁靠 cursorOn 调颜色透明度——译文本身不随闪烁重绘
             (Text(model.output)
-                + Text(model.isTranslating && cursorVisible ? " ▍" : "")
-                    .foregroundColor(.accentColor))
+                + Text(model.isTranslating ? " ▍" : "")
+                    .foregroundColor(.accentColor.opacity(cursorOn ? 1 : 0.15)))
                 .font(outputFont)
                 .lineSpacing(4)
                 .textSelection(.enabled)
@@ -335,13 +337,19 @@ private struct OutputCard: View {
         }
         .padding(Theme.Spacing.cardPadding)
         .cardBackground()
-        .onAppear { startCursorBlink() }
+        .onAppear { if model.isTranslating { startCursorBlink() } }
+        .onChange(of: model.isTranslating) { _, translating in
+            if translating { startCursorBlink() }
+            else { withAnimation(.linear(duration: 0.15)) { cursorOn = true } }  // 停止闪烁，停在常显
+        }
     }
 
+    /// 仅在流式期间启动；autoreverses 让 ▍ 颜色在 1↔0.15 间往返。完成后 ▍ 内容消失，动画自然失效
     private func startCursorBlink() {
-        guard !reduceMotion else { cursorVisible = true; return }
-        withAnimation(.easeInOut(duration: 0.6).repeatForever()) {
-            cursorVisible.toggle()
+        guard !reduceMotion else { cursorOn = true; return }
+        cursorOn = true
+        withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+            cursorOn = false
         }
     }
 }
