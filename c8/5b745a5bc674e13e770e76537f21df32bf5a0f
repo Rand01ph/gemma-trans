@@ -1,0 +1,23 @@
+AppiOS/GemmaTransiOS/AppShortcuts.swift
+  s_b5203e260e0fc3::t_33a1b855ea7669 3,6,17-24
+AppiOS/GemmaTransiOS/ProcessTaskEntity.swift
+  s_b5203e260e0fc3::t_fb739a8653fde8 1-51
+AppiOS/GemmaTransiOS/ProcessTextIntent.swift
+  s_b5203e260e0fc3::t_0b4b5a02462143 1-87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "c85b745a5bc674e13e770e76537f21df32bf5a0f",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
