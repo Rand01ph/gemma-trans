@@ -1,4 +1,5 @@
 import Foundation
+import MLX
 import MLXLLM
 import MLXLMCommon
 import MLXHuggingFace
@@ -35,12 +36,26 @@ public actor TranslationEngine: TranslationService {
     /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
     ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧固定的
     ///   E2B 仓库目录判定错位；nil 时行为与既有 macOS 调用完全一致。
+    /// - Parameter useCPU: spike 用。true 时把 MLX 全局默认设备切到 CPU，绕开后台 GPU
+    ///   不可用（iPhone 全系 BGTaskScheduler.supportedResources 不含 .gpu，Metal 后台
+    ///   被 accessRevoked 崩溃）。默认 false，行为与既有调用完全一致（GPU）。
+    ///   setDefault 是进程级全局，actor 内设一次即可。
     public func load(
         cacheDirectory: URL? = nil,
         modelSource: ModelSource = .huggingFace,
         tuningOverride: EngineTuning? = nil,
+        useCPU: Bool = false,
         progress: @Sendable @escaping (DownloadProgress) -> Void = { _ in }
     ) async throws {
+        if useCPU {
+            // 进程级全局默认设备切 CPU。Device.setDefault 虽标 deprecated，但它是唯一
+            // 真正翻转「全局默认」的 setter（写 _defaultDevice，被 TaskLocal 默认值
+            // _resolveGlobalDefaultDevice() 读取，最终经 StreamOrDevice.default → CPU
+            // stream 驱动算子）；withDefaultDevice 只能 scoped 到闭包，跨 actor 内
+            // 生成 Task 包不住，故 spike 取全局 setter。
+            MLX.Device.setDefault(device: MLX.Device(.cpu))
+            GTLog.info("[spike-cpu] MLX device set to CPU")
+        }
         let tuning: EngineTuning
         if let tuningOverride {
             tuning = tuningOverride
