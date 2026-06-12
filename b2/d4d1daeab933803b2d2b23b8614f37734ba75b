@@ -1,0 +1,21 @@
+docs/superpowers/specs/2026-06-11-ios-app-design.md
+  s_b5203e260e0fc3::t_426ac0c426a4d2 101-105
+AppiOS/GemmaTransiOS/GemmaTransiOSApp.swift
+  s_b5203e260e0fc3::t_d32244aa742eac 2-4,8-11,15-26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "b2d4d1daeab933803b2d2b23b8614f37734ba75b",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
