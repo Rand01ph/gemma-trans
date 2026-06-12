@@ -11,7 +11,7 @@ struct SettingsView: View {
         Form {
             Section("模型") {
                 LabeledContent("当前模型", value: "Gemma 4 (4-bit · 按内存自动选 E4B/E2B)")
-                Text("首次启动自动下载（约 1.5–2.4GB），支持断点续传。")
+                Text("首次启动自动下载（E4B 约 4.9GB / E2B 约 3.6GB，按内存自动选），支持断点续传。")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("使用国内源（ModelScope）下载模型", isOn: $settings.useCNSource)
                 Text("国内网络无法直连 HuggingFace 时开启；切换后下次下载生效")

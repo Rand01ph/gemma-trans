@@ -13,15 +13,19 @@ struct GemmaTransApp: App {
     var body: some Scene {
         MenuBarExtra {
             switch controller.engineStatus {
-            case .loading:
-                Text("引擎：模型加载中…")
+            case .loading(let stage):
+                Text("引擎：\(stage)")
             case .downloading(let progress):
                 Text("引擎：模型下载中 \(Self.downloadText(progress))")
             case .ready:
                 Text("引擎：就绪")
             case .failed(let msg):
                 Text("引擎失败: \(msg)")
-                Button("重试加载引擎") { EngineController.shared.retry() }
+            }
+            if controller.engineStatus != .ready {
+                // 非就绪态全程一个兜底出口（含失败重试，避免「重试」「重载」两个按钮）：
+                // 取消在飞加载重新来——真机现场清单请求挂死时旧版菜单无任何可操作项
+                Button("重新加载引擎") { EngineController.shared.reload() }
             }
             switch controller.apiStatus {
             case .disabled:
