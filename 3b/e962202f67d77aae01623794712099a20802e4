@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-12-local-ai-action-design.md
+  s_b5203e260e0fc3::t_a1559f40dccc81 4-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "3be962202f67d77aae01623794712099a20802e4",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
