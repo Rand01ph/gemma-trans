@@ -1,0 +1,23 @@
+AppiOS/GemmaTransiOS/Views/TranslatorView.swift
+  s_b5203e260e0fc3::t_c567d1fb0ada7a 235-242
+  s_b5203e260e0fc3::t_9ac48cc66b2af9 28-29,35,37-75,77-82,84,88-90,92,101
+  s_b5203e260e0fc3::t_83ae780bedd9dd 288,290,292
+  s_b5203e260e0fc3::t_6f256174135836 347-349
+  s_b5203e260e0fc3::t_7ead3b1ec8a115 16-17
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "ea13617064c88c36a6bcfef024e375dbf215f57a",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
