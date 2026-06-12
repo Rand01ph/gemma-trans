@@ -124,6 +124,9 @@ public enum ModelDownloader {
                 fraction: fraction(completed, of: totalBytes),
                 completedBytes: completed, totalBytes: totalBytes))
         }
+        // 清单解析成功即回调一次（首个文件字节到达前）：UI 据此立即从「加载中」切到
+        // 「下载 0%」，不会停留在无进度的哑状态；已存在跳过的文件随后在循环里逐个计入
+        // （纯磁盘 stat，毫秒级推进进度基数）。
         report(0)
 
         for file in ordered {
