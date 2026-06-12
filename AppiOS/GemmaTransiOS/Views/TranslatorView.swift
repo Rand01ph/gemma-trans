@@ -13,6 +13,8 @@ final class TranslatorModel {
     var target: String?
     var truncated = false
     var isTranslating = false
+    /// 多段翻译进度（当前段, 总段数）；单段翻译保持 nil
+    var chunkProgress: (current: Int, total: Int)?
     /// 拷贝成功后 0.8s 内图标变 checkmark
     var didCopy = false
 
@@ -23,29 +25,72 @@ final class TranslatorModel {
 
     func translate() {
         guard let engine = EngineHolder.shared.engine, !input.isEmpty, !isTranslating else { return }
-        let text = input
+        let chunks = TextChunker.split(input, limit: Self.charLimit)
+        guard !chunks.isEmpty else { return }
         isTranslating = true
         output = ""
         detected = nil
         target = nil
         truncated = false
+        chunkProgress = nil
         task = Task {
+            if chunks.count == 1 {
+                await translateSingle(chunks[0], engine: engine)
+            } else {
+                await translateChunked(chunks, engine: engine)
+            }
+            // 取消路径的清理由 cancel() 负责；这里只收尾正常完成，避免覆盖随后新启动的任务状态
+            if !Task.isCancelled {
+                chunkProgress = nil
+                isTranslating = false
+                task = nil
+            }
+        }
+    }
+
+    /// 单段：维持原有逻辑（truncated 透出、整体失败时替换 output）
+    private func translateSingle(_ text: String, engine: TranslationEngine) async {
+        do {
+            let result = try await engine.translate(text, target: nil)
+            detected = result.detected
+            target = result.target
+            truncated = result.truncated
+            for try await chunk in result.chunks {
+                if Task.isCancelled { break }
+                output += chunk
+            }
+        } catch {
+            if !Task.isCancelled {
+                output = "翻译失败：\(error)"
+            }
+        }
+    }
+
+    /// 多段：逐块顺序翻译流式追加，块间空行分隔；语向取第一块；
+    /// 某块失败保留已译内容、追加失败标记后止步；取消即中断后续块
+    private func translateChunked(_ chunks: [String], engine: TranslationEngine) async {
+        for (i, chunk) in chunks.enumerated() {
+            if Task.isCancelled { break }
+            chunkProgress = (i + 1, chunks.count)
+            if i > 0 { output += "\n\n" }
             do {
-                let result = try await engine.translate(text, target: nil)
-                detected = result.detected
-                target = result.target
-                truncated = result.truncated
-                for try await chunk in result.chunks {
+                let result = try await engine.translate(chunk, target: nil)
+                if i == 0 {
+                    detected = result.detected
+                    target = result.target
+                }
+                for try await piece in result.chunks {
                     if Task.isCancelled { break }
-                    output += chunk
+                    output += piece
                 }
             } catch {
                 if !Task.isCancelled {
-                    output = "翻译失败：\(error)"
+                    while let last = output.last, last.isWhitespace { output.removeLast() }
+                    let note = "[第 \(i + 1) 段翻译失败：\(error)]"
+                    output += output.isEmpty ? note : "\n\n" + note
                 }
+                break
             }
-            isTranslating = false
-            task = nil
         }
     }
 
@@ -53,6 +98,7 @@ final class TranslatorModel {
         task?.cancel()
         task = nil
         isTranslating = false
+        chunkProgress = nil
     }
 
     func clearInput() {
@@ -182,9 +228,18 @@ private struct InputCard: View {
     let isLoading: Bool
     @FocusState.Binding var focused: Bool
 
-    private var overLimit: Bool { model.input.count > TranslatorModel.charLimit }
     private var canSend: Bool {
         EngineHolder.shared.engine != nil && !model.input.isEmpty && !model.isTranslating
+    }
+
+    /// 接近上限显示计数；超限改为中性的分段预告（仅超限时才算 split，避免每键开销）
+    private var countText: String {
+        let count = model.input.count
+        guard count > TranslatorModel.charLimit else {
+            return "\(count) / \(TranslatorModel.charLimit)"
+        }
+        let segments = TextChunker.split(model.input, limit: TranslatorModel.charLimit).count
+        return "\(count) 字 · 将分 \(segments) 段"
     }
 
     var body: some View {
@@ -230,11 +285,11 @@ private struct InputCard: View {
                         .foregroundStyle(.secondary)
                 }
                 .accessibilityLabel("清除")
-                // 接近上限时浮出计数，超限变 orange
+                // 接近上限时浮出计数；超限不再警示，改为中性分段预告
                 if model.input.count >= TranslatorModel.charLimit - 50 {
-                    Text("\(model.input.count) / \(TranslatorModel.charLimit)")
+                    Text(countText)
                         .font(.footnote.monospacedDigit())
-                        .foregroundStyle(overLimit ? Color(.systemOrange) : .secondary)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
@@ -289,6 +344,9 @@ private struct OutputCard: View {
     }
 
     private var caption: String {
+        if model.isTranslating, let p = model.chunkProgress {
+            return "翻译中 · 第 \(p.current)/\(p.total) 段"
+        }
         var s: String
         if let detected = model.detected, let target = model.target {
             s = LanguageLabel.arrow(detected: detected, target: target)
