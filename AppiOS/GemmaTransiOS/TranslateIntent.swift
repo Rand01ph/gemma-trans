@@ -41,9 +41,10 @@ struct TranslateIntent: AppIntent {
             let out = try await result.fullText()
             let translateElapsed = Date().timeIntervalSince(t1)
 
-            GTLog.info("[spike-cpu-intent] mem=\(os_proc_available_memory() / 1_048_576)MB " +
-                       "load=\(String(format: "%.1f", loadElapsed))s " +
-                       "translate=\(String(format: "%.1f", translateElapsed))s")
+            GTLog.info("[intent-diag] in=\"\(text.prefix(60))\" detected=\(result.detected) " +
+                       "target=\(result.target) out=\"\(out.prefix(60))\" " +
+                       "mem=\(os_proc_available_memory() / 1_048_576)MB " +
+                       "load=\(String(format: "%.1f", loadElapsed))s translate=\(String(format: "%.1f", translateElapsed))s")
             return .result(dialog: IntentDialog(stringLiteral: out))
         } catch {
             GTLog.error("[spike-cpu-intent] failed: \(error)")
