@@ -47,6 +47,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
         PRODUCT_NAME: GemmaTrans
         TARGETED_DEVICE_FAMILY: "1,2"
+        # 唯一品牌色：Assets.xcassets 的 AccentColor 双值松石绿作全局 tint
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
   TranslationProvider:
     type: extensionkit-extension
     platform: iOS
