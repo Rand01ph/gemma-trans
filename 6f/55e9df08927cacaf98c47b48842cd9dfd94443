@@ -1,0 +1,21 @@
+Sources/GemmaTransKit/EngineLoadSupport.swift
+  s_b5203e260e0fc3::t_0e6efa81ed3904 11-13,15,31
+Sources/GemmaTransKit/ModelDownloader.swift
+  s_b5203e260e0fc3::t_ed3d5419216720 127-129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "6f55e9df08927cacaf98c47b48842cd9dfd94443",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
