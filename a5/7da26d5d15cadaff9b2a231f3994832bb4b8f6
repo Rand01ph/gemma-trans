@@ -1,0 +1,27 @@
+Sources/GemmaTransKit/EngineTuning.swift
+  s_b5203e260e0fc3::t_554ff722e1a566 5-6,8-10,13-14
+  s_b5203e260e0fc3::t_1c9be03e9a757e 46,53-62
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_b5203e260e0fc3::t_159d942b88800e 88
+  s_b5203e260e0fc3::t_c705eac8df8cab 64,68,70-72
+  s_b5203e260e0fc3::t_7915790093f836 218-249
+Tests/GemmaTransKitTests/EngineTuningTests.swift
+  s_b5203e260e0fc3::t_a524805ff13970 51-70
+  s_b5203e260e0fc3::t_90417fc7f22918 29-30
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "a57da26d5d15cadaff9b2a231f3994832bb4b8f6",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
