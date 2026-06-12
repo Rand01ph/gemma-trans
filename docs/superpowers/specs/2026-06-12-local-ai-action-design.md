@@ -1,7 +1,17 @@
 # GemmaTrans「本地 AI 处理」节点设计（v2 主线 · 待评审）
 
 日期：2026-06-12
-状态：待评审（范围未定稿：最薄版 vs 带任务库 UI，评审后定）
+状态：已确认，范围 **B（带任务库 UI）**，执行中
+
+**范围 B 补充设计（任务库与 Intent 的衔接）**：
+- 自定义任务模型 `ProcessTask`（id/name/instruction，Codable）与 `ProcessTaskStore`
+  放 **Kit**（UserDefaults suite 可注入 → macOS 可单测；iOS 传 App Group suite，
+  intent 与 UI 两进程共享）
+- Intent 的任务参数不用静态 AppEnum，改 **`AppEntity`（ProcessTaskEntity）**：
+  query 返回 内置预设 + 任务库自定义任务——用户在任务库存的任务直接出现在
+  快捷指令的参数下拉里，这是范围 B 的核心价值
+- 任务库 UI：TranslatorView 工具栏入口 → 列表（内置区只读 + 自定义区增删改）→
+  编辑页（名称 + 指令 TextEditor + 试运行：样例输入 → 前台 GPU 引擎流式出结果）
 前置：[2026-06-11-ios-app-design.md](2026-06-11-ios-app-design.md)（已验证的通路事实：
 App Intent 后台 6GB 额度 / CPU 推理短文本 0.3s / GPU 仅前台 / 输出可回传快捷指令）
 
