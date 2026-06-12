@@ -1,0 +1,22 @@
+Sources/GemmaTransKit/ProcessTaskStore.swift
+  s_b5203e260e0fc3::t_744cdd7ef37b57 17-19
+  s_b5203e260e0fc3::t_a0802a6537bf7a 1-16,20-63
+Tests/GemmaTransKitTests/ProcessTaskStoreTests.swift
+  s_b5203e260e0fc3::t_d8e674a65ec8cc 1-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "694134c54836c28774ceaa6ae16dca84bb5881c9",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
