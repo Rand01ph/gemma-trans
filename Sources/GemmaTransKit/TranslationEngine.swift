@@ -172,6 +172,46 @@ public actor TranslationEngine: TranslationService {
         )
     }
 
+    /// 一次性 process 会话：按 instruction 处理 text，返回聚合结果。
+    /// 复用串行队列、maxTokens 与翻译相同的 temperature/repetitionPenalty。
+    /// 输入按 resolvedTuning.maxInputChars 截断；不走 LanguageDetector。
+    public func process(_ text: String, instruction: String) async throws -> String {
+        guard let model else { throw TranslationError.modelNotLoaded }
+        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw TranslationError.emptyInput }
+
+        let maxChars = resolvedTuning?.maxInputChars ?? settings.maxInputChars
+        let input = trimmed.count > maxChars ? String(trimmed.prefix(maxChars)) : trimmed
+        let prompt = PromptBuilder.processUserPrompt(text: input, instruction: instruction)
+        let maxTokens = resolvedTuning?.maxTokens ?? 2048
+
+        let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
+        let previous = lastGeneration
+        activeGenerations += 1
+        lastGeneration = Task {
+            await previous?.value
+            do {
+                let session = ChatSession(
+                    model,
+                    instructions: PromptBuilder.processSystemPrompt,
+                    generateParameters: GenerateParameters(
+                        maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
+                )
+                for try await chunk in session.streamResponse(to: prompt) {
+                    continuation.yield(chunk)
+                }
+                continuation.finish()
+            } catch {
+                GTLog.error("process generation failed: \(error)")
+                continuation.finish(throwing: error)
+            }
+            self.generationFinished()
+        }
+        var out = ""
+        for try await chunk in stream { out += chunk }
+        return out.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     private func generationFinished() {
         activeGenerations -= 1
     }

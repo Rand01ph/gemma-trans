@@ -24,4 +24,16 @@ public enum PromptBuilder {
         let name = languageNames[target] ?? target
         return "Translate the following text into \(name). Output only the translation.\n\n\(text)"
     }
+
+    // MARK: - Process path
+
+    public static let processSystemPrompt = """
+    You are a text processing engine. Follow the instruction exactly. \
+    Output only the result, no explanation. Reply in the language of the input \
+    unless the instruction says otherwise.
+    """
+
+    public static func processUserPrompt(text: String, instruction: String) -> String {
+        "\(instruction)\n\n\(text)"
+    }
 }
