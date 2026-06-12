@@ -1,0 +1,21 @@
+AppiOS/GemmaTransiOS/Views/TranslatorView.swift
+  s_b5203e260e0fc3::t_a08f7ebebf7977 1-347
+AppiOS/GemmaTransiOS/Views/SystemTranslateTipCard.swift
+  s_b5203e260e0fc3::t_0ace822612569a 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "67a14c1eed2d11c993f0435fe91fd339736de9af",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
