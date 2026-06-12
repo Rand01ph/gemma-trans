@@ -61,12 +61,15 @@ public actor TranslationEngine: TranslationService {
             tuning = tuningOverride
             GTLog.info("override tuning: variant=\(tuning.variant.rawValue) maxTokens=\(tuning.maxTokens) input=\(tuning.maxInputChars)")
         } else if settings.autoTuning {
-            tuning = EngineTuning.recommended(
+            let auto = EngineTuning.recommended(
                 physicalMemory: SystemMemory.physical(),
                 availableMemory: SystemMemory.available()
             )
-            GTLog.info("auto tuning: variant=\(tuning.variant.rawValue) maxTokens=\(tuning.maxTokens) input=\(tuning.maxInputChars) " +
+            GTLog.info("auto tuning: variant=\(auto.variant.rawValue) maxTokens=\(auto.maxTokens) input=\(auto.maxInputChars) " +
                        "(ram=\(SystemMemory.physical() >> 30)GB avail=\((SystemMemory.available() ?? 0) >> 30)GB)")
+            // 本地优先纠偏仅对 cacheDirectory==nil（macOS 默认目录）路径生效：
+            // 自定义目录（iOS/CLI）走 tuningOverride 不进此分支，且其本地缓存位置不同
+            tuning = cacheDirectory == nil ? Self.preferLocalModel(over: auto) : auto
         } else {
             tuning = EngineTuning(
                 variant: .gemma4E4B4bit,
@@ -82,11 +85,7 @@ public actor TranslationEngine: TranslationService {
             case .gemma4E4B4bit: LLMRegistry.gemma4_e4b_it_4bit
             case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
             }
-        // repo 由 variant 推导（与 EngineHolder 的 tuningOverride 构成 variant↔repo 名不变量）
-        let repo = switch tuning.variant {
-        case .gemma4E4B4bit: "mlx-community/gemma-4-e4b-it-4bit"
-        case .gemma4E2B4bit: "mlx-community/gemma-4-e2b-it-4bit"
-        }
+        let repo = Self.repoName(for: tuning.variant)
         let loaded: ModelContainer
         if let cacheDirectory {
             // 自研下载路径（iOS/CLI 显式传目录）：快照不完整才触发下载，下载源按 modelSource 切换
@@ -214,6 +213,38 @@ public actor TranslationEngine: TranslationService {
 
     private func generationFinished() {
         activeGenerations -= 1
+    }
+
+    /// repo 由 variant 推导（与 EngineHolder 的 tuningOverride 构成 variant↔repo 名不变量）
+    static func repoName(for variant: ModelVariant) -> String {
+        switch variant {
+        case .gemma4E4B4bit: "mlx-community/gemma-4-e4b-it-4bit"
+        case .gemma4E2B4bit: "mlx-community/gemma-4-e2b-it-4bit"
+        }
+    }
+
+    /// 本地优先纠偏（autoTuning + macOS 默认目录路径）：autoTuning 因可用内存降了档，
+    /// 但降档目标模型本地没有、而按物理内存本该选的更高档模型本地已有
+    /// （新快照完整或 legacy HF 缓存任一）→ 改用更高档。
+    /// 真机现场：16GB Mac 启动时 avail=3GB 被降到 E2B，本地 legacy 缓存只有 E4B(4.9GB)，
+    /// 「省内存」反而触发 3.6GB 下载，且清单请求挂死时菜单永远停在「加载中」。
+    /// 复用本地模型最坏是加载失败（有失败态兜底可重试），强下载最坏是长时间不可用。
+    private static func preferLocalModel(over tuning: EngineTuning) -> EngineTuning {
+        let byRAM = EngineTuning.recommendedByRAM(physicalMemory: SystemMemory.physical())
+        guard byRAM.variant != tuning.variant,
+              !hasLocalModel(for: tuning.variant),
+              hasLocalModel(for: byRAM.variant) else { return tuning }
+        GTLog.info("local-first override: 内存紧张但本地已有 \(byRAM.variant.rawValue)，" +
+                   "优先复用避免下载 \(tuning.variant.rawValue)；内存不足风险由加载失败兜底")
+        return byRAM
+    }
+
+    /// macOS 默认路径下该 variant 的模型本地是否已有：新快照完整 或 legacy HF 缓存非空
+    private static func hasLocalModel(for variant: ModelVariant) -> Bool {
+        let repo = repoName(for: variant)
+        return ModelDownloader.isComplete(
+            ModelDownloader.snapshotDirectory(in: defaultModelDirectory(), repo: repo))
+            || legacyHFCacheHasModel(repo: repo)
     }
 
     /// macOS 默认模型目录：~/Library/Application Support/GemmaTrans/models（自动建目录）
