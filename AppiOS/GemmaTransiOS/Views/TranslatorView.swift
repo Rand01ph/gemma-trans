@@ -158,6 +158,15 @@ struct TranslatorView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        TaskLibraryView()
+                    } label: {
+                        Image(systemName: "wand.and.stars")
+                            .symbolRenderingMode(.hierarchical)
+                    }
+                    .accessibilityLabel("任务库")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
                     Button { showSettings = true } label: {
                         Image(systemName: "gearshape")
                             .symbolRenderingMode(.hierarchical)
