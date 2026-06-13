@@ -14,6 +14,12 @@ struct SettingsSheet: View {
     @AppStorage(ModelStore.sourceKey, store: UserDefaults(suiteName: ModelStore.settingsSuite))
     private var useCNSource = false
 
+    /// 一键导入的快递短信快捷指令模板（iCloud 分享链接）。
+    /// ⚠️ 临时链接，依赖分享者账号与原快捷指令存续；正式发版应换为开发者维护的
+    /// 稳定托管或随包分发的 .shortcut 文件。
+    private static let templateShortcutURL =
+        "https://www.icloud.com/shortcuts/a7f07bbf9b8f45d6a5946006b49bef85"
+
     /// 中文译为：英/日/韩等常见目标
     private let chineseTargets: [(String, String)] = [
         ("en", "English"), ("ja", "日本語"), ("ko", "한국어"),
@@ -57,6 +63,26 @@ struct SettingsSheet: View {
                             Text("设为系统翻译 App")
                             Spacer()
                             Image(systemName: "arrow.up.forward")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .tint(.primary)
+
+                    Button {
+                        if let url = URL(string: Self.templateShortcutURL) {
+                            UIApplication.shared.open(url)
+                        }
+                    } label: {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("获取快递短信快捷指令模板")
+                                Text("一键导入，省去手动搭动作链")
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                            Image(systemName: "square.and.arrow.down")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
                         }
@@ -122,15 +148,16 @@ private struct ShortcutsGuideView: View {
     var body: some View {
         List {
             Section {
-                step(1, "快捷指令 app → 自动化 → 新建，触发器选「信息」，「信息包含」填：取件")
-                step(2, "勾选「立即运行」——不开则每次弹横幅等手动确认，自动化形同虚设")
-                step(3, "添加动作「获取信息内容」")
-                step(4, "添加动作 GemmaTrans「本地 AI 处理」：文本选上一步的信息内容，任务选「快递取件提取」")
-                step(5, "添加动作「添加提醒事项」：标题选上一步输出，列表建议选「取快递」")
+                step(1, "快捷指令 app → 自动化 → 新建，触发器选「信息」")
+                step(2, "「信息包含」必须填关键词（如 快递）——iOS 实测：留空不触发任何短信；发件人那行别碰")
+                step(3, "勾选「立即运行」→ 完成（不开则每次弹横幅等手动确认）")
+                step(4, "加动作 GemmaTrans「本地 AI 处理」：文本选「快捷指令的信息」，任务选「快递取件提取」")
+                step(5, "加「如果」：本地 AI 处理结果「包含」「无」→ 分支内放「停止此快捷指令」")
+                step(6, "加「添加提醒事项」：标题选「本地 AI 处理的结果」（别选「如果的结果」，那个是空的）")
             } header: {
-                Text("快递短信 → 提醒事项（约 2 分钟）")
+                Text("手动配置（约 3 分钟）")
             } footer: {
-                Text("建议在第 4、5 步之间加「如果结果是 无 则停止」，过滤验证码等非快递短信。任务库里保存的自定义任务也会出现在「任务」下拉里。")
+                Text("嫌麻烦？设置里「获取快递短信快捷指令模板」可一键导入动作链，只需自己建个「信息」触发器填关键词。任务库里保存的自定义任务也会出现在「任务」下拉里。")
             }
 
             Section("已知限制") {
