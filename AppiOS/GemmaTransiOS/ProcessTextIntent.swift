@@ -40,6 +40,12 @@ struct ProcessTextIntent: AppIntent {
                 return .result(value: "", dialog: "模型未下载——请先打开 GemmaTrans 完成下载")
             }
 
+            // 空输入（自动化触发时信息为空 / 编辑器手动运行无触发输入）：返回「无」而非抛
+            // emptyInput——契合「包含无→停止」过滤分支让自动化优雅跳过，且不弹失败 dialog
+            guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return .result(value: "无", dialog: "无内容可处理")
+            }
+
             // 指令解析：instruction 参数非空即优先于 task 自带的指令（保持简单，不引入占位实体）
             let resolvedInstruction: String
             if let instruction,

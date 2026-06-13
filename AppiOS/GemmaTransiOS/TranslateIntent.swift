@@ -28,6 +28,11 @@ struct TranslateIntent: AppIntent {
             guard ModelStore.modelDownloaded else {
                 return .result(dialog: "模型未下载——请先打开 GemmaTrans 完成下载")
             }
+            // 空输入（自动化里空短信 / 编辑器手动运行无触发输入）：返回提示而非抛
+            // emptyInput，避免整条快捷指令硬失败
+            guard !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+                return .result(dialog: "（无内容可翻译）")
+            }
             let engine = TranslationEngine(
                 settings: AppSettings.load(suiteName: ModelStore.settingsSuite))
 
