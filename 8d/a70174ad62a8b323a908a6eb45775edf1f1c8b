@@ -1,0 +1,23 @@
+AppiOS/GemmaTransiOS/Views/SettingsSheet.swift
+  s_b5203e260e0fc3::t_6f8bc2c73103ff 152
+docs/shortcuts-guide.md
+  s_b5203e260e0fc3::t_a12103b7bc8c9d 32-37
+  s_b5203e260e0fc3::t_45a236c3164255 21
+  s_b5203e260e0fc3::t_f1d76efa15bbd4 64-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "8da70174ad62a8b323a908a6eb45775edf1f1c8b",
+  "prompts": {},
+  "sessions": {
+    "s_b5203e260e0fc3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "391fee21-3f00-427a-8ff7-8d151fa6b6db",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
