@@ -1,0 +1,69 @@
+App/GemmaTrans/SelectionReader.swift
+  s_dc79470a8e9dec::t_42c2ee1a65c6b0 3-26,28,30,32-41
+App/GemmaTrans/HotkeyCenter.swift
+  s_dc79470a8e9dec::t_ebef8963e053ac 5-6,12,14,18-23,26
+App/GemmaTrans/GemmaTransApp.swift
+  s_dc79470a8e9dec::t_df60083ca890e0 77-86
+  s_dc79470a8e9dec::t_e8e0481bd409d0 110-111
+  s_dc79470a8e9dec::t_79b8309fd43157 37
+  s_dc79470a8e9dec::t_b14f8590c51afd 74,89,91-109,112-116,120
+  s_dc79470a8e9dec::t_2a316808df05e2 75-76
+  s_dc79470a8e9dec::t_0d5e8c5c16c74b 117-119
+  s_dc79470a8e9dec::t_9674ff77795015 2,7,47,54,63-73,87-88,90,121-210
+docs/store-listing.md
+  s_dc79470a8e9dec::t_e0a41f0e94b977 35,37,41-42
+  s_dc79470a8e9dec::t_d6a1f7b6cd4273 43
+  s_dc79470a8e9dec::t_b6f1302595db2d 63-68,70-76
+  s_dc79470a8e9dec::t_8823f3d318f5bb 14
+  s_dc79470a8e9dec::t_2ab4d42c049f68 17,31,39
+  s_dc79470a8e9dec::t_4cf6fdd78d1c22 25
+  s_dc79470a8e9dec::t_9773b847b54d41 28
+README.md
+  s_dc79470a8e9dec::t_2bd21474a58094 88-90,93-94
+  s_dc79470a8e9dec::t_985cec676b6cda 101
+  s_dc79470a8e9dec::t_2627079c5729de 49
+  s_dc79470a8e9dec::t_f4e22e1cc35127 91-92
+  s_dc79470a8e9dec::t_67a85d8846e3d2 38
+  s_dc79470a8e9dec::t_94fd6096158c9f 67
+  s_dc79470a8e9dec::t_ad05956896f467 5
+App/GemmaTrans/SettingsView.swift
+  s_dc79470a8e9dec::t_ea260af51bb151 53
+  s_dc79470a8e9dec::t_50f09714a0c0c3 47-52,54-56
+  s_dc79470a8e9dec::t_d4d65b7f744091 62
+  s_dc79470a8e9dec::t_ef89144461381c 57-61
+  s_dc79470a8e9dec::t_e9839b7ee8a1aa 76-105
+Sources/GemmaTransKit/ModelDownloader.swift
+  s_dc79470a8e9dec::t_339ef7841c0d88 105-107,110
+App/GemmaTrans/Info.plist
+  s_dc79470a8e9dec::t_95d7557d4e9573 24
+  s_dc79470a8e9dec::t_95e171a5d1e639 32-34,36
+  s_dc79470a8e9dec::t_797d1145ed15fa 35
+  s_dc79470a8e9dec::t_d6965713f32816 29-31,37-54
+App/GemmaTrans/TranslationPanel.swift
+  s_dc79470a8e9dec::t_9eb69dd384621e 119-126
+  s_dc79470a8e9dec::t_877c8898746552 55-57
+App/project.yml
+  s_dc79470a8e9dec::t_871edd691c7a80 25,75
+  s_dc79470a8e9dec::t_001c3a62ed1e04 77-79,82-87
+  s_dc79470a8e9dec::t_e06028db838b6e 27-29,32-37
+  s_dc79470a8e9dec::t_05e44488a701f5 31,81
+  s_dc79470a8e9dec::t_7c649c12c1ff2d 30,80
+  s_dc79470a8e9dec::t_01b62da631ffcc 53,107
+  s_dc79470a8e9dec::t_1a508fa7194335 26,76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "e5be9bc832facf2fc5ee84285b63eea96ec53d95",
+  "prompts": {},
+  "sessions": {
+    "s_dc79470a8e9dec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00a834fa-9f14-4474-9203-8ba7908bac53",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
