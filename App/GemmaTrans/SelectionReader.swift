@@ -1,66 +1,43 @@
 import AppKit
-import ApplicationServices
 
-enum SelectionReader {
-    /// 读取当前前台 app 的选中文本。先 AX，失败则模拟 ⌘C（保存并恢复剪贴板）。
-    /// 沙盒实测：AX 读取被沙盒拒绝，但 CGEvent 模拟 ⌘C 在授予辅助功能权限后可用
-    /// （与 MAS 上 Bob/剪贴板管理器同机制），因此两个构建走同一条兜底链。
-    static func read() async -> String? {
-        if let s = axSelectedText(), !s.isEmpty { return s }
-        return await copySelectedText()
-    }
-
-    static var hasAccessibilityPermission: Bool {
-        AXIsProcessTrusted()
-    }
-
-    static func promptForPermission() {
-        let opts = ["AXTrustedCheckOptionPrompt" as CFString: true] as CFDictionary
-        AXIsProcessTrustedWithOptions(opts)
-    }
-
-    private static func axSelectedText() -> String? {
-        let system = AXUIElementCreateSystemWide()
-        var focusedRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(system, kAXFocusedUIElementAttribute as CFString, &focusedRef) == .success,
-              let focused = focusedRef, CFGetTypeID(focused) == AXUIElementGetTypeID() else { return nil }
-        let element = unsafeDowncast(focused, to: AXUIElement.self)
-        var selectedRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, kAXSelectedTextAttribute as CFString, &selectedRef) == .success,
-              let text = selectedRef as? String else { return nil }
-        return text
-    }
-
-    private static func copySelectedText() async -> String? {
-        let pasteboard = NSPasteboard.general
-        let savedItems = pasteboard.pasteboardItems?.map { item -> NSPasteboardItem in
-            let copy = NSPasteboardItem()
-            for type in item.types {
-                if let data = item.data(forType: type) { copy.setData(data, forType: type) }
+/// 选中文本捕获——无需「辅助功能」权限。
+///
+/// 旧版用 AXSelectedText / 模拟 ⌘C（CGEvent）读取前台 app 的选中文本，二者都依赖
+/// 「辅助功能」权限，被 App Review 2.4.5 否决（辅助功能仅限无障碍用途）。本版彻底
+/// 移除该路径，改用两条用户主动发起、零权限的通道：
+///   1. macOS「服务」菜单：用户选中文字后从服务菜单触发，系统把选中文本放进
+///      NSPasteboard 交给本 provider（可在 系统设置 › 键盘 › 键盘快捷键 › 服务 指定快捷键）。
+///   2. 剪贴板热键（见 HotkeyCenter）：用户先复制，再按热键翻译剪贴板内容。
+///
+/// NSServices 在 Info.plist 声明，NSMessage = "translateSelection" 指向下方方法。
+/// provider 实例由 AppDelegate 注册到 NSApp.servicesProvider。
+final class ServicesProvider: NSObject {
+    /// 服务菜单回调：系统在主线程把选中文本放进 pboard 调用本方法。
+    @objc func translateSelection(
+        _ pboard: NSPasteboard,
+        userData: String?,
+        error: AutoreleasingUnsafeMutablePointer<NSString?>?
+    ) {
+        let text = pboard.string(forType: .string)?
+            .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        Task { @MainActor in
+            guard !text.isEmpty else {
+                TranslationPanel.shared.showMessage("未检测到选中文本")
+                return
             }
-            return copy
-        } ?? []
-        let beforeCount = pasteboard.changeCount
-
-        // 模拟 ⌘C
-        let source = CGEventSource(stateID: .combinedSessionState)
-        let keyDown = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: true)  // kVK_ANSI_C
-        keyDown?.flags = .maskCommand
-        let keyUp = CGEvent(keyboardEventSource: source, virtualKey: 0x08, keyDown: false)
-        keyUp?.flags = .maskCommand
-        keyDown?.post(tap: .cghidEventTap)
-        keyUp?.post(tap: .cghidEventTap)
-
-        // 最多等 300ms 剪贴板变化
-        for _ in 0..<6 {
-            try? await Task.sleep(for: .milliseconds(50))
-            if pasteboard.changeCount != beforeCount { break }
+            ServicesProvider.translate(text)
         }
-        let text = pasteboard.changeCount != beforeCount ? pasteboard.string(forType: .string) : nil
+    }
 
-        // 恢复剪贴板
-        pasteboard.clearContents()
-        pasteboard.writeObjects(savedItems)
-        return text
+    /// 公共入口：非空文本交引擎，在鼠标旁浮窗流式显示。引擎未就绪时给提示。
+    /// 服务菜单与剪贴板热键共用此方法。
+    @MainActor
+    static func translate(_ text: String) {
+        let controller = EngineController.shared
+        guard controller.engineStatus == .ready, let engine = controller.engine else {
+            TranslationPanel.shared.showMessage("模型尚未就绪，请稍候")
+            return
+        }
+        TranslationPanel.shared.show(text: text, engine: engine)
     }
 }

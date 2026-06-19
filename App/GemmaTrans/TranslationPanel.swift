@@ -52,6 +52,9 @@ final class TranslationPanel {
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.level = .floating
+        // 跨 Space / 全屏：浮窗出现在「当前」所在 Space（含全屏 app 上方），不跟着主窗口跑回它的桌面。
+        // 主窗口开着时切到全屏 app 划词，旧版会把浮窗弹回主窗口所在桌面——根因是浮窗默认绑主窗口的 Space。
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.contentViewController = hosting
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
@@ -112,6 +115,14 @@ final class TranslationViewModel {
 
     func cancel() {
         task?.cancel()
+    }
+
+    /// 主窗口复用同一个 view model：开新翻译/清空前先取消在飞生成并清状态。
+    func reset() {
+        task?.cancel()
+        output = ""
+        status = ""
+        error = nil
     }
 }
 

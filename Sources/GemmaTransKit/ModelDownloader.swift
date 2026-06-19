@@ -102,9 +102,12 @@ public enum ModelDownloader {
         let dir = snapshotDirectory(in: base, repo: repo)
         try fm.createDirectory(at: dir, withIntermediateDirectories: true)
 
-        // 卡死检测：60s 收不到数据即抛 NSURLError，交给重试（曾见 HF 直连「无进度挂死」）
+        // 卡死检测：60s 收不到数据即抛 NSURLError，交给重试（曾见 HF 直连「无进度挂死」）。
+        // timeoutIntervalForResource 给整次取数（含清单与单文件）兜一个上限，避免极端慢网
+        // 下某个请求虽偶有零星字节、过不了 60s 空闲超时却也永远下不完，让 UI 无限停在某个百分比。
         let configuration = URLSessionConfiguration.default
         configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 6 * 60 * 60  // 6h
         let session = URLSession(configuration: configuration)
         defer { session.finishTasksAndInvalidate() }
 
