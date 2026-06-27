@@ -89,7 +89,27 @@ case "download-e2b":
         print("DOWNLOAD FAILED: \(error)")
         exit(1)
     }
+case "hunyuan-spike":
+    // Plan A 决策门：注册混元类型 → 从本地目录加载 Hy-MT2 → 跑一次生成，人工核对输出。
+    let args = CommandLine.arguments.dropFirst(2)
+    guard let dir = args.first else {
+        print("usage: gemma-trans-cli hunyuan-spike <model-dir> [text]")
+        exit(2)
+    }
+    let text = args.dropFirst().first
+        ?? "Translate the following Chinese into English:\n今天天气很好，我们一起去公园散步吧。"
+    let clock = ContinuousClock()
+    do {
+        let t0 = clock.now
+        print("--- output ---")
+        let out = try await hunyuanSpikeTranslate(
+            modelDir: URL(fileURLWithPath: dir), text: text)
+        print("--- hunyuan-spike done in \(clock.now - t0), \(out.count) chars ---")
+    } catch {
+        print("HUNYUAN-SPIKE FAILED: \(error)")
+        exit(1)
+    }
 default:
-    print("usage: gemma-trans-cli [spike|serve|download-e2b <cache-dir> [hf|ms]]")
+    print("usage: gemma-trans-cli [spike|serve|hunyuan-spike <model-dir> [text]|download-e2b <cache-dir> [hf|ms]]")
     exit(2)
 }
