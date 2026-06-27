@@ -17,6 +17,8 @@ public struct AppSettings: Sendable {
     /// 模型下载走国内源（ModelScope）。国内网络 HF 的 Xet CDN 不可达、hf-mirror 已失效。
     /// key 与 iOS 共享 defaults 的同名开关一致（ModelStore.sourceKey / ContentView @AppStorage）。
     public var useCNSource: Bool
+    /// 活跃模型选择："auto"=按内存选 Gemma；否则为 ModelCatalog 条目 id
+    public var selectedModelID: String
 
     public static let suiteName = "com.gemmatrans.app"
 
@@ -28,7 +30,8 @@ public struct AppSettings: Sendable {
         autoTuning: Bool = true,
         manualMaxTokens: Int = 2048,
         apiEnabled: Bool = true,
-        useCNSource: Bool = false
+        useCNSource: Bool = false,
+        selectedModelID: String = "auto"
     ) {
         self.port = port
         self.targetForChinese = targetForChinese
@@ -38,6 +41,7 @@ public struct AppSettings: Sendable {
         self.manualMaxTokens = manualMaxTokens
         self.apiEnabled = apiEnabled
         self.useCNSource = useCNSource
+        self.selectedModelID = selectedModelID
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
@@ -52,6 +56,7 @@ public struct AppSettings: Sendable {
         if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
         if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
         if d.object(forKey: "useCNSource") != nil { s.useCNSource = d.bool(forKey: "useCNSource") }
+        if let v = d.string(forKey: "selectedModelID"), !v.isEmpty { s.selectedModelID = v }
         return s
     }
 
@@ -65,5 +70,6 @@ public struct AppSettings: Sendable {
         d.set(maxInputChars, forKey: "maxInputChars")
         d.set(apiEnabled, forKey: "apiEnabled")
         d.set(useCNSource, forKey: "useCNSource")
+        d.set(selectedModelID, forKey: "selectedModelID")
     }
 }

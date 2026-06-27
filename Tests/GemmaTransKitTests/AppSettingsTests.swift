@@ -29,4 +29,20 @@ import Foundation
     @Test func defaultSuiteNameUnchanged() {
         #expect(AppSettings.suiteName == "com.gemmatrans.app")
     }
+
+    /// selectedModelID 默认为 "auto"（RAM 自选 Gemma）
+    @Test func test_selectedModelID_defaultsToAuto() {
+        #expect(AppSettings().selectedModelID == "auto")
+    }
+
+    /// selectedModelID 随 UserDefaults 持久化往返
+    @Test func test_selectedModelID_roundTripsThroughDefaults() {
+        let suite = "test.selectedModel.\(UUID().uuidString)"
+        defer { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+
+        var s = AppSettings()
+        s.selectedModelID = "hymt2-8bit"
+        s.save(suiteName: suite)
+        #expect(AppSettings.load(suiteName: suite).selectedModelID == "hymt2-8bit")
+    }
 }
