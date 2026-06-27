@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var settings = AppSettings.load()
     @State private var saved = false
     @State private var switchBlockMessage: String? = nil
+    @State private var installed: [InstalledModel] = []
 
     var body: some View {
         Form {
@@ -66,6 +67,19 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .frame(width: 480)
         .padding()
+        .onAppear { installed = EngineController.shared.installedModels() }
+        .onChange(of: EngineController.shared.engineStatus) { _, _ in
+            installed = EngineController.shared.installedModels()
+        }
+        // 被阻止时弹 alert（移到 Form 顶层以避免 Section 嵌套限制）
+        .alert("无法切换模型", isPresented: Binding(
+            get: { switchBlockMessage != nil },
+            set: { if !$0 { switchBlockMessage = nil } }
+        )) {
+            Button("好") { switchBlockMessage = nil }
+        } message: {
+            Text(switchBlockMessage ?? "")
+        }
     }
 
     /// 从自身 Info.plist 的 NSServices 声明读取「划词翻译」服务的默认快捷键，转成符号（如 ⌥⌘T）。
@@ -140,7 +154,6 @@ struct SettingsView: View {
     @ViewBuilder
     private var modelSection: some View {
         let ec = EngineController.shared
-        let installed = ec.installedModels()
         let installedIDs = Set(installed.map(\.id))
         let selectedID = ec.selectedModelID
 
@@ -195,6 +208,7 @@ struct SettingsView: View {
                                 .help(isAPIRunning ? SwitchBlock.apiRunning.message : "")
                             Button("删除") {
                                 ec.deleteModel(id: entry.id)
+                                installed = EngineController.shared.installedModels()
                             }
                             .disabled(isEngineBusy)
                         } else {
@@ -216,15 +230,6 @@ struct SettingsView: View {
             Toggle("使用国内源（ModelScope）下载模型", isOn: $settings.useCNSource)
             Text("国内网络无法直连 HuggingFace 时开启；切换后下次下载生效")
                 .font(.footnote).foregroundStyle(.secondary)
-        }
-        // 被阻止时弹 alert
-        .alert("无法切换模型", isPresented: Binding(
-            get: { switchBlockMessage != nil },
-            set: { if !$0 { switchBlockMessage = nil } }
-        )) {
-            Button("好") { switchBlockMessage = nil }
-        } message: {
-            Text(switchBlockMessage ?? "")
         }
     }
 
