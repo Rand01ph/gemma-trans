@@ -71,6 +71,10 @@ struct SettingsView: View {
         .onChange(of: EngineController.shared.engineStatus) { _, _ in
             installed = EngineController.shared.installedModels()
         }
+        // 后台下载结束（downloadingModelID 归 nil）后刷新已装列表，让该行从「下载」翻到「设为活跃」
+        .onChange(of: EngineController.shared.downloadingModelID) { _, _ in
+            installed = EngineController.shared.installedModels()
+        }
         // 被阻止时弹 alert（移到 Form 顶层以避免 Section 嵌套限制）
         .alert("无法切换模型", isPresented: Binding(
             get: { switchBlockMessage != nil },
@@ -206,11 +210,15 @@ struct SettingsView: View {
                                 installed = EngineController.shared.installedModels()
                             }
                             .disabled(isEngineBusy)
+                        } else if ec.downloadingModelID == entry.id {
+                            // 正在后台下载这一档（不切换当前模型）
+                            Text("下载中 \(Int((ec.downloadProgress?.fraction ?? 0) * 100))%")
+                                .font(.caption).foregroundStyle(.secondary)
                         } else {
-                            // 未下载
-                            Button("下载并使用") { trySwitchModel(to: entry.id) }
-                                .disabled(switchDisabled)
-                                .help(isEngineBusy ? "引擎忙（加载/下载中），请稍候再切换" : "")
+                            // 未下载：只下载到磁盘，不切换当前模型（可后台下，继续用当前档）
+                            Button("下载") { ec.downloadModel(id: entry.id) }
+                                .disabled(ec.downloadingModelID != nil)
+                                .help(ec.downloadingModelID != nil ? "已有模型在下载中，请稍候" : "")
                         }
                     }
                 } label: {

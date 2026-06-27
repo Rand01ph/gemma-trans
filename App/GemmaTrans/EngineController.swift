@@ -177,6 +177,38 @@ final class EngineController {
         InstalledModels.scan(base: TranslationEngine.defaultModelBase())
     }
 
+    // MARK: - 后台下载（只下不切，与正在用的模型并存）
+
+    private var downloadTask: Task<Void, Never>?
+    /// 正在后台下载的模型 id；nil 表示当前无后台下载。供设置页显示进度/禁用其他下载。
+    private(set) var downloadingModelID: String?
+    private(set) var downloadProgress: DownloadProgress?
+
+    /// 设置页「下载」入口：把某 catalog 模型下到磁盘，**不切换当前活跃引擎**。
+    /// 与 switchModel 的区别：纯磁盘拉取，不动引擎，故可边用当前模型边下新模型。
+    /// 一次只下一个（downloadTask 非空时忽略）；无自动重试，失败后按钮复现可重点。
+    func downloadModel(id: String) {
+        guard downloadTask == nil, let entry = ModelCatalog.entry(id: id) else { return }
+        downloadingModelID = id
+        downloadProgress = DownloadProgress(fraction: 0)
+        let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
+        let base = TranslationEngine.defaultModelBase()
+        GTLog.info("background download started: \(id)")
+        downloadTask = Task {
+            do {
+                _ = try await ModelDownloader.download(repo: entry.repo, from: source, into: base) { p in
+                    Task { @MainActor in EngineController.shared.downloadProgress = p }
+                }
+                GTLog.info("background download done: \(id)")
+            } catch {
+                GTLog.error("background download failed \(id): \(error)")
+            }
+            self.downloadingModelID = nil
+            self.downloadProgress = nil
+            self.downloadTask = nil
+        }
+    }
+
     /// 当前活跃模型的展示名（就绪状态展示用）；Auto 解析到具体 Gemma 档并加前缀。
     var activeModelName: String {
         if let entry = ModelCatalog.entry(id: selectedModelID) {
