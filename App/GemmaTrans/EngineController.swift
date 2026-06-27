@@ -209,8 +209,15 @@ final class EngineController {
         }
     }
 
-    /// 最近一次翻译的速度（tok/s），由翻译完成的 ViewModel 回填，供设置页/状态展示。
-    var lastTokensPerSecond: Double?
+    /// 各模型最近一次翻译的速度（tok/s），按活跃模型 id 分别记录——不同模型速度不同，不能共用一个值。
+    /// 由翻译完成的 ViewModel 通过 recordTokensPerSecond 回填，设置页按行读取。
+    var lastTokensPerSecond: [String: Double] = [:]
+
+    /// 把一次翻译的速度记到「当前活跃模型」名下（selectedModelID；Auto 记在 autoID）。
+    func recordTokensPerSecond(_ tps: Double?) {
+        guard let tps else { return }
+        lastTokensPerSecond[selectedModelID] = tps
+    }
 
     /// 当前活跃模型的展示名（就绪状态展示用）；Auto 解析到具体 Gemma 档并加前缀。
     var activeModelName: String {

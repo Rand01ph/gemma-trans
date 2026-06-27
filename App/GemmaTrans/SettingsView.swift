@@ -171,7 +171,7 @@ struct SettingsView: View {
                             .background(Color.accentColor.opacity(0.15))
                             .foregroundStyle(Color.accentColor)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
-                        if let tps = ec.lastTokensPerSecond {
+                        if let tps = ec.lastTokensPerSecond[ModelCatalog.autoID] {
                             Text(String(format: "%.1f tok/s", tps))
                                 .font(.caption).foregroundStyle(.secondary)
                         }
@@ -202,7 +202,7 @@ struct SettingsView: View {
                                 .background(Color.accentColor.opacity(0.15))
                                 .foregroundStyle(Color.accentColor)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
-                            if let tps = ec.lastTokensPerSecond {
+                            if let tps = ec.lastTokensPerSecond[entry.id] {
                                 Text(String(format: "%.1f tok/s", tps))
                                     .font(.caption).foregroundStyle(.secondary)
                             }
