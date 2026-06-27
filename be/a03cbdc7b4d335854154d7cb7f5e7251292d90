@@ -1,0 +1,21 @@
+App/GemmaTrans/SettingsView.swift
+  s_c5b5ee14ac3b27::t_1a3833ed4a7be8 100-119,121,127-259
+  s_c5b5ee14ac3b27::t_d34a3d437e9834 120,122-126
+  s_c5b5ee14ac3b27::t_545632e4949c50 9,13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "bea03cbdc7b4d335854154d7cb7f5e7251292d90",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
