@@ -109,7 +109,34 @@ case "hunyuan-spike":
         print("HUNYUAN-SPIKE FAILED: \(error)")
         exit(1)
     }
+case "engine-translate":
+    // Plan C 验证：走正式引擎路径（load(resolved:) + translate）测某 catalog 模型的端到端翻译。
+    let args = Array(CommandLine.arguments.dropFirst(2))
+    guard args.count >= 2 else {
+        print("usage: gemma-trans-cli engine-translate <model-id> <cache-dir> [text]")
+        exit(2)
+    }
+    let resolved = ActiveModelResolver.resolve(
+        selectedID: args[0],
+        physicalMemory: SystemMemory.physical(),
+        availableMemory: SystemMemory.available())
+    let engine = TranslationEngine(settings: settings)
+    do {
+        try await engine.load(
+            resolved: resolved,
+            cacheDirectory: URL(fileURLWithPath: args[1]),
+            modelSource: .modelScope
+        ) { p in printDownloadProgress(p) }
+        let text = args.count >= 3 ? args[2] : "今天天气很好，我们一起去公园散步吧。"
+        print("\n--- translate via engine (family=\(resolved.entry.family.rawValue)) ---")
+        let result = try await engine.translate(text, target: nil)
+        for try await chunk in result.chunks { print(chunk, terminator: "") }
+        print("\n--- engine-translate OK (detected=\(result.detected) target=\(result.target)) ---")
+    } catch {
+        print("ENGINE-TRANSLATE FAILED: \(error)")
+        exit(1)
+    }
 default:
-    print("usage: gemma-trans-cli [spike|serve|hunyuan-spike <model-dir> [text]|download-e2b <cache-dir> [hf|ms]]")
+    print("usage: gemma-trans-cli [spike|serve|hunyuan-spike <model-dir> [text]|engine-translate <model-id> <cache-dir> [text]|download-e2b <cache-dir> [hf|ms]]")
     exit(2)
 }

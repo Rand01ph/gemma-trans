@@ -13,6 +13,9 @@ public actor TranslationEngine: TranslationService {
     private var activeGenerations = 0
     private let detector = LanguageDetector()
     private var resolvedTuning: EngineTuning?
+    /// 当前活跃模型的 family，决定 prompt 策略：Gemma 用 systemPrompt；Hy-MT2（混元）按其
+    /// 推荐格式只发 user 指令、不用 system（spike 验证：无 system 译文最稳）。
+    private var activeFamily: ModelFamily = .gemma
 
     /// 设置页展示用（actor 属性，外部 await 访问）
     public var currentTuning: EngineTuning? { resolvedTuning }
@@ -78,6 +81,7 @@ public actor TranslationEngine: TranslationService {
             )
             GTLog.info("manual tuning: maxTokens=\(tuning.maxTokens) input=\(tuning.maxInputChars)")
         }
+        activeFamily = .gemma
         resolvedTuning = tuning
 
         let configuration =
@@ -145,6 +149,7 @@ public actor TranslationEngine: TranslationService {
             GTLog.info("[spike-cpu] MLX device set to CPU")
         }
         resolvedTuning = resolved.tuning
+        activeFamily = resolved.entry.family
         GTLog.info("load(resolved:) entry=\(resolved.entry.id) repo=\(resolved.entry.repo) " +
                    "family=\(resolved.entry.family.rawValue)")
 
@@ -161,7 +166,9 @@ public actor TranslationEngine: TranslationService {
         case .gemma:
             loaded = try await loadModelContainer(from: snapshotDir, using: #huggingFaceTokenizerLoader())
         case .hunyuanMT2:
-            throw TranslationError.modelNotSupported("Hy-MT2 暂未接入（待架构移植完成后启用）")
+            // 混元架构不在 Swift MLXLLM 内置类型表，加载前注册自定义类型（幂等）。
+            await registerHunyuanIfNeeded()
+            loaded = try await loadModelContainer(from: snapshotDir, using: #huggingFaceTokenizerLoader())
         }
 
         await finishLoading(loaded, label: resolved.entry.repo)
@@ -192,6 +199,9 @@ public actor TranslationEngine: TranslationService {
         let plan = detector.plan(for: input, target: target, settings: settings)
         let prompt = PromptBuilder.userPrompt(text: input, target: plan.target)
         let maxTokens = resolvedTuning?.maxTokens ?? 2048
+        // Gemma 用固定系统指令；Hy-MT2 按推荐只发 user 指令（无 system）。
+        // 先 capture 到局部，避免下面的 Task 闭包访问 actor 隔离的 activeFamily。
+        let instructions = activeFamily == .gemma ? PromptBuilder.systemPrompt : nil
 
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let previous = lastGeneration
@@ -204,7 +214,7 @@ public actor TranslationEngine: TranslationService {
                 // 降到 0.1（近贪心）让模型确定性遵循翻译指令。repetitionPenalty 抑制小模型复读。
                 let session = ChatSession(
                     model,
-                    instructions: PromptBuilder.systemPrompt,
+                    instructions: instructions,
                     generateParameters: GenerateParameters(
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
@@ -235,6 +245,7 @@ public actor TranslationEngine: TranslationService {
         let input = trimmed.count > maxChars ? String(trimmed.prefix(maxChars)) : trimmed
         let prompt = PromptBuilder.processUserPrompt(text: input, instruction: instruction)
         let maxTokens = resolvedTuning?.maxTokens ?? 2048
+        let instructions = activeFamily == .gemma ? PromptBuilder.processSystemPrompt : nil
 
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let previous = lastGeneration
@@ -244,7 +255,7 @@ public actor TranslationEngine: TranslationService {
             do {
                 let session = ChatSession(
                     model,
-                    instructions: PromptBuilder.processSystemPrompt,
+                    instructions: instructions,
                     generateParameters: GenerateParameters(
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
