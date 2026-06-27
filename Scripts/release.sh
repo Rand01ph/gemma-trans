@@ -21,6 +21,24 @@ if [ ! -f "$NOTARY_KEY" ]; then
     exit 1
 fi
 
+# 公证（带重试）：国内网络连 Apple notary 的 S3 上传偶发 deadlineExceeded，自动退避重试。
+notarize() {
+    local file="$1" attempt=1 max=3
+    while true; do
+        if xcrun notarytool submit "$file" --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" \
+                --issuer "$NOTARY_ISSUER" --wait; then
+            return 0
+        fi
+        if [ "$attempt" -ge "$max" ]; then
+            echo "❌ 公证失败（已重试 $max 次）：$file"
+            return 1
+        fi
+        echo "⚠️ 公证上传/等待失败 ${attempt}/$max；30s 后重试：$file"
+        attempt=$((attempt + 1))
+        sleep 30
+    done
+}
+
 echo "==> 构建 Release $VERSION"
 cd $APP_DIR
 xcodegen generate >/dev/null
@@ -36,7 +54,7 @@ echo "==> 打包并提交公证（可能数分钟）"
 mkdir -p ../dist
 ZIP="../dist/GemmaTrans-$VERSION.zip"
 ditto -c -k --keepParent "$APP" "$ZIP"
-xcrun notarytool submit "$ZIP" --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER" --wait
+notarize "$ZIP"
 
 echo "==> 装订并重新打包"
 xcrun stapler staple "$APP"
@@ -70,7 +88,7 @@ fi
 [ -f "$DMG" ] || { echo "❌ DMG 生成失败"; exit 1; }
 
 echo "==> 公证 + 装订 DMG（可能数分钟）"
-xcrun notarytool submit "$DMG" --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER" --wait
+notarize "$DMG"
 xcrun stapler staple "$DMG"
 spctl --assess --type open --context context:primary-signature --verbose "$DMG" || true
 
