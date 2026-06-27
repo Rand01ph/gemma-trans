@@ -1,0 +1,20 @@
+App/GemmaTrans/EngineController.swift
+  s_c5b5ee14ac3b27::t_0effa3b67fac62 142
+  s_c5b5ee14ac3b27::t_6d50d5683e3371 19,26-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "d4af140f0534d6c04fcef01c51051ee1df2005b8",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
