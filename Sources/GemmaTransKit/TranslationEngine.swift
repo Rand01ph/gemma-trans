@@ -308,6 +308,17 @@ public actor TranslationEngine: TranslationService {
             || legacyHFCacheHasModel(repo: repo)
     }
 
+    /// 暴露默认模型目录给 App 层（EngineController.deleteModel / installedModels 用）
+    public static func defaultModelBase() -> URL { defaultModelDirectory() }
+
+    /// 卸载当前模型并回收工作余量缓冲（切换模型前调用）。
+    /// 权重被 model 强引用；置 nil 后 ARC 释放，clearCache 再回收空闲缓冲池余量。
+    public func unload() {
+        model = nil
+        MLX.Memory.clearCache()
+        GTLog.info("mlx model unloaded (switch)")
+    }
+
     /// macOS 默认模型目录：~/Library/Application Support/GemmaTrans/models（自动建目录）
     private static func defaultModelDirectory() -> URL {
         let dir = FileManager.default
