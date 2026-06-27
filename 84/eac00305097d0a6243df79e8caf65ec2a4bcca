@@ -1,0 +1,27 @@
+App/GemmaTrans/TranslationPanel.swift
+  s_c5b5ee14ac3b27::t_125d1cf0b4c414 157-160
+  s_c5b5ee14ac3b27::t_a4302658ff1e77 107
+  s_c5b5ee14ac3b27::t_6e3778fe772bfe 94-95
+  s_c5b5ee14ac3b27::t_2599905a54abd9 129
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_c5b5ee14ac3b27::t_df57ae03eaafc4 224-234
+  s_c5b5ee14ac3b27::t_a14a73686b7fbf 20-22
+  s_c5b5ee14ac3b27::t_ac8af3f1a470fc 253-257
+  s_c5b5ee14ac3b27::t_f1f8daa468de3d 279-289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "84eac00305097d0a6243df79e8caf65ec2a4bcca",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
