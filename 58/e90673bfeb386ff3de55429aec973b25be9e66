@@ -1,0 +1,21 @@
+Scripts/release.sh
+  s_c5b5ee14ac3b27::t_6a69ac00183c15 24-41
+  s_c5b5ee14ac3b27::t_0dad7e01278aec 57
+  s_c5b5ee14ac3b27::t_7b7fbe867373a8 91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "58e90673bfeb386ff3de55429aec973b25be9e66",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
