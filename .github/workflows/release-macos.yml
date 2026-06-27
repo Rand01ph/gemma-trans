@@ -1,0 +1,41 @@
+name: Release macOS
+
+# 打 tag（vX.Y.Z）即在自托管 Mac runner 上构建、签名、公证，
+# 产出 Developer ID + 公证的 .zip 与 .dmg，并附到同名 GitHub Release。
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write # 创建 Release 需要写权限
+
+jobs:
+  release:
+    # 自托管 runner：证书 / 公证密钥 / xcodegen / Metal Toolchain 都在你机器上。
+    # 注册见仓库 Settings → Actions → Runners → New self-hosted runner。
+    runs-on: [self-hosted, macOS]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 校验 tag 与 MARKETING_VERSION 一致
+        run: |
+          VERSION=$(grep 'MARKETING_VERSION' App/project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          TAG="${GITHUB_REF_NAME#v}"
+          if [ "$VERSION" != "$TAG" ]; then
+            echo "::error::tag v$TAG 与 App/project.yml 的 MARKETING_VERSION $VERSION 不一致，请先对齐再打 tag"
+            exit 1
+          fi
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: 构建 + 签名 + 公证（zip + dmg）
+        run: ./Scripts/release.sh
+
+      - name: 创建 Release 并上传产物
+        uses: softprops/action-gh-release@v2
+        with:
+          name: GemmaTrans ${{ env.VERSION }}
+          generate_release_notes: true
+          files: |
+            dist/GemmaTrans-${{ env.VERSION }}.zip
+            dist/GemmaTrans-${{ env.VERSION }}.dmg
