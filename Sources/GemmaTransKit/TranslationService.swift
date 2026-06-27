@@ -31,4 +31,6 @@ public enum TranslationError: Error, Sendable {
     case modelNotLoaded
     case emptyInput
     case queueTimeout
+    /// family 对应的加载器尚未实现；msg 为展示给调用方的中文说明。
+    case modelNotSupported(String)
 }

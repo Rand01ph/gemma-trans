@@ -121,15 +121,63 @@ public actor TranslationEngine: TranslationService {
                     from: dir, using: #huggingFaceTokenizerLoader())
             }
         }
+        await finishLoading(loaded, label: configuration.name)
+    }
+
+    /// 加载指定 ResolvedModel（按 entry.repo 下载/加载，按 entry.family 分发）。
+    /// 所有既有调用方（EngineController / EngineHolder / CLI）继续使用旧签名，两者互不影响。
+    /// - Parameter resolved: 已解析的模型条目 + 调优参数（由 ActiveModelResolver 产出）。
+    /// - Parameter cacheDirectory: 非 nil 时走自研 ModelDownloader（iOS/CLI）；nil 时走 macOS 三级策略。
+    ///   注意：此方法面向「按 catalog 显式切模型」场景，macOS 三级策略在此简化为「新快照优先，无则下载」，
+    ///   不再检查 legacyHFCache（legacy 条目是旧两档 Gemma，旧 load() 已覆盖）。
+    /// - Parameter modelSource: 下载源（国内切 ModelScope）。
+    /// - Parameter useCPU: spike 用；true 时切 MLX 全局默认设备到 CPU。
+    /// - Parameter progress: 下载进度回调。
+    public func load(
+        resolved: ResolvedModel,
+        cacheDirectory: URL? = nil,
+        modelSource: ModelSource = .huggingFace,
+        useCPU: Bool = false,
+        progress: @Sendable @escaping (DownloadProgress) -> Void = { _ in }
+    ) async throws {
+        if useCPU {
+            MLX.Device.setDefault(device: MLX.Device(.cpu))
+            GTLog.info("[spike-cpu] MLX device set to CPU")
+        }
+        resolvedTuning = resolved.tuning
+        GTLog.info("load(resolved:) entry=\(resolved.entry.id) repo=\(resolved.entry.repo) " +
+                   "family=\(resolved.entry.family.rawValue)")
+
+        let repo = resolved.entry.repo
+        let base = cacheDirectory ?? Self.defaultModelDirectory()
+        let snapshotDir = ModelDownloader.snapshotDirectory(in: base, repo: repo)
+        if !ModelDownloader.isComplete(snapshotDir) {
+            _ = try await ModelDownloader.download(
+                repo: repo, from: modelSource, into: base, progress: progress)
+        }
+
+        let loaded: ModelContainer
+        switch resolved.entry.family {
+        case .gemma:
+            loaded = try await loadModelContainer(from: snapshotDir, using: #huggingFaceTokenizerLoader())
+        case .hunyuanMT2:
+            throw TranslationError.modelNotSupported("Hy-MT2 暂未接入（待架构移植完成后启用）")
+        }
+
+        await finishLoading(loaded, label: resolved.entry.repo)
+    }
+
+    /// 预热 + 置 ready + 回收缓冲。两个 load 入口共用。
+    private func finishLoading(_ container: ModelContainer, label: String) async {
         // 预热：首次生成触发 Metal 内核编译（冷启可超 30s，曾致首单超时 500）。
         // 在置 ready 前用 1-token 生成把编译做完，用户首单即快。
-        let warmup = ChatSession(loaded, generateParameters: GenerateParameters(maxTokens: 1))
+        let warmup = ChatSession(container, generateParameters: GenerateParameters(maxTokens: 1))
         _ = try? await warmup.respond(to: "hi")
-        model = loaded
+        model = container
         // 预热（1-token 生成）留下的临时缓冲在置 ready 后立即回收，让初始空闲态就精简；
         // 权重已在 model 中常驻，clearCache 不动它。
         MLX.Memory.clearCache()
-        GTLog.info("mlx model loaded+warmed: \(configuration.name), " +
+        GTLog.info("mlx model loaded+warmed: \(label), " +
                    "active(权重)\(MLX.Memory.activeMemory >> 20)MB cache\(MLX.Memory.cacheMemory >> 20)MB")
     }
 
