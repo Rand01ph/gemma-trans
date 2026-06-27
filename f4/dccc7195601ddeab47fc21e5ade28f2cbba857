@@ -1,0 +1,21 @@
+Sources/GemmaTransKit/ModelSwitchGuard.swift
+  s_c5b5ee14ac3b27::t_13bcb523541597 1-31
+Tests/GemmaTransKitTests/ModelSwitchGuardTests.swift
+  s_c5b5ee14ac3b27::t_145df4e9c7eb2d 1-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "f4dccc7195601ddeab47fc21e5ade28f2cbba857",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
