@@ -1,0 +1,22 @@
+App/project.yml
+  s_c5b5ee14ac3b27::t_a5942edd861c87 24,74
+  s_c5b5ee14ac3b27::t_a1e63710be40dc 53,107
+  s_c5b5ee14ac3b27::t_e0e80202c5874f 25,75
+  s_c5b5ee14ac3b27::t_4108e50ea2412e 52,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "52344d0d4fdcc8fdd4c55c0e1f2f2b5650f7fe36",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
