@@ -1,0 +1,22 @@
+Scripts/release-mas.sh
+  s_c5b5ee14ac3b27::t_3c9fdbf1bdc30a 1-41
+README.md
+  s_c5b5ee14ac3b27::t_ed1444ef180f7d 8-10
+  s_c5b5ee14ac3b27::t_acf0e425cef2a9 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "67125855ce3202d81e84952dd6ef7390648e433b",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
