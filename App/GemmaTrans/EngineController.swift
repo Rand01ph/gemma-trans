@@ -16,14 +16,20 @@ final class EngineController {
     private(set) var apiStatus: APIStatus = .disabled
     private(set) var engine: TranslationEngine?
     private var serverTask: Task<Void, Error>?
-    private(set) var settings = AppSettings.load()
+    private(set) var settings: AppSettings
     /// 在飞加载任务 + 代际号：reload 取消旧任务后，旧任务的迟到回调（进度/重试/失败）
     /// 凭代际号被丢弃，不会覆盖新任务刚置的状态
     private var loadTask: Task<Void, Never>?
     private var loadGeneration = 0
 
     /// 当前选中的模型 ID（镜像 AppSettings.selectedModelID，供 Task 8 UI 绑定）
-    private(set) var selectedModelID: String = AppSettings.load().selectedModelID
+    private(set) var selectedModelID: String
+
+    private init() {
+        let loaded = AppSettings.load()
+        self.settings = loaded
+        self.selectedModelID = loaded.selectedModelID
+    }
 
     func start() {
         engineStatus = .loading("正在准备…")
@@ -133,8 +139,8 @@ final class EngineController {
         settings.save()
         self.selectedModelID = id
         GTLog.info("switching model to \(id)")
+        loadTask?.cancel()  // 先取消在飞加载，防止旧任务在 unload 后写入 self.engine
         await engine?.unload()
-        loadTask?.cancel()  // 取消在飞加载（若有），代际号隔离迟到回调
         start()             // start() 重读 settings 并按新 selectedModelID 解析（R1）
         return nil
     }
