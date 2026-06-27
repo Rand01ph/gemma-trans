@@ -1,0 +1,19 @@
+docs/superpowers/specs/2026-06-27-multi-model-config-and-hymt2-design.md
+  s_c5b5ee14ac3b27::t_ed9a1dac71edf9 1-111
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "5b301f310e7299b15700063e87d46400c999d628",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
