@@ -1,0 +1,21 @@
+Scripts/release.sh
+  s_c5b5ee14ac3b27::t_d38d66a87fd567 46,48-76,78
+.github/workflows/release-macos.yml
+  s_c5b5ee14ac3b27::t_0c845a8f5864c9 1-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "eccaa273d40fb995cb0393a8d3de71be57e4dfdb",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
