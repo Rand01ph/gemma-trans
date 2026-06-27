@@ -1,11 +1,13 @@
 # GemmaTrans
 
-macOS 本地大模型划词翻译。基于 Google **Gemma 4**（4-bit 量化）+ **MLX-Swift**（Apple Silicon 原生加速），完全离线运行：
+macOS 本地大模型划词翻译。基于 **MLX-Swift**（Apple Silicon 原生加速），支持多个本地翻译模型（Google **Gemma 4** / 腾讯混元 **Hy-MT2**），完全离线运行：
 
 - **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + 兼容 `/v1/chat/completions` 请求格式，PopClip、Bob、Raycast 等工具直连
 - **menu bar app**：全局热键划词翻译，浮窗流式显示译文
 - **智能双向**：自动检测语言——中文 → 英文，其他语言 → 中文（目标语言可配置）
-- **模型自动下载**：首次启动从 Hugging Face 自动拉取（约 1.5–2.4GB，按内存自动选 E4B/E2B 变体）
+- **多模型可选**：内置 Gemma 4（E4B/E2B，4-bit）与腾讯混元 **Hy-MT2**（1.8B 翻译专用，4/8-bit）；设置页可下载、切换、删除模型，支持后台下载（边用边下）
+- **性能可视**：翻译后显示每秒 token 速率（按模型分别记录），随时观察各模型快慢
+- **模型下载**：首次启动按内存自动选 Gemma 档拉取（E4B≈4.9GB / E2B≈3.6GB），双源（HuggingFace / 国内 ModelScope）+ 断点续传
 
 ## 快速开始
 
