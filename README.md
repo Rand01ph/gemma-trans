@@ -2,7 +2,7 @@
 
 macOS 本地大模型划词翻译。基于 Google **Gemma 4**（4-bit 量化）+ **MLX-Swift**（Apple Silicon 原生加速），完全离线运行：
 
-- **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + **OpenAI 兼容** `/v1/chat/completions`，PopClip、Bob、Raycast 等工具直连
+- **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + 兼容 `/v1/chat/completions` 请求格式，PopClip、Bob、Raycast 等工具直连
 - **menu bar app**：全局热键划词翻译，浮窗流式显示译文
 - **智能双向**：自动检测语言——中文 → 英文，其他语言 → 中文（目标语言可配置）
 - **模型自动下载**：首次启动从 Hugging Face 自动拉取（约 1.5–2.4GB，按内存自动选 E4B/E2B 变体）
@@ -35,7 +35,7 @@ curl -s -X POST http://127.0.0.1:8765/translate -H 'Content-Type: application/js
 curl -s -N -X POST http://127.0.0.1:8765/translate -H 'Content-Type: application/json' \
   -d '{"text": "今天天气真好", "stream": true}'
 
-# OpenAI 兼容接口
+# /v1/chat/completions 接口
 curl -s -X POST http://127.0.0.1:8765/v1/chat/completions -H 'Content-Type: application/json' \
   -d '{"messages": [{"role": "user", "content": "Hello world"}]}'
 ```
@@ -46,7 +46,7 @@ curl -s -X POST http://127.0.0.1:8765/v1/chat/completions -H 'Content-Type: appl
 2. 在 Finder 中双击 `popclip/GemmaTrans.popclipext` 目录，PopClip 会提示安装
 3. 任意 app 选中文字 → 点击 PopClip 弹条中的 GemmaTrans 图标 → 顶部显示译文
 
-PopClip 也可以用其内置 OpenAI 扩展指向 `http://127.0.0.1:8765/v1`（API key 随意填）。
+PopClip 也可以用任何接受 `/v1/chat/completions` 的扩展指向 `http://127.0.0.1:8765/v1`（API key 随意填）。
 
 ## API 文档
 
@@ -64,7 +64,7 @@ SSE 流格式：若干 `data: {"delta": "..."}` → 一条 `data: {"translation"
 
 ### `POST /v1/chat/completions`
 
-OpenAI 兼容（含 `stream: true` SSE）。取最后一条 `user` 消息按智能双向翻译；`model` 字段与 system 消息被忽略——这是翻译器，不是通用聊天。
+兼容 `/v1/chat/completions` 请求格式（含 `stream: true` SSE），方便接受该格式的工具直连本地引擎。取最后一条 `user` 消息按智能双向翻译；`model` 字段与 system 消息被忽略——这是翻译器，不是通用聊天，且全程本地，不连任何外部服务。
 
 ### `GET /health`
 
@@ -85,17 +85,19 @@ xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Debug
 open build/Build/Products/Debug/GemmaTrans.app
 ```
 
-- 启动后 menu bar 出现 💬 图标，模型加载完成（约 15s）后图标变实心，并在 `127.0.0.1:8765` 提供 API（app 与 CLI serve 二者跑一个即可，同时跑会端口冲突）
-- **首次使用**：在任意 app 选中文字按 `⌥D`，系统会弹出"辅助功能"授权请求 → 系统设置中勾选 GemmaTrans → 重启 app
-- 之后：选中文字 → `⌥D` → 鼠标旁浮窗流式显示译文（Esc 关闭，可一键复制）
-- 不选文字按 `⌥D` 会提示"未检测到选中文本"
-- 菜单"设置…"可改模型路径、目标语言、API 端口和热键
+- 启动后弹出主窗口（含模型下载进度），同时 menu bar 出现 💬 图标；模型加载完成（约 15s）后图标变实心，并在 `127.0.0.1:8765` 提供 API（app 与 CLI serve 二者跑一个即可，同时跑会端口冲突）
+- **三种译法**（均无需任何系统权限）：
+  - 主窗口里粘贴/输入文字 → 点「翻译」流式显示译文
+  - 任意 app 选中文字 → 按 `⌥⌘T` 一键翻译选中内容，**无需先复制**；也可从「服务」菜单点「Translate with GemmaTrans」
+    - 这是 macOS「服务」快捷键，默认 `⌥⌘T`。macOS 不一定会自动启用声明的默认值——若按了没反应，去 系统设置 › 键盘 › 键盘快捷键 › 服务 › 文本，勾选并确认 Translate with GemmaTrans 的快捷键（一次性，之后长期生效；也可在这里改键）
+  - 复制文字后按 `⌥D` → 翻译剪贴板内容（鼠标旁浮窗流式显示，Esc 关闭，可一键复制）
+- 菜单"设置…"可改目标语言、API 端口和剪贴板热键
 - 设置"性能"区默认按机器内存自动配置 KV cache 与输入上限（加载时还会按当前可用内存降档），也可手动覆盖
 
 ## 架构
 
 ```
 GemmaTransKit     核心库：MLX-Swift 引擎封装、语言检测（NaturalLanguage）、提示词、按内存自动调优
-GemmaTransServer  HTTP 层：FlyingFox，/translate + OpenAI 兼容 + SSE
+GemmaTransServer  HTTP 层：FlyingFox，/translate + /v1/chat/completions + SSE
 gemma-trans-cli   命令行：spike / serve
 ```

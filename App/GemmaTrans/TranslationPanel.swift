@@ -52,6 +52,9 @@ final class TranslationPanel {
         panel.titlebarAppearsTransparent = true
         panel.isFloatingPanel = true
         panel.level = .floating
+        // 跨 Space / 全屏：浮窗出现在「当前」所在 Space（含全屏 app 上方），不跟着主窗口跑回它的桌面。
+        // 主窗口开着时切到全屏 app 划词，旧版会把浮窗弹回主窗口所在桌面——根因是浮窗默认绑主窗口的 Space。
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.contentViewController = hosting
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
@@ -88,6 +91,8 @@ final class TranslationViewModel {
     var output = ""
     var status = ""
     var error: String?
+    /// 上次生成速度（tok/s），生成结束后从引擎取，供面板观察性能。
+    var tokensPerSecond: Double?
     private var task: Task<Void, Never>?
 
     func start(text: String, engine: TranslationEngine) {
@@ -99,6 +104,8 @@ final class TranslationViewModel {
                 for try await chunk in result.chunks {
                     output += chunk
                 }
+                tokensPerSecond = await engine.lastTokensPerSecond
+                EngineController.shared.recordTokensPerSecond(tokensPerSecond)
                 status = "\(result.detected) → \(result.target)"
             } catch is CancellationError {
                 // 被新请求取代，旧浮窗已关闭，无需展示
@@ -112,6 +119,15 @@ final class TranslationViewModel {
 
     func cancel() {
         task?.cancel()
+    }
+
+    /// 主窗口复用同一个 view model：开新翻译/清空前先取消在飞生成并清状态。
+    func reset() {
+        task?.cancel()
+        output = ""
+        status = ""
+        error = nil
+        tokensPerSecond = nil
     }
 }
 
@@ -139,6 +155,10 @@ struct TranslationView: View {
             }
             HStack {
                 Text(model.status).font(.caption).foregroundStyle(.secondary)
+                if let tps = model.tokensPerSecond {
+                    Text(String(format: "· %.1f tok/s", tps))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Spacer()
                 Button("复制") {
                     NSPasteboard.general.clearContents()

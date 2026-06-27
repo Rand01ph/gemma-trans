@@ -14,6 +14,11 @@ public struct AppSettings: Sendable {
     public var manualMaxTokens: Int
     /// 本地 HTTP API（PopClip 等外部工具用）；划词翻译是进程内调用，不受此开关影响
     public var apiEnabled: Bool
+    /// 模型下载走国内源（ModelScope）。国内网络 HF 的 Xet CDN 不可达、hf-mirror 已失效。
+    /// key 与 iOS 共享 defaults 的同名开关一致（ModelStore.sourceKey / ContentView @AppStorage）。
+    public var useCNSource: Bool
+    /// 活跃模型选择："auto"=按内存选 Gemma；否则为 ModelCatalog 条目 id
+    public var selectedModelID: String
 
     public static let suiteName = "com.gemmatrans.app"
 
@@ -24,7 +29,9 @@ public struct AppSettings: Sendable {
         maxInputChars: Int = 1500,
         autoTuning: Bool = true,
         manualMaxTokens: Int = 2048,
-        apiEnabled: Bool = true
+        apiEnabled: Bool = true,
+        useCNSource: Bool = false,
+        selectedModelID: String = "auto"
     ) {
         self.port = port
         self.targetForChinese = targetForChinese
@@ -33,10 +40,12 @@ public struct AppSettings: Sendable {
         self.autoTuning = autoTuning
         self.manualMaxTokens = manualMaxTokens
         self.apiEnabled = apiEnabled
+        self.useCNSource = useCNSource
+        self.selectedModelID = selectedModelID
     }
 
-    /// 从 UserDefaults 读取（缺省值兜底）
-    public static func load() -> AppSettings {
+    /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
+    public static func load(suiteName: String = Self.suiteName) -> AppSettings {
         guard let d = UserDefaults(suiteName: suiteName) else { return AppSettings() }
         var s = AppSettings()
         if d.integer(forKey: "port") > 0 { s.port = UInt16(d.integer(forKey: "port")) }
@@ -46,11 +55,13 @@ public struct AppSettings: Sendable {
         if d.integer(forKey: "manualMaxTokens") > 0 { s.manualMaxTokens = d.integer(forKey: "manualMaxTokens") }
         if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
         if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
+        if d.object(forKey: "useCNSource") != nil { s.useCNSource = d.bool(forKey: "useCNSource") }
+        if let v = d.string(forKey: "selectedModelID"), !v.isEmpty { s.selectedModelID = v }
         return s
     }
 
-    public func save() {
-        guard let d = UserDefaults(suiteName: Self.suiteName) else { return }
+    public func save(suiteName: String = Self.suiteName) {
+        guard let d = UserDefaults(suiteName: suiteName) else { return }
         d.set(Int(port), forKey: "port")
         d.set(targetForChinese, forKey: "targetForChinese")
         d.set(targetDefault, forKey: "targetDefault")
@@ -58,5 +69,7 @@ public struct AppSettings: Sendable {
         d.set(manualMaxTokens, forKey: "manualMaxTokens")
         d.set(maxInputChars, forKey: "maxInputChars")
         d.set(apiEnabled, forKey: "apiEnabled")
+        d.set(useCNSource, forKey: "useCNSource")
+        d.set(selectedModelID, forKey: "selectedModelID")
     }
 }

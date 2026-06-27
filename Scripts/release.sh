@@ -43,6 +43,36 @@ xcrun stapler staple "$APP"
 rm "$ZIP"
 ditto -c -k --keepParent "$APP" "$ZIP"
 
-echo "==> 验收"
+echo "==> 验收 ZIP 内的 app"
 spctl --assess --type execute --verbose "$APP"
+
+echo "==> 生成 DMG（拖拽安装）"
+DMG="../dist/GemmaTrans-$VERSION.dmg"
+rm -f "$DMG"
+if command -v create-dmg >/dev/null 2>&1; then
+    # create-dmg 偶发非零退出但产物正常，故临时关 -e，事后校验产物存在
+    set +e
+    create-dmg \
+        --volname "GemmaTrans" \
+        --window-size 600 360 \
+        --icon "GemmaTrans.app" 150 185 \
+        --app-drop-link 450 185 \
+        "$DMG" "$APP"
+    set -e
+else
+    echo "   （create-dmg 未安装，用 hdiutil 生成基础 DMG；brew install create-dmg 可得带背景的拖拽版）"
+    STAGE=$(mktemp -d)
+    cp -R "$APP" "$STAGE/"
+    ln -s /Applications "$STAGE/Applications"
+    hdiutil create -volname "GemmaTrans" -srcfolder "$STAGE" -ov -format UDZO "$DMG"
+    rm -rf "$STAGE"
+fi
+[ -f "$DMG" ] || { echo "❌ DMG 生成失败"; exit 1; }
+
+echo "==> 公证 + 装订 DMG（可能数分钟）"
+xcrun notarytool submit "$DMG" --key "$NOTARY_KEY" --key-id "$NOTARY_KEY_ID" --issuer "$NOTARY_ISSUER" --wait
+xcrun stapler staple "$DMG"
+spctl --assess --type open --context context:primary-signature --verbose "$DMG" || true
+
 echo "✅ 完成: $ZIP"
+echo "✅ 完成: $DMG"

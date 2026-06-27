@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "gemma-trans",
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v14), .iOS(.v18)],
     products: [
         .library(name: "GemmaTransKit", targets: ["GemmaTransKit"]),
         .library(name: "GemmaTransServer", targets: ["GemmaTransServer"]),

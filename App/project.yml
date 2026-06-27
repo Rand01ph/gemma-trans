@@ -22,7 +22,19 @@ targets:
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "3"
+        CFBundleVersion: "4"
+        ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
+        NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
+          - NSMenuItem:
+              default: Translate with GemmaTrans
+            NSKeyEquivalent:
+              default: "~@t"        # ⌥⌘T 默认快捷键：选中文字按一下即翻译（用户可在系统设置改）
+            NSMessage: translateSelection
+            NSPortName: GemmaTrans
+            NSRequiredContext: {}
+            NSSendTypes:
+              - NSStringPboardType
+              - public.utf8-plain-text
     dependencies:
       - package: GemmaTransCore
         product: GemmaTransKit
@@ -38,7 +50,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
         MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "3"
+        CURRENT_PROJECT_VERSION: "4"
       configs:
         Release:
           # 公证直分：Developer ID + Hardened Runtime（Debug 日常开发不受影响）
@@ -55,12 +67,24 @@ targets:
     info:
       path: GemmaTrans/Info.plist
       properties:
-        LSUIElement: false
+        LSUIElement: true            # 纯菜单栏 app（无 Dock 图标）：划词时不被前台化，浮窗只出现在当前 Space
         CFBundleDisplayName: GemmaTrans
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
         CFBundleShortVersionString: "1.0"
-        CFBundleVersion: "3"
+        CFBundleVersion: "4"
+        ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
+        NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
+          - NSMenuItem:
+              default: Translate with GemmaTrans
+            NSKeyEquivalent:
+              default: "~@t"        # ⌥⌘T 默认快捷键：选中文字按一下即翻译（用户可在系统设置改）
+            NSMessage: translateSelection
+            NSPortName: GemmaTrans
+            NSRequiredContext: {}
+            NSSendTypes:
+              - NSStringPboardType
+              - public.utf8-plain-text
     entitlements:
       path: GemmaTrans-MAS.entitlements
       properties:
@@ -80,6 +104,6 @@ targets:
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
         MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "3"
+        CURRENT_PROJECT_VERSION: "4"
         PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
         PRODUCT_NAME: GemmaTrans
