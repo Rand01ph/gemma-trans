@@ -51,6 +51,15 @@ final class EngineController {
             }
             let engine = TranslationEngine(settings: settings)
             let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
+            // settings 是 @MainActor 隔离属性，不能在下面 withNetworkRetry 的 @Sendable 闭包里访问。
+            // 在此（MainActor 上下文）先取出选中档并解析，闭包只捕获 Sendable 值（source/resolved）。
+            let selectedID = settings.selectedModelID
+            let resolved: ResolvedModel? = selectedID == ModelCatalog.autoID
+                ? nil
+                : ActiveModelResolver.resolve(
+                    selectedID: selectedID,
+                    physicalMemory: SystemMemory.physical(),
+                    availableMemory: SystemMemory.available())
             // 进度回调脚手架两分支共用：仅 engine.load(...) 那一行因选中模型不同而分流
             let progressHandler: @Sendable (DownloadProgress) -> Void = { progress in
                 Task { @MainActor in
@@ -79,15 +88,11 @@ final class EngineController {
                     // auto 档保持既有 load(modelSource:) 完全不变——存量 macOS 用户的 Gemma
                     // 在 legacy HF 缓存里，仅旧路径会复用它，强切新路径会让他们白下 GB 级权重。
                     // 显式选档走 load(resolved:)：按 catalog 条目下载/加载新快照。
-                    if settings.selectedModelID == ModelCatalog.autoID {
-                        try await engine.load(modelSource: source, progress: progressHandler)
-                    } else {
-                        let resolved = ActiveModelResolver.resolve(
-                            selectedID: settings.selectedModelID,
-                            physicalMemory: SystemMemory.physical(),
-                            availableMemory: SystemMemory.available())
+                    if let resolved {
                         try await engine.load(
                             resolved: resolved, modelSource: source, progress: progressHandler)
+                    } else {
+                        try await engine.load(modelSource: source, progress: progressHandler)
                     }
                 }
                 guard generation == loadGeneration else { return }
