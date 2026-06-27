@@ -17,6 +17,9 @@ public actor TranslationEngine: TranslationService {
     /// 推荐格式只发 user 指令、不用 system（spike 验证：无 system 译文最稳）。
     private var activeFamily: ModelFamily = .gemma
 
+    /// 上一次生成的速度（生成 token 数 / 生成耗时），供 UI 观察性能；nil 表示尚无生成。
+    public private(set) var lastTokensPerSecond: Double?
+
     /// 设置页展示用（actor 属性，外部 await 访问）
     public var currentTuning: EngineTuning? { resolvedTuning }
 
@@ -218,8 +221,17 @@ public actor TranslationEngine: TranslationService {
                     generateParameters: GenerateParameters(
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
-                for try await chunk in session.streamResponse(to: prompt) {
-                    continuation.yield(chunk)
+                for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                    switch item {
+                    case .chunk(let text):
+                        continuation.yield(text)
+                    case .info(let info):
+                        lastTokensPerSecond = info.tokensPerSecond
+                        GTLog.info("mlx gen: \(info.generationTokenCount) tok, " +
+                            String(format: "%.2fs, %.1f tok/s", info.generateTime, info.tokensPerSecond))
+                    case .toolCall:
+                        break
+                    }
                 }
                 continuation.finish()
             } catch {
@@ -238,6 +250,11 @@ public actor TranslationEngine: TranslationService {
     /// 输入按 resolvedTuning.maxInputChars 截断；不走 LanguageDetector。
     public func process(_ text: String, instruction: String) async throws -> String {
         guard let model else { throw TranslationError.modelNotLoaded }
+        // 通用文本处理只在通用模型（Gemma）上可靠；Hy-MT2 是翻译专用，喂任意指令易出烂结果，
+        // 直接拒绝而非静默跑偏（采纳 Codex 审查）。
+        guard activeFamily == .gemma else {
+            throw TranslationError.modelNotSupported("当前为翻译专用模型，不支持通用文本处理，请切换到 Gemma")
+        }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw TranslationError.emptyInput }
 
@@ -259,8 +276,17 @@ public actor TranslationEngine: TranslationService {
                     generateParameters: GenerateParameters(
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
-                for try await chunk in session.streamResponse(to: prompt) {
-                    continuation.yield(chunk)
+                for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                    switch item {
+                    case .chunk(let text):
+                        continuation.yield(text)
+                    case .info(let info):
+                        lastTokensPerSecond = info.tokensPerSecond
+                        GTLog.info("mlx process: \(info.generationTokenCount) tok, " +
+                            String(format: "%.2fs, %.1f tok/s", info.generateTime, info.tokensPerSecond))
+                    case .toolCall:
+                        break
+                    }
                 }
                 continuation.finish()
             } catch {

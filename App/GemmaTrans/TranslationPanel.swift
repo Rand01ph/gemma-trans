@@ -91,6 +91,8 @@ final class TranslationViewModel {
     var output = ""
     var status = ""
     var error: String?
+    /// 上次生成速度（tok/s），生成结束后从引擎取，供面板观察性能。
+    var tokensPerSecond: Double?
     private var task: Task<Void, Never>?
 
     func start(text: String, engine: TranslationEngine) {
@@ -102,6 +104,7 @@ final class TranslationViewModel {
                 for try await chunk in result.chunks {
                     output += chunk
                 }
+                tokensPerSecond = await engine.lastTokensPerSecond
                 status = "\(result.detected) → \(result.target)"
             } catch is CancellationError {
                 // 被新请求取代，旧浮窗已关闭，无需展示
@@ -123,6 +126,7 @@ final class TranslationViewModel {
         output = ""
         status = ""
         error = nil
+        tokensPerSecond = nil
     }
 }
 
@@ -150,6 +154,10 @@ struct TranslationView: View {
             }
             HStack {
                 Text(model.status).font(.caption).foregroundStyle(.secondary)
+                if let tps = model.tokensPerSecond {
+                    Text(String(format: "· %.1f tok/s", tps))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Spacer()
                 Button("复制") {
                     NSPasteboard.general.clearContents()
