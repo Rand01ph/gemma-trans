@@ -126,7 +126,11 @@ public actor TranslationEngine: TranslationService {
         let warmup = ChatSession(loaded, generateParameters: GenerateParameters(maxTokens: 1))
         _ = try? await warmup.respond(to: "hi")
         model = loaded
-        GTLog.info("mlx model loaded+warmed: \(configuration.name)")
+        // 预热（1-token 生成）留下的临时缓冲在置 ready 后立即回收，让初始空闲态就精简；
+        // 权重已在 model 中常驻，clearCache 不动它。
+        MLX.Memory.clearCache()
+        GTLog.info("mlx model loaded+warmed: \(configuration.name), " +
+                   "active(权重)\(MLX.Memory.activeMemory >> 20)MB cache\(MLX.Memory.cacheMemory >> 20)MB")
     }
 
     public func translate(_ text: String, target: String?) async throws -> TranslationStreamResult {
@@ -213,6 +217,15 @@ public actor TranslationEngine: TranslationService {
 
     private func generationFinished() {
         activeGenerations -= 1
+        // 队列真正排空才回收：连续/排队生成（含 API 串行链）中途 activeGenerations 不归零，
+        // 故不会清掉马上要复用的缓冲、不抖动。clearCache 只把没人引用的空闲缓冲池
+        // （上一轮 KV cache/激活那部分工作余量）还给系统，不碰被 model 强引用的权重。
+        if activeGenerations == 0 {
+            let beforeMB = MLX.Memory.cacheMemory >> 20
+            MLX.Memory.clearCache()
+            GTLog.info("mlx idle reclaim: cache \(beforeMB)MB→\(MLX.Memory.cacheMemory >> 20)MB, " +
+                       "active(权重)\(MLX.Memory.activeMemory >> 20)MB")
+        }
     }
 
     /// repo 由 variant 推导（与 EngineHolder 的 tuningOverride 构成 variant↔repo 名不变量）
