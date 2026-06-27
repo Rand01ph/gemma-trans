@@ -1,0 +1,21 @@
+Sources/GemmaTransKit/ModelCatalog.swift
+  s_c5b5ee14ac3b27::t_c47b4ccdb73885 1-37
+Tests/GemmaTransKitTests/ModelCatalogTests.swift
+  s_c5b5ee14ac3b27::t_f9ab13cffa6d3a 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "1e38402f2ce4d42971557c615e1806080f06e928",
+  "prompts": {},
+  "sessions": {
+    "s_c5b5ee14ac3b27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "81ba9311-a51e-4aa1-992d-19a6445015cb",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
