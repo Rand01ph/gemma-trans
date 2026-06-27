@@ -134,9 +134,10 @@ final class EngineController {
             if case .downloading = engineStatus { return true }
             return false
         }()
-        let apiRunning: Bool = { if case .running = apiStatus { return true }; return false }()
+        // 仅「API 监听中」不再阻断切换——否则默认开 API 时页面整页置灰无法操作。
+        // 在飞的 API 翻译仍由 isGenerating 守住；切换会重启 server 指向新引擎（见下）。
         if let block = ModelSwitchGuard.blockReason(
-            isGenerating: generating, isLoading: loadingNow, apiRunning: apiRunning) {
+            isGenerating: generating, isLoading: loadingNow, apiRunning: false) {
             GTLog.info("model switch blocked: \(block)")
             return block
         }
@@ -144,6 +145,13 @@ final class EngineController {
         settings.save()
         self.selectedModelID = id
         GTLog.info("switching model to \(id)")
+        // 停掉指向旧引擎的 API server；start() 会在新引擎就绪后按 apiEnabled 重启（指向新引擎）。
+        // 不停的话 startServer 的 serverTask==nil 守卫会让 API 继续服务旧模型（潜在 bug）。
+        if serverTask != nil {
+            serverTask?.cancel()
+            serverTask = nil
+            apiStatus = .disabled
+        }
         loadTask?.cancel()  // 先取消在飞加载，防止旧任务在 unload 后写入 self.engine
         await engine?.unload()
         start()             // start() 重读 settings 并按新 selectedModelID 解析（R1）
@@ -167,6 +175,18 @@ final class EngineController {
     /// 设置页展示用：扫描默认目录下已完整安装的 catalog 模型（带磁盘体积）。
     func installedModels() -> [InstalledModel] {
         InstalledModels.scan(base: TranslationEngine.defaultModelBase())
+    }
+
+    /// 当前活跃模型的展示名（就绪状态展示用）；Auto 解析到具体 Gemma 档并加前缀。
+    var activeModelName: String {
+        if let entry = ModelCatalog.entry(id: selectedModelID) {
+            return entry.displayName
+        }
+        let resolved = ActiveModelResolver.resolve(
+            selectedID: ModelCatalog.autoID,
+            physicalMemory: SystemMemory.physical(),
+            availableMemory: SystemMemory.available())
+        return "Auto · \(resolved.entry.displayName)"
     }
 
     /// 菜单/设置开关入口：即时生效并持久化

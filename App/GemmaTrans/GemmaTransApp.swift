@@ -18,7 +18,7 @@ struct GemmaTransApp: App {
             case .downloading(let progress):
                 Text("引擎：模型下载中 \(Self.downloadText(progress))")
             case .ready:
-                Text("引擎：就绪")
+                Text("引擎：就绪 · \(controller.activeModelName)")
             case .failed(let msg):
                 Text("引擎失败: \(msg)")
             }
@@ -191,7 +191,7 @@ struct MainView: View {
                 }
             }
         case .ready:
-            Label("模型就绪", systemImage: "checkmark.circle.fill")
+            Label("模型就绪 · \(controller.activeModelName)", systemImage: "checkmark.circle.fill")
                 .foregroundStyle(.green)
         case .failed(let msg):
             VStack(alignment: .leading, spacing: 6) {

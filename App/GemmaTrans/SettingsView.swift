@@ -122,14 +122,9 @@ struct SettingsView: View {
         }
     }
 
-    /// API 正在运行中（切换/下载需要先关闭 API）。
-    private var isAPIRunning: Bool {
-        if case .running = EngineController.shared.apiStatus { return true }
-        return false
-    }
-
-    /// 切换/下载按钮通用禁用规则：引擎忙或 API 运行中。
-    private var switchDisabled: Bool { isEngineBusy || isAPIRunning }
+    /// 切换/下载按钮禁用规则：仅引擎忙（加载/下载中）时禁用。
+    /// API 运行不再阻断切换——切换会自动重启 API 指向新引擎；在飞翻译由引擎串行队列守住。
+    private var switchDisabled: Bool { isEngineBusy }
 
     /// 将字节数格式化为 "X.X GB"（接受 UInt64 或 Int64）。
     private func formatGB(_ bytes: UInt64) -> String {
@@ -175,7 +170,7 @@ struct SettingsView: View {
                     } else {
                         Button("设为活跃") { trySwitchModel(to: ModelCatalog.autoID) }
                             .disabled(switchDisabled)
-                            .help(isAPIRunning ? SwitchBlock.apiRunning.message : "")
+                            .help(isEngineBusy ? "引擎忙（加载/下载中），请稍候再切换" : "")
                     }
                 }
             } label: {
@@ -205,7 +200,7 @@ struct SettingsView: View {
                         } else if isInstalled {
                             Button("设为活跃") { trySwitchModel(to: entry.id) }
                                 .disabled(switchDisabled)
-                                .help(isAPIRunning ? SwitchBlock.apiRunning.message : "")
+                                .help(isEngineBusy ? "引擎忙（加载/下载中），请稍候再切换" : "")
                             Button("删除") {
                                 ec.deleteModel(id: entry.id)
                                 installed = EngineController.shared.installedModels()
@@ -215,7 +210,7 @@ struct SettingsView: View {
                             // 未下载
                             Button("下载并使用") { trySwitchModel(to: entry.id) }
                                 .disabled(switchDisabled)
-                                .help(isAPIRunning ? SwitchBlock.apiRunning.message : "")
+                                .help(isEngineBusy ? "引擎忙（加载/下载中），请稍候再切换" : "")
                         }
                     }
                 } label: {
