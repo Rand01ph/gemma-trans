@@ -158,6 +158,10 @@ struct MainView: View {
                 Button("清空") { input = ""; vm.reset() }
                     .disabled(input.isEmpty && vm.output.isEmpty)
                 Spacer()
+                if let tps = vm.tokensPerSecond {
+                    Text(String(format: "%.1f tok/s", tps))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
                 Text(vm.status).font(.caption).foregroundStyle(.secondary)
             }
             Divider()

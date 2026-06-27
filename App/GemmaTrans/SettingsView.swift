@@ -171,6 +171,10 @@ struct SettingsView: View {
                             .background(Color.accentColor.opacity(0.15))
                             .foregroundStyle(Color.accentColor)
                             .clipShape(RoundedRectangle(cornerRadius: 4))
+                        if let tps = ec.lastTokensPerSecond {
+                            Text(String(format: "%.1f tok/s", tps))
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
                     } else {
                         Button("设为活跃") { trySwitchModel(to: ModelCatalog.autoID) }
                             .disabled(switchDisabled)
@@ -198,6 +202,10 @@ struct SettingsView: View {
                                 .background(Color.accentColor.opacity(0.15))
                                 .foregroundStyle(Color.accentColor)
                                 .clipShape(RoundedRectangle(cornerRadius: 4))
+                            if let tps = ec.lastTokensPerSecond {
+                                Text(String(format: "%.1f tok/s", tps))
+                                    .font(.caption).foregroundStyle(.secondary)
+                            }
                             // 删除按钮：活跃模型禁用
                             Button("删除") { }
                                 .disabled(true)

@@ -105,6 +105,7 @@ final class TranslationViewModel {
                     output += chunk
                 }
                 tokensPerSecond = await engine.lastTokensPerSecond
+                EngineController.shared.lastTokensPerSecond = tokensPerSecond
                 status = "\(result.detected) → \(result.target)"
             } catch is CancellationError {
                 // 被新请求取代，旧浮窗已关闭，无需展示

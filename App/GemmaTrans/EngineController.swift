@@ -209,6 +209,9 @@ final class EngineController {
         }
     }
 
+    /// 最近一次翻译的速度（tok/s），由翻译完成的 ViewModel 回填，供设置页/状态展示。
+    var lastTokensPerSecond: Double?
+
     /// 当前活跃模型的展示名（就绪状态展示用）；Auto 解析到具体 Gemma 档并加前缀。
     var activeModelName: String {
         if let entry = ModelCatalog.entry(id: selectedModelID) {
