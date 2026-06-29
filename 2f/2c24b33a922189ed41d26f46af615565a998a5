@@ -1,0 +1,19 @@
+App/ci_scripts/ci_pre_xcodebuild.sh
+  s_987651c6f62fb2::t_3ec402da3d3244 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "2f2c24b33a922189ed41d26f46af615565a998a5",
+  "prompts": {},
+  "sessions": {
+    "s_987651c6f62fb2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "613e92f3-22e2-48a4-b8c0-cdfffdf151e6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
