@@ -1,0 +1,19 @@
+App/ci_scripts/ci_post_clone.sh
+  s_987651c6f62fb2::t_bcc40db2011c16 2-6,16-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "624d1dd8d370f5fcba2b8f6f4fa2daf2ea147854",
+  "prompts": {},
+  "sessions": {
+    "s_987651c6f62fb2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "613e92f3-22e2-48a4-b8c0-cdfffdf151e6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
