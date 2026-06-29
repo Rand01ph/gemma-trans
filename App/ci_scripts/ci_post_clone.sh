@@ -18,6 +18,10 @@ echo "✅ xcodegen 已生成 GemmaTrans.xcodeproj"
 defaults write com.apple.dt.Xcode IDEDisableAutomaticPackageResolution -bool NO || true
 defaults write com.apple.dt.Xcode IDEPackageOnlyUseVersionsFromResolvedFile -bool NO || true
 
+# 跳过 Swift 宏指纹校验（mlx-swift-lm 的 MLXHuggingFaceMacros；本地构建用 -skipMacroValidation，
+# Xcode Cloud 自身的构建步骤不带该 flag，用 defaults 等价跳过，避免 "must be enabled" 失败）
+defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES || true
+
 # 显式预解析一次，确保完整的 Package.resolved 就位
 xcodebuild -resolvePackageDependencies \
   -project GemmaTrans.xcodeproj -scheme GemmaTrans-MAS \
