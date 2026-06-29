@@ -1,0 +1,29 @@
+App/GemmaTrans/Info.plist
+  s_987651c6f62fb2::t_1aed097e2bd0cc 24
+  s_987651c6f62fb2::t_65875fa288785a 22,25-26
+App/project.yml
+  s_987651c6f62fb2::t_467dcbe8293612 25,75
+  s_987651c6f62fb2::t_c2556970d70a5d 53,107
+.github/workflows/release-mas.yml
+  s_987651c6f62fb2::t_885587be46fccd 1-122
+ci_scripts/ci_post_clone.sh
+  s_987651c6f62fb2::t_38bd622ab0812b 1-13
+App/GemmaTrans/PrivacyInfo.xcprivacy
+  s_987651c6f62fb2::t_03803a386bb41e 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.3",
+  "base_commit_sha": "81ed6674a2d8c120c299fc236387b7b98a9f4610",
+  "prompts": {},
+  "sessions": {
+    "s_987651c6f62fb2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "613e92f3-22e2-48a4-b8c0-cdfffdf151e6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
