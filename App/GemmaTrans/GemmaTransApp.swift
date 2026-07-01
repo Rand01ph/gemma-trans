@@ -39,14 +39,10 @@ struct GemmaTransApp: App {
                 get: { EngineController.shared.settings.apiEnabled },
                 set: { EngineController.shared.setAPIEnabled($0) }
             ))
-            SettingsLink { Text("设置…") }
+            Button("设置…") { SettingsWindowController.shared.show() }
             Button("退出") { NSApplication.shared.terminate(nil) }
         } label: {
             Image(systemName: controller.engineStatus == .ready ? "character.bubble.fill" : "character.bubble")
-        }
-
-        Settings {
-            SettingsView()
         }
     }
 
@@ -81,8 +77,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @MainActor @objc private func windowBecameKey(_ note: Notification) {
         guard let win = note.object as? NSWindow,
-              !(win is NSPanel),
-              win.styleMask.contains(.titled) else { return }
+              !(win is NSPanel) else { return }
         win.collectionBehavior.insert(.moveToActiveSpace)
     }
 
@@ -103,20 +98,82 @@ final class MainWindowController {
     func show() {
         if window == nil {
             let hosting = NSHostingController(rootView: MainView(controller: EngineController.shared))
-            let win = NSWindow(contentViewController: hosting)
+            let win = GlassWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 488, height: 494),
+                styleMask: .borderless,
+                backing: .buffered,
+                defer: false
+            )
+            win.contentViewController = hosting
             win.title = "GemmaTrans"
-            win.styleMask = [.titled, .closable, .miniaturizable]
+            win.titleVisibility = .hidden
+            win.titlebarAppearsTransparent = true
+            win.isOpaque = false
+            win.backgroundColor = .clear
+            win.hasShadow = false
+            win.isMovableByWindowBackground = true
             win.isReleasedWhenClosed = false  // 关窗保留实例，下次 reopen 复用
             // 从全屏 app 唤出时窗口来到当前 Space，而不是把人跳回它原来的桌面
             win.collectionBehavior = [.moveToActiveSpace]
-            win.setContentSize(NSSize(width: 460, height: 440))
             win.center()
             window = win
         }
-        window?.makeKeyAndOrderFront(nil)
-        // 纯菜单栏 app（LSUIElement）：activate 把窗口带到前台展示，不产生 Dock 图标。
-        // 关键：不再 setActivationPolicy(.regular)——保持 accessory，划词时「服务」不会前台化本 app，
-        // 浮窗才不会被主窗口拽回它所在的 Space（根因见诊断日志）。
+        if let window {
+            bringAppWindowToFront(window)
+        }
+    }
+}
+
+@MainActor
+final class SettingsWindowController {
+    static let shared = SettingsWindowController()
+    private var window: NSWindow?
+
+    func show() {
+        if window == nil {
+            let hosting = NSHostingController(rootView: SettingsView())
+            let win = GlassWindow(
+                contentRect: NSRect(
+                    x: 0,
+                    y: 0,
+                    width: GlassMetrics.settingsWidth,
+                    height: GlassMetrics.settingsHeight
+                ),
+                styleMask: .borderless,
+                backing: .buffered,
+                defer: false
+            )
+            win.contentViewController = hosting
+            win.title = "GemmaTrans Settings"
+            win.titleVisibility = .hidden
+            win.isOpaque = false
+            win.backgroundColor = .clear
+            win.hasShadow = false
+            win.isMovableByWindowBackground = true
+            win.isReleasedWhenClosed = false
+            win.collectionBehavior = [.moveToActiveSpace]
+            win.center()
+            window = win
+        }
+        if let window {
+            bringAppWindowToFront(window)
+        }
+    }
+}
+
+@MainActor
+private func bringAppWindowToFront(_ window: NSWindow) {
+    if window.isMiniaturized {
+        window.deminiaturize(nil)
+    }
+    window.collectionBehavior.insert(.moveToActiveSpace)
+    window.orderFrontRegardless()
+    window.makeKeyAndOrderFront(nil)
+    _ = NSRunningApplication.current.activate(options: [.activateAllWindows])
+    // 菜单栏按钮触发时菜单本身仍在收起动画里，下一轮 run loop 再顶一次更稳。
+    DispatchQueue.main.async {
+        window.orderFrontRegardless()
+        window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
     }
 }
@@ -124,6 +181,9 @@ final class MainWindowController {
 /// 主窗口：顶部显示引擎/下载状态（带进度条与失败重试），下方粘贴/输入文字翻译。
 /// 这条通道零系统权限，是「服务菜单」「剪贴板热键」之外最稳的兜底入口。
 struct MainView: View {
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var appearance = AppearanceController.shared
+
     let controller: EngineController
     @State private var input = ""
     @State private var vm = TranslationViewModel()
@@ -133,49 +193,114 @@ struct MainView: View {
             && !input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var theme: GlassTheme {
+        GlassTheme.resolve(mode: appearance.mode, systemScheme: colorScheme)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            statusHeader
-            Divider()
-            Text("输入或粘贴要翻译的文字")
-                .font(.caption).foregroundStyle(.secondary)
-            ZStack(alignment: .topLeading) {
-                TextEditor(text: $input)
-                    .font(.body)
-                    .frame(minHeight: 90)
-                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
-                if input.isEmpty {
-                    Text("在此粘贴文字，或在其他 app 选中文字用「服务」菜单翻译…")
-                        .foregroundStyle(.tertiary)
-                        .padding(.horizontal, 5).padding(.vertical, 8)
-                        .allowsHitTesting(false)
-                }
-            }
-            HStack {
-                Button("翻译") { translate() }
-                    .keyboardShortcut(.return, modifiers: .command)
-                    .disabled(!canTranslate)
-                Button("清空") { input = ""; vm.reset() }
-                    .disabled(input.isEmpty && vm.output.isEmpty)
-                Spacer()
-                if let tps = vm.tokensPerSecond {
-                    Text(String(format: "%.1f tok/s", tps))
-                        .font(.caption).foregroundStyle(.secondary)
-                }
-                Text(vm.status).font(.caption).foregroundStyle(.secondary)
-            }
-            Divider()
-            ScrollView {
-                Text(vm.error ?? (vm.output.isEmpty ? "译文显示在这里…" : vm.output))
+        ZStack(alignment: .topLeading) {
+            GlassWindowBackdrop()
+            VStack(alignment: .leading, spacing: 12) {
+                statusHeader
+                    .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
-                    .foregroundStyle(vm.error != nil ? .red
-                        : (vm.output.isEmpty ? .secondary : .primary))
+                    .background {
+                        sectionSurface
+                    }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("输入或粘贴要翻译的文字")
+                        .font(.caption)
+                        .foregroundStyle(theme.textSecondary)
+                    ZStack(alignment: .topLeading) {
+                        PlainTextEditor(
+                            text: $input,
+                            textColor: theme.nsTextColor,
+                            insertionPointColor: theme.nsInsertionPointColor
+                        )
+                            .frame(minHeight: 96)
+                        if input.isEmpty {
+                            Text("在此粘贴文字，或在其他 app 选中文字用「服务」菜单翻译…")
+                                .font(.body)
+                                .foregroundStyle(theme.textTertiary)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                    .frame(minHeight: 96, alignment: .topLeading)
+                }
+                .padding(12)
+                .background {
+                    sectionSurface
+                }
+
+                HStack {
+                    GlassPillButton(title: "翻译", isPrimary: true, isDisabled: !canTranslate) {
+                        translate()
+                    }
+                        .keyboardShortcut(.return, modifiers: .command)
+                    GlassPillButton(
+                        title: "清空",
+                        isDisabled: input.isEmpty && vm.output.isEmpty
+                    ) {
+                        input = ""
+                        vm.reset()
+                    }
+                    Spacer()
+                    if let tps = vm.tokensPerSecond {
+                        Text(String(format: "%.1f tok/s", tps))
+                            .font(.caption)
+                            .foregroundStyle(theme.textSecondary)
+                    }
+                    Text(vm.status)
+                        .font(.caption)
+                        .foregroundStyle(theme.textSecondary)
+                }
+
+                ScrollView {
+                    Text(vm.error ?? (vm.output.isEmpty ? "译文显示在这里…" : vm.output))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .textSelection(.enabled)
+                        .foregroundStyle(outputColor)
+                }
+                .frame(minHeight: 122)
+                .padding(12)
+                .background {
+                    sectionSurface
+                }
             }
-            .frame(minHeight: 120)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+            .padding(.top, GlassMetrics.windowChromeHeight)
+            GlassWindowControls()
+                .padding(.leading, 15)
+                .padding(.top, 15)
         }
-        .padding(16)
-        .frame(width: 460)
+        .frame(width: 488)
+        .glassPreferredColorScheme(theme)
+        .background {
+            GlassWindowConfigurator(
+                hideTitle: true,
+                movableByBackground: true,
+                appearanceName: theme.nsAppearance,
+                backgroundColor: theme.nsWindowBackgroundColor
+            )
+        }
+    }
+
+    private var sectionSurface: some View {
+        GlassSurface(
+            cornerRadius: GlassMetrics.panelCornerRadius,
+            fill: theme.panelOverlay,
+            stroke: theme.hairline,
+            shadowOpacity: theme.isDark ? 0.16 : 0.10,
+            shadowRadius: theme.isDark ? 10 : 12,
+            shadowY: 3
+        )
+    }
+
+    private var outputColor: Color {
+        if vm.error != nil { return theme.destructive }
+        return vm.output.isEmpty ? theme.textSecondary : theme.textPrimary
     }
 
     @ViewBuilder private var statusHeader: some View {
@@ -184,19 +309,21 @@ struct MainView: View {
             HStack(spacing: 8) {
                 ProgressView().controlSize(.small)
                 Text("引擎：\(stage)")
+                    .foregroundStyle(theme.textPrimary)
             }
         case .downloading(let p):
             VStack(alignment: .leading, spacing: 4) {
                 Text("正在下载翻译模型 \(Int(p.fraction * 100))%")
+                    .foregroundStyle(theme.textPrimary)
                 ProgressView(value: p.fraction)
                 if let d = p.completedBytes, let t = p.totalBytes {
                     Text(String(format: "已下载 %.1f / %.1f GB", Double(d) / 1e9, Double(t) / 1e9))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundStyle(theme.textSecondary)
                 }
             }
         case .ready:
             Label("模型就绪 · \(controller.activeModelName)", systemImage: "checkmark.circle.fill")
-                .foregroundStyle(.green)
+                .foregroundStyle(Color.green)
         case .failed(let msg):
             VStack(alignment: .leading, spacing: 6) {
                 Label(msg, systemImage: "exclamationmark.triangle.fill")

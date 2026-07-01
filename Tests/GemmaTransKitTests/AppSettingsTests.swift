@@ -12,12 +12,14 @@ import Foundation
         s.targetDefault = "ja"
         s.manualMaxTokens = 512
         s.useCNSource = true
+        s.appearanceMode = .dark
         s.save(suiteName: suite)
 
         let loaded = AppSettings.load(suiteName: suite)
         #expect(loaded.targetDefault == "ja")
         #expect(loaded.manualMaxTokens == 512)
         #expect(loaded.useCNSource == true)
+        #expect(loaded.appearanceMode == .dark)
     }
 
     /// 国内源开关默认关闭（HF 直连可用的用户不受影响）
@@ -33,6 +35,11 @@ import Foundation
     /// selectedModelID 默认为 "auto"（RAM 自选 Gemma）
     @Test func test_selectedModelID_defaultsToAuto() {
         #expect(AppSettings().selectedModelID == "auto")
+    }
+
+    /// 外观默认跟随系统，避免升级后强行改变既有用户观感
+    @Test func appearanceMode_defaultsToSystem() {
+        #expect(AppSettings().appearanceMode == .system)
     }
 
     /// selectedModelID 随 UserDefaults 持久化往返

@@ -1,5 +1,6 @@
 import AppKit
 import KeyboardShortcuts
+import GemmaTransKit
 
 extension KeyboardShortcuts.Name {
     // 名字字符串保持 "translateSelection" 不变：用户此前录制的快捷键按此键持久化，
@@ -19,7 +20,9 @@ enum HotkeyCenter {
     static func handle() {
         let text = NSPasteboard.general.string(forType: .string)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        GTLog.info("hotkey translate requested chars=\(text.count)")
         guard !text.isEmpty else {
+            GTLog.info("hotkey translate ignored empty clipboard")
             TranslationPanel.shared.showMessage("剪贴板为空——先复制要翻译的文字")
             return
         }

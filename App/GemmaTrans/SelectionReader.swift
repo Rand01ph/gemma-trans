@@ -1,4 +1,5 @@
 import AppKit
+import GemmaTransKit
 
 /// 选中文本捕获——无需「辅助功能」权限。
 ///
@@ -21,6 +22,7 @@ final class ServicesProvider: NSObject {
         let text = pboard.string(forType: .string)?
             .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         Task { @MainActor in
+            GTLog.info("service translate requested chars=\(text.count)")
             guard !text.isEmpty else {
                 TranslationPanel.shared.showMessage("未检测到选中文本")
                 return
@@ -35,9 +37,11 @@ final class ServicesProvider: NSObject {
     static func translate(_ text: String) {
         let controller = EngineController.shared
         guard controller.engineStatus == .ready, let engine = controller.engine else {
+            GTLog.info("translate request blocked: engine not ready chars=\(text.count)")
             TranslationPanel.shared.showMessage("模型尚未就绪，请稍候")
             return
         }
+        GTLog.info("translate request accepted chars=\(text.count)")
         TranslationPanel.shared.show(text: text, engine: engine)
     }
 }

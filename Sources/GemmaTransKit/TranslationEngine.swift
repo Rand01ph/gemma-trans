@@ -209,9 +209,11 @@ public actor TranslationEngine: TranslationService {
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let previous = lastGeneration
         activeGenerations += 1
-        lastGeneration = Task {
+        let generation = Task {
+            defer { self.generationFinished() }
             await previous?.value  // 串行：GPU 单飞，等上一个生成自然结束
             do {
+                try Task.checkCancellation()
                 // 每次翻译一次性会话：无历史、系统指令固定
                 // 翻译是确定性任务：默认温度 0.6 的采样随机性会偶尔走到「复述原文/跑偏」，
                 // 降到 0.1（近贪心）让模型确定性遵循翻译指令。repetitionPenalty 抑制小模型复读。
@@ -222,6 +224,7 @@ public actor TranslationEngine: TranslationService {
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
                 for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                    try Task.checkCancellation()
                     switch item {
                     case .chunk(let text):
                         continuation.yield(text)
@@ -234,11 +237,20 @@ public actor TranslationEngine: TranslationService {
                     }
                 }
                 continuation.finish()
+            } catch is CancellationError {
+                GTLog.info("generation cancelled")
+                continuation.finish(throwing: CancellationError())
             } catch {
                 GTLog.error("generation failed: \(error)")
                 continuation.finish(throwing: error)
             }
-            self.generationFinished()
+        }
+        lastGeneration = generation
+        continuation.onTermination = { @Sendable termination in
+            if case .cancelled = termination {
+                GTLog.info("generation stream cancelled")
+                generation.cancel()
+            }
         }
         return TranslationStreamResult(
             detected: plan.detected, target: plan.target, truncated: truncated, chunks: stream
@@ -267,9 +279,11 @@ public actor TranslationEngine: TranslationService {
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let previous = lastGeneration
         activeGenerations += 1
-        lastGeneration = Task {
+        let generation = Task {
+            defer { self.generationFinished() }
             await previous?.value
             do {
+                try Task.checkCancellation()
                 let session = ChatSession(
                     model,
                     instructions: instructions,
@@ -277,6 +291,7 @@ public actor TranslationEngine: TranslationService {
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
                 for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                    try Task.checkCancellation()
                     switch item {
                     case .chunk(let text):
                         continuation.yield(text)
@@ -289,11 +304,20 @@ public actor TranslationEngine: TranslationService {
                     }
                 }
                 continuation.finish()
+            } catch is CancellationError {
+                GTLog.info("process generation cancelled")
+                continuation.finish(throwing: CancellationError())
             } catch {
                 GTLog.error("process generation failed: \(error)")
                 continuation.finish(throwing: error)
             }
-            self.generationFinished()
+        }
+        lastGeneration = generation
+        continuation.onTermination = { @Sendable termination in
+            if case .cancelled = termination {
+                GTLog.info("process stream cancelled")
+                generation.cancel()
+            }
         }
         var out = ""
         for try await chunk in stream { out += chunk }
@@ -301,7 +325,7 @@ public actor TranslationEngine: TranslationService {
     }
 
     private func generationFinished() {
-        activeGenerations -= 1
+        activeGenerations = max(0, activeGenerations - 1)
         // 队列真正排空才回收：连续/排队生成（含 API 串行链）中途 activeGenerations 不归零，
         // 故不会清掉马上要复用的缓冲、不抖动。clearCache 只把没人引用的空闲缓冲池
         // （上一轮 KV cache/激活那部分工作余量）还给系统，不碰被 model 强引用的权重。
