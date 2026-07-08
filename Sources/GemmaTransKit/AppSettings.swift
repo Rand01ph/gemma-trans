@@ -1,5 +1,11 @@
 import Foundation
 
+public enum AppAppearance: String, CaseIterable, Sendable {
+    case system
+    case light
+    case dark
+}
+
 /// 全局配置。CLI 与 App 共用，UserDefaults 持久化（App 修改，CLI 读取）。
 public struct AppSettings: Sendable {
     public var port: UInt16
@@ -19,6 +25,8 @@ public struct AppSettings: Sendable {
     public var useCNSource: Bool
     /// 活跃模型选择："auto"=按内存选 Gemma；否则为 ModelCatalog 条目 id
     public var selectedModelID: String
+    /// macOS 外观：默认跟随系统；CLI/iOS 可忽略该字段。
+    public var appearance: AppAppearance
 
     public static let suiteName = "com.gemmatrans.app"
 
@@ -31,7 +39,8 @@ public struct AppSettings: Sendable {
         manualMaxTokens: Int = 2048,
         apiEnabled: Bool = true,
         useCNSource: Bool = false,
-        selectedModelID: String = "auto"
+        selectedModelID: String = "auto",
+        appearance: AppAppearance = .system
     ) {
         self.port = port
         self.targetForChinese = targetForChinese
@@ -42,6 +51,7 @@ public struct AppSettings: Sendable {
         self.apiEnabled = apiEnabled
         self.useCNSource = useCNSource
         self.selectedModelID = selectedModelID
+        self.appearance = appearance
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
@@ -57,6 +67,9 @@ public struct AppSettings: Sendable {
         if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
         if d.object(forKey: "useCNSource") != nil { s.useCNSource = d.bool(forKey: "useCNSource") }
         if let v = d.string(forKey: "selectedModelID"), !v.isEmpty { s.selectedModelID = v }
+        if let v = d.string(forKey: "appearance"), let appearance = AppAppearance(rawValue: v) {
+            s.appearance = appearance
+        }
         return s
     }
 
@@ -71,5 +84,6 @@ public struct AppSettings: Sendable {
         d.set(apiEnabled, forKey: "apiEnabled")
         d.set(useCNSource, forKey: "useCNSource")
         d.set(selectedModelID, forKey: "selectedModelID")
+        d.set(appearance.rawValue, forKey: "appearance")
     }
 }

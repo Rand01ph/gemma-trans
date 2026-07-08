@@ -1,81 +1,50 @@
-import SwiftUI
 import AppKit
+import SwiftUI
 import GemmaTransKit
 import KeyboardShortcuts
 
 struct SettingsView: View {
+    var embedded = false
+
     @State private var settings = AppSettings.load()
     @State private var saved = false
-    @State private var switchBlockMessage: String? = nil
+    @State private var switchBlockMessage: String?
     @State private var installed: [InstalledModel] = []
+    @State private var appearanceStore = GTAppearanceStore.shared
 
     var body: some View {
-        Form {
-            modelSection
-            Section("翻译") {
-                TextField("中文翻译为（语言代码）", text: $settings.targetForChinese)
-                TextField("其他语言翻译为", text: $settings.targetDefault)
-            }
-            Section("API") {
-                Toggle("启用本地 API（PopClip 等外部工具需要）", isOn: Binding(
-                    get: { EngineController.shared.settings.apiEnabled },
-                    set: { EngineController.shared.setAPIEnabled($0) }
-                ))
-                TextField("端口", value: $settings.port, format: .number.grouping(.never))
-            }
-            Section("性能") {
-                Toggle("自动配置（按内存推荐）", isOn: $settings.autoTuning)
-                if settings.autoTuning {
-                    let auto = EngineTuning.recommended(
-                        physicalMemory: SystemMemory.physical(),
-                        availableMemory: SystemMemory.available()
-                    )
-                    Text("当前推荐：\(auto.variant == .gemma4E4B4bit ? "E4B" : "E2B") · 生成上限 \(auto.maxTokens) tokens · 输入上限 \(auto.maxInputChars) 字符")
-                        .foregroundStyle(.secondary)
-                } else {
-                    TextField("生成上限 (tokens)", value: $settings.manualMaxTokens,
-                              format: .number.grouping(.never))
-                    TextField("输入上限（字符）", value: $settings.maxInputChars,
-                              format: .number.grouping(.never))
+        ZStack {
+            if !embedded { GTContentBackground() }
+            ScrollView {
+                VStack(alignment: .leading, spacing: GTGlassTokens.Space.l) {
+                    header
+                    appearanceSection
+                    modelSection
+                    translationSection
+                    apiSection
+                    performanceSection
+                    shortcutsSection
+                    saveSection
                 }
+                .padding(embedded ? GTGlassTokens.Window.contentInset : GTGlassTokens.Space.xl)
+                .frame(maxWidth: embedded ? .infinity : GTGlassTokens.Panel.settingsWidth)
             }
-            Section("快捷键") {
-                KeyboardShortcuts.Recorder("翻译剪贴板（先复制，再按）", name: .translateSelection)
-
-                LabeledContent("划词翻译（选中即译）") {
-                    HStack(spacing: 8) {
-                        Text(Self.serviceShortcutGlyphs).foregroundStyle(.secondary)
-                        Button("打开键盘快捷键设置…") { Self.openServicesShortcutSettings() }
-                            .buttonStyle(.link)
-                    }
-                }
-                Text("""
-                「划词翻译」由 macOS「服务」提供：选中文字后直接按快捷键即可翻译，无需先复制。
-
-                首次使用：默认快捷键是 \(Self.serviceShortcutGlyphs)，但 macOS 不一定会自动启用它。若按了没反应，点上面「打开键盘快捷键设置…」，在左侧选「服务」（系统不会自动停在这一页，需手动点进去），找到 Translate with GemmaTrans，勾选并确认它的快捷键即可——设一次就长期生效。
-                """)
-                    .font(.footnote).foregroundStyle(.secondary)
-            }
-            Button("保存（重启 app 生效）") {
-                // API 开关即时生效且由 EngineController 持有真值，防止本视图的陈旧副本覆盖
-                settings.apiEnabled = EngineController.shared.settings.apiEnabled
-                settings.save()
-                saved = true
-            }
-            if saved { Text("已保存").foregroundStyle(.secondary) }
+            .scrollEdgeEffectStyle(.soft, for: .all)
         }
-        .formStyle(.grouped)
-        .frame(width: 480)
-        .padding()
-        .onAppear { installed = EngineController.shared.installedModels() }
+        .frame(width: embedded ? nil : GTGlassTokens.Panel.settingsWidth,
+               height: embedded ? nil : GTGlassTokens.Panel.settingsHeight)
+        .gtApplicationAppearance()
+        .onAppear {
+            settings = AppSettings.load()
+            installed = EngineController.shared.installedModels()
+            appearanceStore.reloadFromDefaults()
+        }
         .onChange(of: EngineController.shared.engineStatus) { _, _ in
             installed = EngineController.shared.installedModels()
         }
-        // 后台下载结束（downloadingModelID 归 nil）后刷新已装列表，让该行从「下载」翻到「设为活跃」
         .onChange(of: EngineController.shared.downloadingModelID) { _, _ in
             installed = EngineController.shared.installedModels()
         }
-        // 被阻止时弹 alert（移到 Form 顶层以避免 Section 嵌套限制）
         .alert("无法切换模型", isPresented: Binding(
             get: { switchBlockMessage != nil },
             set: { if !$0 { switchBlockMessage = nil } }
@@ -86,8 +55,361 @@ struct SettingsView: View {
         }
     }
 
+    private var header: some View {
+        HStack(spacing: GTGlassTokens.Space.m) {
+            Image(systemName: "gearshape.fill")
+                .font(.title3)
+                .frame(width: GTGlassTokens.Icon.chip, height: GTGlassTokens.Icon.chip)
+                .gtGlassSurface(.flat,
+                                cornerRadius: GTGlassTokens.Radius.control,
+                                fill: GTGlassPalette.warmNeutral,
+                                fillOpacity: 0.22,
+                                gradient: true,
+                                stroke: false)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("设置")
+                    .font(.title3.weight(.semibold))
+                Text("模型、翻译、API、性能和快捷键")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, GTGlassTokens.Space.xs)
+    }
+
+    private var appearanceSection: some View {
+        GTPanelSection(title: "外观", subtitle: "默认跟随系统，也可以固定浅色或深色。") {
+            GTPanelField(label: "显示模式") {
+                Picker("显示模式", selection: appearanceBinding) {
+                    ForEach(AppAppearance.allCases, id: \.self) { mode in
+                        Text(mode.displayName).tag(mode)
+                    }
+                }
+                .labelsHidden()
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 280)
+            }
+        }
+    }
+
+    private var translationSection: some View {
+        GTPanelSection(title: "翻译", subtitle: "语言代码会在下次翻译时生效。") {
+            GTPanelField(label: "中文翻译为") {
+                glassTextField("en", text: $settings.targetForChinese)
+            }
+            GTPanelDivider()
+            GTPanelField(label: "其他语言翻译为") {
+                glassTextField("zh-Hans", text: $settings.targetDefault)
+            }
+        }
+    }
+
+    private var apiSection: some View {
+        GTPanelSection(title: "本地 API", subtitle: "PopClip 等外部工具可通过本地服务调用翻译。") {
+            GTPanelToggleRow(title: "启用本地 API",
+                             subtitle: apiSubtitle,
+                             isOn: Binding(
+                                get: { EngineController.shared.settings.apiEnabled },
+                                set: { EngineController.shared.setAPIEnabled($0) }
+                             ))
+            GTPanelDivider()
+            GTPanelField(label: "端口") {
+                glassNumberField(value: $settings.port)
+                    .frame(maxWidth: 110, alignment: .leading)
+            }
+        }
+    }
+
+    private var performanceSection: some View {
+        GTPanelSection(title: "性能", subtitle: "自动模式会按内存选择模型和输入/输出上限。") {
+            GTPanelToggleRow(title: "自动配置",
+                             subtitle: autoTuningSubtitle,
+                             isOn: $settings.autoTuning)
+            if !settings.autoTuning {
+                GTPanelDivider()
+                GTPanelField(label: "生成上限") {
+                    glassNumberField(value: $settings.manualMaxTokens)
+                        .frame(maxWidth: 140, alignment: .leading)
+                }
+                GTPanelDivider()
+                GTPanelField(label: "输入上限") {
+                    glassNumberField(value: $settings.maxInputChars)
+                        .frame(maxWidth: 140, alignment: .leading)
+                }
+            }
+        }
+    }
+
+    private var shortcutsSection: some View {
+        GTPanelSection(title: "快捷键", subtitle: "剪贴板快捷键由 app 管理；划词翻译由 macOS 服务管理。") {
+            GTPanelRow(title: "翻译剪贴板", subtitle: "先复制，再按快捷键。") {
+                KeyboardShortcuts.Recorder("", name: .translateSelection)
+                    .labelsHidden()
+            }
+            GTPanelDivider()
+            GTPanelRow(title: "划词翻译", subtitle: "选中文字后按服务快捷键。") {
+                HStack(spacing: GTGlassTokens.Space.s) {
+                    Text(Self.serviceShortcutGlyphs)
+                        .font(.callout.monospaced().weight(.bold))
+                        .foregroundStyle(.secondary)
+                    GTGlassButton("打开设置", systemImage: "keyboard") {
+                        Self.openServicesShortcutSettings()
+                    }
+                }
+            }
+            Text("首次使用若按了没反应，请在系统设置的「键盘快捷键 > 服务」中勾选 Translate with GemmaTrans。")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+    }
+
+    private var saveSection: some View {
+        HStack(spacing: GTGlassTokens.Space.m) {
+            GTGlassButton("保存设置", systemImage: "checkmark.circle.fill", prominent: true) {
+                save()
+            }
+            if saved {
+                Text("已保存")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .transition(.opacity)
+            }
+            Spacer()
+        }
+        .padding(.horizontal, GTGlassTokens.Space.xs)
+    }
+
+    private var modelSection: some View {
+        let ec = EngineController.shared
+        let installedIDs = Set(installed.map(\.id))
+        let selectedID = ec.selectedModelID
+
+        return GTPanelSection(title: "模型", subtitle: "下载模型不会切换当前模型；设为活跃会重新加载引擎。") {
+            engineStatusRow
+
+            if ec.engineStatus != .ready {
+                GTPanelDivider()
+            }
+
+            modelRow(title: "Auto（按内存自动选 Gemma）",
+                     subtitle: "E4B 约 4.9 GB / E2B 约 3.6 GB，按可用内存自动选。",
+                     active: selectedID == ModelCatalog.autoID,
+                     tps: ec.lastTokensPerSecond[ModelCatalog.autoID]) {
+                trySwitchModel(to: ModelCatalog.autoID)
+            }
+
+            ForEach(ModelCatalog.entries) { entry in
+                GTPanelDivider()
+                catalogRow(entry, installedIDs: installedIDs)
+            }
+
+            GTPanelDivider()
+            GTPanelToggleRow(title: "使用国内源（ModelScope）",
+                             subtitle: "国内网络无法直连 HuggingFace 时开启；切换后下次下载生效。",
+                             isOn: $settings.useCNSource)
+        }
+    }
+
+    @ViewBuilder
+    private var engineStatusRow: some View {
+        switch EngineController.shared.engineStatus {
+        case .ready:
+            GTPanelRow(title: "引擎状态", subtitle: "就绪 · \(EngineController.shared.activeModelName)") {
+                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+            }
+        case .loading(let message):
+            GTPanelRow(title: "引擎状态", subtitle: message) {
+                ProgressView().controlSize(.small)
+            }
+        case .downloading(let progress):
+            GTPanelRow(title: "引擎状态", subtitle: downloadText(progress)) {
+                ProgressView(value: progress.fraction)
+                    .frame(width: 96)
+            }
+        case .failed(let message):
+            GTPanelRow(title: "引擎状态", subtitle: message) {
+                GTGlassButton("重试", systemImage: "arrow.clockwise") {
+                    EngineController.shared.reload()
+                }
+            }
+        }
+    }
+
+    private var isEngineBusy: Bool {
+        switch EngineController.shared.engineStatus {
+        case .loading, .downloading: return true
+        default: return false
+        }
+    }
+
+    private var switchDisabled: Bool { isEngineBusy }
+
+    private var apiSubtitle: String {
+        switch EngineController.shared.apiStatus {
+        case .disabled:
+            return "已关闭。"
+        case .running(let port):
+            return "正在 127.0.0.1:\(port) 监听。"
+        case .failed(let message):
+            return message
+        }
+    }
+
+    private var autoTuningSubtitle: String {
+        guard settings.autoTuning else { return "关闭后使用下面的手动上限。" }
+        let auto = EngineTuning.recommended(
+            physicalMemory: SystemMemory.physical(),
+            availableMemory: SystemMemory.available()
+        )
+        let variant = auto.variant == .gemma4E4B4bit ? "E4B" : "E2B"
+        return "当前推荐：\(variant) · 生成上限 \(auto.maxTokens) tokens · 输入上限 \(auto.maxInputChars) 字符。"
+    }
+
+    private var appearanceBinding: Binding<AppAppearance> {
+        Binding {
+            settings.appearance
+        } set: { newValue in
+            settings.appearance = newValue
+            settings.save()
+            appearanceStore.set(newValue, persist: false)
+        }
+    }
+
+    private func catalogRow(_ entry: ModelCatalogEntry, installedIDs: Set<String>) -> some View {
+        let ec = EngineController.shared
+        let isActive = ec.selectedModelID == entry.id
+        let isInstalled = installedIDs.contains(entry.id)
+        let subtitle = "\(formatGB(entry.estimatedBytes)) · \(entry.repo)"
+
+        return modelRow(title: entry.displayName,
+                        subtitle: subtitle,
+                        active: isActive,
+                        installed: isInstalled,
+                        downloading: ec.downloadingModelID == entry.id,
+                        downloadProgress: ec.downloadProgress,
+                        tps: ec.lastTokensPerSecond[entry.id],
+                        switchAction: { trySwitchModel(to: entry.id) },
+                        downloadAction: { ec.downloadModel(id: entry.id) },
+                        deleteAction: {
+                            ec.deleteModel(id: entry.id)
+                            installed = EngineController.shared.installedModels()
+                        })
+    }
+
+    private func modelRow(title: String,
+                          subtitle: String,
+                          active: Bool,
+                          installed: Bool = true,
+                          downloading: Bool = false,
+                          downloadProgress: DownloadProgress? = nil,
+                          tps: Double? = nil,
+                          switchAction: @escaping () -> Void,
+                          downloadAction: (() -> Void)? = nil,
+                          deleteAction: (() -> Void)? = nil) -> some View {
+        GTPanelRow(title: title, subtitle: subtitle) {
+            HStack(spacing: GTGlassTokens.Space.s) {
+                if active {
+                    GTActiveBadge()
+                    if let tps {
+                        Text(String(format: "%.1f tok/s", tps))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                } else if downloading {
+                    Text("下载中 \(Int((downloadProgress?.fraction ?? 0) * 100))%")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                } else if installed {
+                    GTGlassButton("设为活跃", systemImage: "bolt.fill") {
+                        switchAction()
+                    }
+                    .disabled(switchDisabled)
+                    if let deleteAction {
+                        GTGlassButton("删除", systemImage: "trash", role: .destructive) {
+                            deleteAction()
+                        }
+                        .disabled(isEngineBusy)
+                    }
+                } else if let downloadAction {
+                    GTGlassButton("下载", systemImage: "arrow.down.circle") {
+                        downloadAction()
+                    }
+                    .disabled(EngineController.shared.downloadingModelID != nil)
+                }
+            }
+        }
+    }
+
+    private func save() {
+        settings.apiEnabled = EngineController.shared.settings.apiEnabled
+        settings.save()
+        appearanceStore.set(settings.appearance, persist: false)
+        withAnimation(.easeOut(duration: 0.18)) { saved = true }
+    }
+
+    private func trySwitchModel(to id: String) {
+        Task {
+            if let block = await EngineController.shared.switchModel(to: id) {
+                switchBlockMessage = block.message
+            }
+        }
+    }
+
+    private func glassTextField(_ prompt: String, text: Binding<String>) -> some View {
+        TextField(prompt, text: text)
+            .textFieldStyle(.plain)
+            .padding(.horizontal, GTGlassTokens.Space.s)
+            .frame(height: 30)
+            .gtGlassSurface(.flat,
+                            cornerRadius: GTGlassTokens.Radius.control,
+                            fill: GTGlassPalette.innerNeutral,
+                            fillOpacity: 0.10,
+                            gradient: false)
+    }
+
+    private func glassNumberField(value: Binding<Int>) -> some View {
+        TextField("", value: value, format: .number.grouping(.never))
+            .textFieldStyle(.plain)
+            .padding(.horizontal, GTGlassTokens.Space.s)
+            .frame(height: 30)
+            .gtGlassSurface(.flat,
+                            cornerRadius: GTGlassTokens.Radius.control,
+                            fill: GTGlassPalette.innerNeutral,
+                            fillOpacity: 0.10,
+                            gradient: false)
+    }
+
+    private func glassNumberField(value: Binding<UInt16>) -> some View {
+        TextField("", value: value, format: .number.grouping(.never))
+            .textFieldStyle(.plain)
+            .padding(.horizontal, GTGlassTokens.Space.s)
+            .frame(height: 30)
+            .gtGlassSurface(.flat,
+                            cornerRadius: GTGlassTokens.Radius.control,
+                            fill: GTGlassPalette.innerNeutral,
+                            fillOpacity: 0.10,
+                            gradient: false)
+    }
+
+    private func formatGB(_ bytes: UInt64) -> String {
+        String(format: "%.1f GB", Double(bytes) / 1_000_000_000)
+    }
+
+    private func formatGB(_ bytes: Int64) -> String {
+        String(format: "%.1f GB", Double(bytes) / 1_000_000_000)
+    }
+
+    private func downloadText(_ progress: DownloadProgress) -> String {
+        let pct = Int(progress.fraction * 100)
+        guard let total = progress.totalBytes, let done = progress.completedBytes else {
+            return "下载中 \(pct)%"
+        }
+        return "下载中 \(pct)% · \(formatGB(done)) / \(formatGB(total))"
+    }
+
     /// 从自身 Info.plist 的 NSServices 声明读取「划词翻译」服务的默认快捷键，转成符号（如 ⌥⌘T）。
-    /// 沙盒内无法读取系统 pbs 里用户改后的实际绑定，故展示声明的默认值。
     static var serviceShortcutGlyphs: String {
         guard let services = Bundle.main.infoDictionary?["NSServices"] as? [[String: Any]],
               let keyEq = services.first?["NSKeyEquivalent"] as? [String: String],
@@ -105,172 +427,14 @@ struct SettingsView: View {
         return out
     }
 
-    /// 打开 系统设置 ›「键盘快捷键」（服务快捷键归系统管理，沙盒 app 不能代写）。
+    /// 打开 系统设置 > 键盘快捷键。服务快捷键归系统管理，沙盒 app 不能代写。
     static func openServicesShortcutSettings() {
         let candidates = [
             "x-apple.systempreferences:com.apple.preference.keyboard?Shortcuts",
             "x-apple.systempreferences:com.apple.Keyboard-Settings.extension",
         ]
-        for s in candidates {
-            if let url = URL(string: s), NSWorkspace.shared.open(url) { return }
-        }
-    }
-
-    // MARK: - Model Section
-
-    /// 当前引擎是否处于"切换禁止"状态（加载中 / 下载中）。
-    private var isEngineBusy: Bool {
-        switch EngineController.shared.engineStatus {
-        case .loading, .downloading: return true
-        default: return false
-        }
-    }
-
-    /// 切换/下载按钮禁用规则：仅引擎忙（加载/下载中）时禁用。
-    /// API 运行不再阻断切换——切换会自动重启 API 指向新引擎；在飞翻译由引擎串行队列守住。
-    private var switchDisabled: Bool { isEngineBusy }
-
-    /// 将字节数格式化为 "X.X GB"（接受 UInt64 或 Int64）。
-    private func formatGB(_ bytes: UInt64) -> String {
-        let gb = Double(bytes) / 1_000_000_000
-        return String(format: "%.1f GB", gb)
-    }
-
-    private func formatGB(_ bytes: Int64) -> String {
-        let gb = Double(bytes) / 1_000_000_000
-        return String(format: "%.1f GB", gb)
-    }
-
-    /// 触发 switchModel 并在被阻止时展示提示。
-    private func trySwitchModel(to id: String) {
-        Task {
-            if let block = await EngineController.shared.switchModel(to: id) {
-                switchBlockMessage = block.message
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var modelSection: some View {
-        let ec = EngineController.shared
-        let installedIDs = Set(installed.map(\.id))
-        let selectedID = ec.selectedModelID
-
-        Section("模型") {
-            // ── 引擎状态行 ────────────────────────────────────────────────────
-            engineStatusRow
-
-            // ── Auto 行 ────────────────────────────────────────────────────────
-            let autoActive = selectedID == ModelCatalog.autoID
-            LabeledContent {
-                HStack(spacing: 8) {
-                    if autoActive {
-                        Text("活跃")
-                            .font(.caption).bold()
-                            .padding(.horizontal, 6).padding(.vertical, 2)
-                            .background(Color.accentColor.opacity(0.15))
-                            .foregroundStyle(Color.accentColor)
-                            .clipShape(RoundedRectangle(cornerRadius: 4))
-                        if let tps = ec.lastTokensPerSecond[ModelCatalog.autoID] {
-                            Text(String(format: "%.1f tok/s", tps))
-                                .font(.caption).foregroundStyle(.secondary)
-                        }
-                    } else {
-                        Button("设为活跃") { trySwitchModel(to: ModelCatalog.autoID) }
-                            .disabled(switchDisabled)
-                            .help(isEngineBusy ? "引擎忙（加载/下载中），请稍候再切换" : "")
-                    }
-                }
-            } label: {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Auto（按内存自动选 Gemma）")
-                    Text("E4B ≈ 4.9 GB / E2B ≈ 3.6 GB，按可用内存自动选").font(.caption).foregroundStyle(.secondary)
-                }
-            }
-
-            // ── Catalog 条目行 ────────────────────────────────────────────────
-            ForEach(ModelCatalog.entries) { entry in
-                let isActive = selectedID == entry.id
-                let isInstalled = installedIDs.contains(entry.id)
-
-                LabeledContent {
-                    HStack(spacing: 8) {
-                        if isActive {
-                            Text("活跃")
-                                .font(.caption).bold()
-                                .padding(.horizontal, 6).padding(.vertical, 2)
-                                .background(Color.accentColor.opacity(0.15))
-                                .foregroundStyle(Color.accentColor)
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                            if let tps = ec.lastTokensPerSecond[entry.id] {
-                                Text(String(format: "%.1f tok/s", tps))
-                                    .font(.caption).foregroundStyle(.secondary)
-                            }
-                            // 删除按钮：活跃模型禁用
-                            Button("删除") { }
-                                .disabled(true)
-                        } else if isInstalled {
-                            Button("设为活跃") { trySwitchModel(to: entry.id) }
-                                .disabled(switchDisabled)
-                                .help(isEngineBusy ? "引擎忙（加载/下载中），请稍候再切换" : "")
-                            Button("删除") {
-                                ec.deleteModel(id: entry.id)
-                                installed = EngineController.shared.installedModels()
-                            }
-                            .disabled(isEngineBusy)
-                        } else if ec.downloadingModelID == entry.id {
-                            // 正在后台下载这一档（不切换当前模型）
-                            Text("下载中 \(Int((ec.downloadProgress?.fraction ?? 0) * 100))%")
-                                .font(.caption).foregroundStyle(.secondary)
-                        } else {
-                            // 未下载：只下载到磁盘，不切换当前模型（可后台下，继续用当前档）
-                            Button("下载") { ec.downloadModel(id: entry.id) }
-                                .disabled(ec.downloadingModelID != nil)
-                                .help(ec.downloadingModelID != nil ? "已有模型在下载中，请稍候" : "")
-                        }
-                    }
-                } label: {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(entry.displayName)
-                        Text(formatGB(entry.estimatedBytes)).font(.caption).foregroundStyle(.secondary)
-                    }
-                }
-            }
-
-            // ── 下载源开关 ────────────────────────────────────────────────────
-            Toggle("使用国内源（ModelScope）下载模型", isOn: $settings.useCNSource)
-            Text("国内网络无法直连 HuggingFace 时开启；切换后下次下载生效")
-                .font(.footnote).foregroundStyle(.secondary)
-        }
-    }
-
-    /// 引擎状态展示行：下载中显示进度，失败时显示错误，加载中/就绪简短提示。
-    @ViewBuilder
-    private var engineStatusRow: some View {
-        let status = EngineController.shared.engineStatus
-        switch status {
-        case .ready:
-            EmptyView()
-        case .loading(let msg):
-            HStack(spacing: 6) {
-                ProgressView().controlSize(.small)
-                Text(msg).font(.caption).foregroundStyle(.secondary)
-            }
-        case .downloading(let progress):
-            VStack(alignment: .leading, spacing: 4) {
-                ProgressView(value: progress.fraction)
-                    .progressViewStyle(.linear)
-                let pct = Int(progress.fraction * 100)
-                if let total = progress.totalBytes, let done = progress.completedBytes {
-                    Text("下载中 \(pct)% · \(formatGB(done)) / \(formatGB(total))")
-                        .font(.caption).foregroundStyle(.secondary)
-                } else {
-                    Text("下载中 \(pct)%").font(.caption).foregroundStyle(.secondary)
-                }
-            }
-        case .failed(let msg):
-            Label(msg, systemImage: "exclamationmark.triangle")
-                .font(.caption).foregroundStyle(.red)
+        for candidate in candidates {
+            if let url = URL(string: candidate), NSWorkspace.shared.open(url) { return }
         }
     }
 }

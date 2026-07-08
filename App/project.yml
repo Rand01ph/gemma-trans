@@ -2,7 +2,7 @@ name: GemmaTrans
 options:
   bundleIdPrefix: com.gemmatrans
   deploymentTarget:
-    macOS: "14.0"
+    macOS: "26.0"
 packages:
   GemmaTransCore:
     path: ../
