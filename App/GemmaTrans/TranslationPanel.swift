@@ -1,30 +1,32 @@
-import SwiftUI
 import AppKit
 import AVFoundation
+import QuartzCore
+import SwiftUI
 import GemmaTransKit
 
 @MainActor
 final class TranslationPanel {
     static let shared = TranslationPanel()
+
     private var panel: TranslationFloatingPanelWindow?
     private var currentModel: TranslationViewModel?
     private var currentMode: TranslationPanelLayoutMode = .translation
+    private var didSettleCompletedLayout = false
+    private var escapeMonitor: Any?
 
     func show(text: String, engine: TranslationEngine) {
         let model = TranslationViewModel()
-        present(model: model, sourceText: text) {
+        present(model: model) {
             model.reset()
             model.start(text: text, engine: engine)
         }
         model.start(text: text, engine: engine)
     }
 
-    /// 短提示（如"未检测到选中文本"），1.5 秒后自动关闭
     func showMessage(_ message: String) {
         let model = TranslationViewModel()
-        model.output = message
-        model.status = " "
-        present(model: model, sourceText: "提示", mode: .message)
+        model.setMessage(message)
+        present(model: model, mode: .message)
         Task {
             try? await Task.sleep(for: .seconds(1.5))
             self.close()
@@ -34,25 +36,32 @@ final class TranslationPanel {
     func close() {
         currentModel?.cancel()
         currentModel = nil
+        if let escapeMonitor {
+            NSEvent.removeMonitor(escapeMonitor)
+            self.escapeMonitor = nil
+        }
         panel?.close()
         panel = nil
     }
 
     private func present(model: TranslationViewModel,
-                         sourceText: String,
                          mode: TranslationPanelLayoutMode = .translation,
                          onRetry: (() -> Void)? = nil) {
-        currentModel?.cancel()  // 取消上一个浮窗的翻译消费，让被取代的生成尽快收尾
+        currentModel?.cancel()
         currentModel = model
         currentMode = mode
+        didSettleCompletedLayout = false
+
         let view = GTTranslationPanelView(
-            sourceText: sourceText,
             model: model,
             mode: mode,
+            action: .translate,
             onRetry: onRetry,
             onClose: { [weak self] in self?.close() },
             onStop: { model.cancel() },
-            onContentHeight: { [weak self] h in self?.adjustHeight(contentHeight: h) }
+            onContentHeight: { [weak self] height, settle in
+                self?.adjustHeight(contentHeight: height, settleCompletedLayout: settle)
+            }
         )
         let hosting = NSHostingController(rootView: view)
 
@@ -62,7 +71,8 @@ final class TranslationPanel {
                                 width: mode.windowSize.width,
                                 height: mode.windowSize.height),
             styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered, defer: false
+            backing: .buffered,
+            defer: false
         )
         panel.isOpaque = false
         panel.backgroundColor = .clear
@@ -70,30 +80,41 @@ final class TranslationPanel {
         panel.isMovableByWindowBackground = true
         panel.isFloatingPanel = true
         panel.level = .floating
-        // 跨 Space / 全屏：浮窗出现在「当前」所在 Space（含全屏 app 上方），不跟着主窗口跑回它的桌面。
-        // 主窗口开着时切到全屏 app 划词，旧版会把浮窗弹回主窗口所在桌面——根因是浮窗默认绑主窗口的 Space。
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.contentViewController = hosting
         panel.contentView?.wantsLayer = true
         panel.contentView?.layer?.backgroundColor = NSColor.clear.cgColor
+        panel.contentView?.layer?.masksToBounds = false
         hosting.view.wantsLayer = true
         hosting.view.layer?.backgroundColor = NSColor.clear.cgColor
+        hosting.view.layer?.masksToBounds = false
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
 
         panel.setFrame(initialFrame(for: mode), display: false)
         self.panel?.close()
         self.panel = panel
+        installEscapeMonitor()
         panel.orderFrontRegardless()
     }
 
-    /// 译文流式生长时随内容调高：顶边不动向下生长，70% 屏高封顶，防越出屏幕底部。
-    private func adjustHeight(contentHeight: CGFloat) {
+    private func installEscapeMonitor() {
+        if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
+        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard event.keyCode == 53 else { return event }
+            self?.close()
+            return nil
+        }
+    }
+
+    private func adjustHeight(contentHeight: CGFloat, settleCompletedLayout: Bool) {
         guard let panel, currentMode == .translation else { return }
         let screen = panel.screen ?? NSScreen.main
         let visibleHeight = screen?.visibleFrame.height ?? 800
-        let targetVisualHeight = PanelGeometry.targetHeight(contentHeight: contentHeight,
-                                                            screenVisibleHeight: visibleHeight)
+        let targetVisualHeight = PanelGeometry.targetHeight(
+            contentHeight: contentHeight,
+            screenVisibleHeight: visibleHeight
+        )
         let targetWindowHeight = targetVisualHeight + GTGlassTokens.Panel.translationShadowGutter * 2
         guard abs(targetWindowHeight - panel.frame.height) >= PanelGeometry.resizeThreshold else { return }
 
@@ -104,7 +125,21 @@ final class TranslationPanel {
         if let visible = screen?.visibleFrame, frame.minY < visible.minY {
             frame.origin.y = visible.minY
         }
-        panel.setFrame(frame, display: true, animate: true)
+
+        let shouldAnimate = settleCompletedLayout
+            && !didSettleCompletedLayout
+            && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+        if settleCompletedLayout { didSettleCompletedLayout = true }
+
+        if shouldAnimate {
+            NSAnimationContext.runAnimationGroup { context in
+                context.duration = 0.16
+                context.timingFunction = CAMediaTimingFunction(name: .easeOut)
+                panel.animator().setFrame(frame, display: true)
+            }
+        } else {
+            panel.setFrame(frame, display: true, animate: false)
+        }
     }
 
     private func initialFrame(for mode: TranslationPanelLayoutMode) -> NSRect {
@@ -113,23 +148,16 @@ final class TranslationPanel {
         let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main
         let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
         let margin: CGFloat = 10
-        var frame = NSRect(x: mouse.x + margin,
-                           y: mouse.y - margin - size.height,
+        // Anchor the visible rounded surface, not the larger transparent shadow window.
+        var frame = NSRect(x: mouse.x + margin - mode.shadowGutter,
+                           y: mouse.y - margin - size.height + mode.shadowGutter,
                            width: size.width,
                            height: size.height)
 
-        if frame.maxX > visible.maxX - margin {
-            frame.origin.x = visible.maxX - size.width - margin
-        }
-        if frame.minX < visible.minX + margin {
-            frame.origin.x = visible.minX + margin
-        }
-        if frame.minY < visible.minY + margin {
-            frame.origin.y = visible.minY + margin
-        }
-        if frame.maxY > visible.maxY - margin {
-            frame.origin.y = visible.maxY - size.height - margin
-        }
+        if frame.maxX > visible.maxX - margin { frame.origin.x = visible.maxX - size.width - margin }
+        if frame.minX < visible.minX + margin { frame.origin.x = visible.minX + margin }
+        if frame.minY < visible.minY + margin { frame.origin.y = visible.minY + margin }
+        if frame.maxY > visible.maxY - margin { frame.origin.y = visible.maxY - size.height - margin }
         return frame
     }
 }
@@ -150,68 +178,108 @@ private enum TranslationPanelLayoutMode {
         }
     }
 
-    var minimumVisualHeight: CGFloat {
+    var initialVisualHeight: CGFloat {
         switch self {
-        case .translation: return GTGlassTokens.Panel.translationMinVisualHeight
+        case .translation: return GTGlassTokens.Panel.translationInitialVisualHeight
         case .message: return GTGlassTokens.Panel.messageVisualSize.height
         }
     }
 
-    var shadowGutter: CGFloat {
-        GTGlassTokens.Panel.translationShadowGutter
-    }
+    var shadowGutter: CGFloat { GTGlassTokens.Panel.translationShadowGutter }
 
     var windowSize: NSSize {
         NSSize(width: visualWidth + shadowGutter * 2,
-               height: minimumVisualHeight + shadowGutter * 2)
+               height: initialVisualHeight + shadowGutter * 2)
     }
 
     var surfacePadding: CGFloat {
         switch self {
-        case .translation: return 18
+        case .translation: return 14
         case .message: return 16
         }
     }
 
     var cornerRadius: CGFloat {
         switch self {
-        case .translation: return 24
+        case .translation: return 20
         case .message: return 22
         }
     }
+}
+
+enum TextActionKind: String, CaseIterable, Identifiable {
+    case translate
+
+    var id: String { rawValue }
+}
+
+struct TextActionDescriptor: Identifiable {
+    let id: TextActionKind
+    let title: String
+    let systemImage: String
+    let kind: TextActionKind
+
+    static let registered: [TextActionDescriptor] = [
+        TextActionDescriptor(id: .translate,
+                             title: "翻译",
+                             systemImage: "wand.and.sparkles",
+                             kind: .translate),
+    ]
+}
+
+enum TranslationPhase: Equatable {
+    case idle
+    case running
+    case completed
+    case failed(String)
+    case cancelled
 }
 
 @MainActor @Observable
 final class TranslationViewModel {
     var output = ""
     var status = ""
-    var error: String?
-    var isRunning = false
-    /// 上次生成速度（tok/s），生成结束后从引擎取，供面板观察性能。
+    private(set) var phase: TranslationPhase = .idle
     var tokensPerSecond: Double?
+
     private var task: Task<Void, Never>?
+    private var generation = 0
+
+    var isRunning: Bool { phase == .running }
+
+    var error: String? {
+        guard case .failed(let message) = phase else { return nil }
+        return message
+    }
 
     func start(text: String, engine: TranslationEngine) {
-        isRunning = true
+        generation += 1
+        let currentGeneration = generation
+        phase = .running
         status = "翻译中…"
+
         task = Task {
             do {
                 let result = try await engine.translate(text, target: nil)
+                guard currentGeneration == generation else { return }
                 if result.truncated { status = "（超长已截断）翻译中…" }
                 for try await chunk in result.chunks {
+                    guard currentGeneration == generation else { return }
                     output += chunk
                 }
+                guard currentGeneration == generation else { return }
                 tokensPerSecond = await engine.lastTokensPerSecond
                 EngineController.shared.recordTokensPerSecond(tokensPerSecond)
                 status = "\(result.detected) → \(result.target)"
-                isRunning = false
+                phase = .completed
             } catch is CancellationError {
-                isRunning = false
+                guard currentGeneration == generation else { return }
+                phase = .cancelled
                 if output.isEmpty { status = "已停止" }
-                // 被新请求取代，旧浮窗已关闭，无需展示
             } catch {
-                isRunning = false
-                self.error = "\(error)"
+                guard currentGeneration == generation else { return }
+                let message = "\(error)"
+                phase = .failed(message)
                 status = ""
                 GTLog.error("translation failed: \(error)")
             }
@@ -219,28 +287,29 @@ final class TranslationViewModel {
     }
 
     func cancel() {
+        generation += 1
         task?.cancel()
-        isRunning = false
-        if !output.isEmpty {
+        phase = .cancelled
+        if output.isEmpty {
+            status = "已停止"
+        } else if !status.contains("已停止") {
             status = status.isEmpty ? "已停止" : "\(status) · 已停止"
         }
     }
 
-    /// 主窗口复用同一个 view model：开新翻译/清空前先取消在飞生成并清状态。
     func reset() {
+        generation += 1
         task?.cancel()
         output = ""
         status = ""
-        error = nil
         tokensPerSecond = nil
-        isRunning = false
+        phase = .idle
     }
-}
 
-private struct ContentHeightKey: PreferenceKey {
-    static let defaultValue: CGFloat = 0
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = max(value, nextValue())
+    func setMessage(_ message: String) {
+        reset()
+        output = message
+        phase = .completed
     }
 }
 
@@ -257,15 +326,18 @@ private final class TranslationPanelSpeaker {
 }
 
 private struct GTTranslationPanelView: View {
-    let sourceText: String
     let model: TranslationViewModel
     let mode: TranslationPanelLayoutMode
+    let action: TextActionKind
     let onRetry: (() -> Void)?
     let onClose: () -> Void
     let onStop: () -> Void
-    var onContentHeight: (CGFloat) -> Void = { _ in }
+    var onContentHeight: (CGFloat, Bool) -> Void = { _, _ in }
 
     @State private var speaker = TranslationPanelSpeaker()
+    @State private var copied = false
+    @State private var copyFeedbackTask: Task<Void, Never>?
+    @State private var resultSurfaceHeight = CGFloat(PanelGeometry.streamingResultSurfaceHeight)
 
     var body: some View {
         ZStack {
@@ -277,33 +349,44 @@ private struct GTTranslationPanelView: View {
         }
         .frame(width: mode.windowSize.width)
         .gtApplicationAppearance()
-        .onPreferenceChange(ContentHeightKey.self) { onContentHeight($0) }
+        .onAppear {
+            onContentHeight(preferredVisualHeight, false)
+            if model.phase == .completed {
+                settleCompletedResultLayout()
+            }
+        }
+        .onChange(of: model.phase) { _, phase in
+            if phase == .completed {
+                settleCompletedResultLayout()
+            }
+        }
+        .onDisappear { copyFeedbackTask?.cancel() }
     }
 
     @ViewBuilder
     private var visibleSurface: some View {
         switch mode {
-        case .translation:
-            translationSurface
-        case .message:
-            messageSurface
+        case .translation: translationSurface
+        case .message: messageSurface
         }
     }
 
     private var translationSurface: some View {
         panelContent
             .padding(mode.surfacePadding)
-            .frame(width: mode.visualWidth, alignment: .topLeading)
-            .frame(minHeight: mode.minimumVisualHeight, alignment: .topLeading)
+            .frame(width: mode.visualWidth,
+                   height: preferredVisualHeight,
+                   alignment: .topLeading)
             .gtGlassSurface(.flat,
                             cornerRadius: mode.cornerRadius,
-                            fill: GTGlassPalette.warmNeutral,
-                            fillOpacity: 0.30,
-                            gradient: true)
-            .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
-            .background(GeometryReader { geo in
-                Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-            })
+                            fillOpacity: 0.20,
+                            gradient: false)
+            .background {
+                GTExteriorShadow(cornerRadius: mode.cornerRadius,
+                                 color: .black.opacity(0.20),
+                                 radius: 8,
+                                 y: 4)
+            }
     }
 
     private var messageSurface: some View {
@@ -315,213 +398,229 @@ private struct GTTranslationPanelView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .textSelection(.enabled)
 
-            GTGlassIconButton(title: "关闭",
-                              systemImage: "xmark",
-                              size: 28,
-                              action: onClose)
+            GTGlassIconButton(title: "关闭", systemImage: "xmark", quiet: true, size: 28, action: onClose)
                 .keyboardShortcut(.cancelAction)
         }
         .padding(mode.surfacePadding)
         .frame(width: mode.visualWidth,
-               height: mode.minimumVisualHeight,
+               height: mode.initialVisualHeight,
                alignment: .center)
         .gtGlassSurface(.flat,
                         cornerRadius: mode.cornerRadius,
-                        fill: GTGlassPalette.warmNeutral,
-                        fillOpacity: 0.30,
-                        gradient: true)
-        .shadow(color: .black.opacity(0.16), radius: 18, x: 0, y: 8)
-        .background(GeometryReader { geo in
-            Color.clear.preference(key: ContentHeightKey.self, value: geo.size.height)
-        })
+                        fillOpacity: 0.20,
+                        gradient: false)
+        .background {
+            GTExteriorShadow(cornerRadius: mode.cornerRadius,
+                             color: .black.opacity(0.20),
+                             radius: 8,
+                             y: 4)
+        }
     }
 
     private var panelContent: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            sourceCard
-            toolRow
-            resultCard
+        VStack(alignment: .leading, spacing: GTGlassTokens.Space.s) {
+            actionHeader
+            resultSurface
+            resultActions
         }
     }
 
-    private var sourceCard: some View {
-        HStack(alignment: .top, spacing: GTGlassTokens.Space.m) {
-            ScrollView {
-                Text(sourceText.isEmpty ? "等待输入..." : sourceText)
-                    .font(.system(size: 16, weight: .regular))
-                    .lineSpacing(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
-            }
-            .frame(minHeight: 58, maxHeight: sourceTextMaxHeight)
-
-            if let onRetry {
-                GTGlassIconButton(title: "重新翻译",
-                                  systemImage: "arrow.up",
-                                  filled: true,
-                                  size: 34,
-                                  action: onRetry)
-                    .keyboardShortcut(.return, modifiers: .command)
-            }
-        }
-        .padding(GTGlassTokens.Space.m)
-        .gtGlassSurface(.flat,
-                        cornerRadius: 18,
-                        fill: GTGlassPalette.coolNeutral,
-                        fillOpacity: 0.20,
-                        gradient: true,
-                        stroke: false)
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
-        }
-    }
-
-    private var toolRow: some View {
-        HStack(spacing: 10) {
-            PanelToolbarIcon(systemImage: "bubble.left", label: "原文")
-            PanelToolbarIcon(systemImage: "globe", label: "自动检测语言")
-            PanelPill(title: "翻译", systemImage: "wand.and.sparkles")
-            PanelToolbarIcon(systemImage: "checklist", label: "结果")
-
-            Spacer(minLength: GTGlassTokens.Space.l)
-
-            Text(EngineController.shared.activeModelName)
-                .font(.system(size: 14.5, weight: .semibold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.82)
-                .frame(maxWidth: 230, alignment: .trailing)
-                .help(EngineController.shared.activeModelName)
-
-            Image(systemName: "chevron.up.chevron.down")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            GTGlassIconButton(title: "关闭",
-                              systemImage: "xmark",
-                              size: 30,
-                              action: onClose)
+    private var actionHeader: some View {
+        HStack(spacing: GTGlassTokens.Space.s) {
+            actionIdentity
+            Spacer(minLength: GTGlassTokens.Space.s)
+            phaseMetadata
+            GTGlassIconButton(title: "关闭", systemImage: "xmark", quiet: true, size: 26, action: onClose)
                 .keyboardShortcut(.cancelAction)
         }
-        .frame(height: 32)
-        .frame(maxWidth: .infinity)
+        .frame(minHeight: 28)
     }
 
-    private var resultCard: some View {
-        VStack(alignment: .leading, spacing: GTGlassTokens.Space.s) {
-            ScrollView {
-                Text(resultText)
-                    .font(.system(size: 16, weight: .regular))
-                    .lineSpacing(2)
-                    .foregroundStyle(model.error == nil ? Color.primary : GTGlassPalette.semanticRed)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .textSelection(.enabled)
+    @ViewBuilder
+    private var actionIdentity: some View {
+        if TextActionDescriptor.registered.count > 1 {
+            Menu {
+                ForEach(TextActionDescriptor.registered) { descriptor in
+                    Button {
+                        // Future actions apply to the next request; only translation is registered today.
+                    } label: {
+                        Label(descriptor.title, systemImage: descriptor.systemImage)
+                    }
+                    .disabled(descriptor.kind == action)
+                }
+            } label: {
+                actionLabel
             }
-            .frame(minHeight: 78, maxHeight: resultTextMaxHeight)
+            .menuStyle(.borderlessButton)
+        } else {
+            actionLabel
+        }
+    }
 
-            HStack(spacing: GTGlassTokens.Space.m) {
-                GTGlassIconButton(title: "复制译文",
-                                  systemImage: "doc.on.doc",
-                                  size: 30) {
-                    NSPasteboard.general.clearContents()
-                    NSPasteboard.general.setString(model.output, forType: .string)
+    @ViewBuilder
+    private var actionLabel: some View {
+        let descriptor = TextActionDescriptor.registered.first { $0.kind == action }
+            ?? TextActionDescriptor.registered[0]
+        Label(descriptor.title, systemImage: descriptor.systemImage)
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.primary)
+            .help(EngineController.shared.activeModelName)
+    }
+
+    private var phaseMetadata: some View {
+        Group {
+            switch model.phase {
+            case .idle:
+                Text("等待结果").foregroundStyle(.secondary)
+            case .running:
+                HStack(spacing: GTGlassTokens.Space.s) {
+                    ProgressView().controlSize(.small)
+                    Text("正在翻译…")
+                }
+                .foregroundStyle(.secondary)
+            case .completed:
+                completedStatus
+            case .failed:
+                Label("翻译失败", systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(GTGlassPalette.semanticRed)
+            case .cancelled:
+                Text("已停止").foregroundStyle(.secondary)
+            }
+        }
+        .font(.caption)
+        .lineLimit(1)
+    }
+
+    private var resultSurface: some View {
+        ScrollView(.vertical) {
+            Text(resultText)
+                .font(.system(size: 15, weight: .regular))
+                .lineSpacing(2)
+                .foregroundStyle(resultForeground)
+                .frame(maxWidth: .infinity, alignment: .topLeading)
+                .fixedSize(horizontal: false, vertical: true)
+                .textSelection(.enabled)
+        }
+        .scrollBounceBehavior(.basedOnSize)
+        .padding(GTGlassTokens.Space.s + 2)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .gtContentSurface(.reading, cornerRadius: GTGlassTokens.Radius.control)
+        .frame(height: resultSurfaceHeight)
+    }
+
+    private var resultActions: some View {
+        HStack(spacing: GTGlassTokens.Space.s) {
+            switch model.phase {
+            case .running:
+                GTGlassButton("停止", systemImage: "stop.fill", tint: GTGlassPalette.semanticOrange, compact: true) {
+                    onStop()
+                }
+            case .failed:
+                if let onRetry {
+                    GTGlassButton("重试", systemImage: "arrow.clockwise", prominent: true, compact: true) {
+                        onRetry()
+                    }
+                    .keyboardShortcut(.return, modifiers: .command)
+                }
+            case .completed, .cancelled:
+                GTGlassButton(copied ? "已复制" : "复制",
+                              systemImage: copied ? "checkmark" : "doc.on.doc",
+                              minWidth: 72,
+                              compact: true) {
+                    copyResult()
                 }
                 .disabled(model.output.isEmpty)
 
-                GTGlassIconButton(title: "朗读译文",
-                                  systemImage: "speaker.wave.2",
-                                  size: 30) {
+                GTGlassButton("朗读", systemImage: "speaker.wave.2", compact: true) {
                     speaker.speak(model.output)
                 }
                 .disabled(model.output.isEmpty)
-
-                if model.isRunning {
-                    GTGlassIconButton(title: "停止翻译",
-                                      systemImage: "stop.fill",
-                                      tint: GTGlassPalette.semanticOrange,
-                                      size: 30,
-                                      action: onStop)
-                }
-
-                Spacer()
-
-                Text(statusText)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .help(diagnosticText)
+            case .idle:
+                EmptyView()
             }
+            Spacer()
         }
-        .padding(GTGlassTokens.Space.m)
-        .gtGlassSurface(.flat,
-                        cornerRadius: 18,
-                        fill: GTGlassPalette.peach,
-                        fillOpacity: 0.22,
-                        gradient: true,
-                        stroke: false)
-        .overlay {
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .strokeBorder(Color.primary.opacity(0.08), lineWidth: 1)
-        }
+        .frame(height: 28)
     }
 
     private var resultText: String {
-        model.error ?? (model.output.isEmpty ? "译文会显示在这里..." : model.output)
+        model.error ?? (model.output.isEmpty ? "译文会显示在这里…" : model.output)
     }
 
-    private var sourceTextMaxHeight: CGFloat {
-        sourceText.count > 220 ? 96 : 72
+    private var resultForeground: Color {
+        if model.error != nil { return GTGlassPalette.semanticRed }
+        return model.output.isEmpty ? Color.secondary : Color.primary
     }
 
-    private var resultTextMaxHeight: CGFloat {
-        resultText.count > 180 ? 128 : 78
+    private var preferredVisualHeight: CGFloat {
+        CGFloat(PanelGeometry.preferredHeight(
+            resultSurfaceHeight: Double(resultSurfaceHeight)
+        ))
     }
 
-    private var statusText: String {
-        if model.error != nil { return "需要处理" }
-        if model.isRunning { return "正在翻译..." }
-        if model.output.isEmpty { return "等待结果" }
-        return "完成"
-    }
+    private func settleCompletedResultLayout() {
+        guard mode == .translation else { return }
 
-    private var diagnosticText: String {
-        var parts: [String] = []
-        let status = model.status.trimmingCharacters(in: .whitespacesAndNewlines)
-        if !status.isEmpty { parts.append(status) }
-        if let tps = model.tokensPerSecond {
-            parts.append(String(format: "%.1f tok/s", tps))
+        let targetSurfaceHeight = measuredResultSurfaceHeight(for: model.output)
+        let targetVisualHeight = CGFloat(PanelGeometry.preferredHeight(
+            resultSurfaceHeight: Double(targetSurfaceHeight)
+        ))
+        guard abs(targetVisualHeight - preferredVisualHeight) >= CGFloat(PanelGeometry.resizeThreshold) else {
+            return
         }
-        return parts.isEmpty ? statusText : parts.joined(separator: " · ")
+
+        resultSurfaceHeight = targetSurfaceHeight
+        onContentHeight(targetVisualHeight, true)
     }
-}
 
-private struct PanelToolbarIcon: View {
-    var systemImage: String
-    var label: String
-
-    var body: some View {
-        Image(systemName: systemImage)
-            .font(.system(size: 16, weight: .medium))
-            .frame(width: 26, height: 26)
-            .foregroundStyle(Color.primary)
-            .help(label)
-            .accessibilityLabel(label)
+    private func measuredResultSurfaceHeight(for text: String) -> CGFloat {
+        let paragraph = NSMutableParagraphStyle()
+        paragraph.lineSpacing = 2
+        let font = NSFont.systemFont(ofSize: 15, weight: .regular)
+        let contentWidth = mode.visualWidth
+            - mode.surfacePadding * 2
+            - (GTGlassTokens.Space.s + 2) * 2
+        let bounds = (text as NSString).boundingRect(
+            with: NSSize(width: contentWidth, height: .greatestFiniteMagnitude),
+            options: [.usesLineFragmentOrigin, .usesFontLeading],
+            attributes: [
+                .font: font,
+                .paragraphStyle: paragraph,
+            ]
+        )
+        let measuredWithInsets = ceil(bounds.height) + (GTGlassTokens.Space.s + 2) * 2
+        return CGFloat(PanelGeometry.resultSurfaceHeight(
+            measuredContentHeight: Double(measuredWithInsets)
+        ))
     }
-}
 
-private struct PanelPill: View {
-    var title: String
-    var systemImage: String
+    private var completedStatus: some View {
+        Text(completedStatusText)
+            .foregroundStyle(.secondary)
+            .help(completedPerformanceHelp)
+    }
 
-    var body: some View {
-        Label(title, systemImage: systemImage)
-            .font(.system(size: 14, weight: .semibold))
-            .padding(.horizontal, GTGlassTokens.Space.m)
-            .frame(height: 32)
-            .gtGlassSurface(.flat,
-                            cornerRadius: 16,
-                            fill: GTGlassPalette.innerNeutral,
-                            fillOpacity: 0.16,
-                            gradient: true)
+    private var completedStatusText: String {
+        let status = model.status.trimmingCharacters(in: .whitespacesAndNewlines)
+        return status.isEmpty ? "译文已生成" : status
+    }
+
+    private var completedPerformanceHelp: String {
+        if let tokensPerSecond = model.tokensPerSecond {
+            return String(format: "生成速度 %.1f tok/s", tokensPerSecond)
+        }
+        return "翻译完成"
+    }
+
+    private func copyResult() {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(model.output, forType: .string)
+        copied = true
+        copyFeedbackTask?.cancel()
+        copyFeedbackTask = Task {
+            try? await Task.sleep(for: .seconds(1.2))
+            guard !Task.isCancelled else { return }
+            copied = false
+        }
     }
 }

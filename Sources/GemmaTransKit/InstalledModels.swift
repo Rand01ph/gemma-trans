@@ -6,6 +6,12 @@ public struct InstalledModel: Sendable, Equatable {
 }
 
 public enum InstalledModels {
+    public static func isInstalled(id: String, base: URL) -> Bool {
+        guard let entry = ModelCatalog.entry(id: id) else { return false }
+        let dir = ModelDownloader.snapshotDirectory(in: base, repo: entry.repo)
+        return ModelDownloader.isComplete(dir)
+    }
+
     /// 遍历 catalog，凡在 base 下有完整快照（ModelDownloader.isComplete）者计入，附目录体积。
     public static func scan(base: URL) -> [InstalledModel] {
         ModelCatalog.entries.compactMap { entry in

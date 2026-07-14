@@ -12,14 +12,6 @@ extension AppAppearance {
         }
     }
 
-    var colorScheme: ColorScheme? {
-        switch self {
-        case .system: return nil
-        case .light: return .light
-        case .dark: return .dark
-        }
-    }
-
     var nsAppearance: NSAppearance? {
         switch self {
         case .system: return nil
@@ -56,6 +48,14 @@ final class GTAppearanceStore {
 
     private func apply(_ value: AppAppearance) {
         NSApplication.shared.appearance = value.nsAppearance
+        // AppKit is the single appearance source for every SwiftUI host and NSPanel.
+        // Clearing per-window overrides is essential when moving from a forced mode
+        // back to `system`; `.preferredColorScheme(nil)` can retain the previous mode.
+        for window in NSApplication.shared.windows {
+            window.appearance = nil
+            window.contentView?.appearance = nil
+            window.contentView?.needsDisplay = true
+        }
     }
 }
 
@@ -64,7 +64,6 @@ struct GTApplicationAppearance: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .preferredColorScheme(appearanceStore.appearance.colorScheme)
             .onAppear { appearanceStore.reloadFromDefaults() }
     }
 }

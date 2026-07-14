@@ -25,6 +25,8 @@ import Foundation
         let found = InstalledModels.scan(base: base)
         #expect(found.map(\.id) == ["gemma-e2b-4bit"])
         #expect(found.first!.bytesOnDisk >= 2048)
+        #expect(InstalledModels.isInstalled(id: "gemma-e2b-4bit", base: base))
+        #expect(!InstalledModels.isInstalled(id: "gemma-e4b-4bit", base: base))
     }
 
     @Test func scan_ignoresIncompleteOrUnknown() throws {

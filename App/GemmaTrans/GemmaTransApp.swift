@@ -13,6 +13,8 @@ struct GemmaTransApp: App {
         // 实测会「有 Dock 图标却无窗口」装死——正是 App Review 2.1a「下载时一直空闲」根因。
         MenuBarExtra {
             switch controller.engineStatus {
+            case .needsModel:
+                Text("引擎：请选择模型")
             case .loading(let stage):
                 Text("引擎：\(stage)")
             case .downloading(let progress):
@@ -22,8 +24,11 @@ struct GemmaTransApp: App {
             case .failed(let msg):
                 Text("引擎失败: \(msg)")
             }
-            if controller.engineStatus != .ready {
+            switch controller.engineStatus {
+            case .loading, .downloading, .failed:
                 Button("重新加载引擎") { EngineController.shared.reload() }
+            case .needsModel, .ready:
+                EmptyView()
             }
             switch controller.apiStatus {
             case .disabled:
@@ -39,16 +44,12 @@ struct GemmaTransApp: App {
                 get: { EngineController.shared.settings.apiEnabled },
                 set: { EngineController.shared.setAPIEnabled($0) }
             ))
-            Button("设置…") { MainWindowController.shared.showSettings() }
+            SettingsLink {
+                Text("设置…")
+            }
             Button("退出") { NSApplication.shared.terminate(nil) }
         } label: {
-            Image(systemName: controller.engineStatus == .ready ? "character.bubble.fill" : "character.bubble")
-        }
-        .commands {
-            CommandGroup(replacing: .appSettings) {
-                Button("设置…") { MainWindowController.shared.showSettings() }
-                    .keyboardShortcut(",", modifiers: .command)
-            }
+            Image(systemName: controller.engineStatus == .ready ? "character.book.closed.fill" : "character.book.closed")
         }
 
         Settings {
@@ -72,6 +73,9 @@ struct GemmaTransApp: App {
 /// 服务注册需在运行期把实例挂到 NSApp.servicesProvider（Info.plist NSServices 仅声明菜单项）。
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let services = ServicesProvider()
+#if DEBUG
+    private var debugTranslateClipboardObserver: NSObjectProtocol?
+#endif
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -89,6 +93,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(
             self, selector: #selector(windowBecameKey(_:)),
             name: NSWindow.didBecomeKeyNotification, object: nil)
+#if DEBUG
+        // Visual-QA hook for exercising the real floating-panel path without relying on a signed
+        // global shortcut. It is compiled out of Release/App Store builds.
+        debugTranslateClipboardObserver = DistributedNotificationCenter.default().addObserver(
+            forName: Notification.Name("com.gemmatrans.debug.translate-clipboard"),
+            object: nil,
+            queue: .main
+        ) { _ in
+            Task { @MainActor in HotkeyCenter.handle() }
+        }
+#endif
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+#if DEBUG
+        if let debugTranslateClipboardObserver {
+            DistributedNotificationCenter.default().removeObserver(debugTranslateClipboardObserver)
+        }
+#endif
     }
 
     @MainActor @objc private func windowBecameKey(_ note: Notification) {

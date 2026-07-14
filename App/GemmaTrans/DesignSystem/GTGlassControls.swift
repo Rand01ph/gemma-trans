@@ -5,70 +5,39 @@ struct GTGlassButton<Label: View>: View {
     var tint: Color? = nil
     var prominent = false
     var minWidth: CGFloat? = nil
+    var compact = false
     var action: () -> Void
     @ViewBuilder var label: () -> Label
 
-    @Environment(\.isEnabled) private var isEnabled
     @Environment(\.colorScheme) private var colorScheme
-    @State private var hovering = false
 
+    @ViewBuilder
     var body: some View {
+        if prominent {
+            baseButton
+                .buttonStyle(.glassProminent)
+                .tint(tint ?? GTGlassPalette.primaryActionTint(for: colorScheme))
+        } else if let tint {
+            baseButton
+                .buttonStyle(.glass)
+                .tint(tint)
+        } else {
+            baseButton
+                .buttonStyle(.glass)
+                .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
+        }
+    }
+
+    private var baseButton: some View {
         Button(role: role, action: action) {
             label()
-                .font(.body.weight(.semibold))
+                .font((compact ? Font.callout : Font.body).weight(.semibold))
                 .lineLimit(1)
-                .foregroundStyle(foregroundStyle)
-                .padding(.horizontal, GTGlassTokens.Space.m)
-                .frame(height: GTGlassTokens.Toolbar.controlHeight)
-                .frame(minWidth: minWidth)
-                .contentShape(Capsule(style: .continuous))
+                .padding(.horizontal, compact ? 2 : GTGlassTokens.Space.xs)
+                .frame(minWidth: minWidth, minHeight: compact ? 16 : 20)
         }
-        .buttonStyle(.plain)
-        .buttonBorderShape(.capsule)
-        .disabled(!isEnabled)
-        .background {
-            Capsule(style: .continuous)
-                .fill(backgroundFill)
-                .opacity(isEnabled ? 1 : 0.45)
-        }
-        .glassEffect(glass, in: Capsule(style: .continuous))
-        .overlay {
-            Capsule(style: .continuous)
-                .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.16 : 0.28), lineWidth: 1)
-        }
-        .onHover { hovering = $0 }
-        .opacity(isEnabled ? 1 : 0.58)
-        .help(helpText)
-    }
-
-    private var glass: Glass {
-        let base: Glass
-        if prominent {
-            base = .regular.tint((tint ?? GTGlassPalette.innerNeutral).opacity(0.30))
-        } else {
-            base = .regular
-        }
-        return base.interactive()
-    }
-
-    private var foregroundStyle: AnyShapeStyle {
-        if role == .destructive { return AnyShapeStyle(Color.red) }
-        if prominent { return AnyShapeStyle(Color.primary) }
-        return AnyShapeStyle(Color.primary)
-    }
-
-    private var backgroundFill: Color {
-        if role == .destructive {
-            return Color.red.opacity(hovering ? 0.20 : 0.12)
-        }
-        if prominent {
-            return (tint ?? GTGlassPalette.innerNeutral).opacity(hovering ? 0.32 : 0.22)
-        }
-        return Color.white.opacity(hovering ? (colorScheme == .dark ? 0.14 : 0.24) : 0.06)
-    }
-
-    private var helpText: String {
-        role == .destructive ? "删除" : ""
+        .buttonBorderShape(.roundedRectangle(radius: 9))
+        .controlSize(compact ? .small : .regular)
     }
 }
 
@@ -79,11 +48,13 @@ extension GTGlassButton where Label == SwiftUI.Label<Text, Image> {
          tint: Color? = nil,
          prominent: Bool = false,
          minWidth: CGFloat? = nil,
+         compact: Bool = false,
          action: @escaping () -> Void) {
         self.role = role
         self.tint = tint
         self.prominent = prominent
         self.minWidth = minWidth
+        self.compact = compact
         self.action = action
         self.label = { Label(title, systemImage: systemImage) }
     }
@@ -100,9 +71,8 @@ struct GTGlassButtonGroup<Content: View>: View {
         .frame(height: GTGlassTokens.Toolbar.controlHeight)
         .gtGlassSurface(.flat,
                         cornerRadius: GTGlassTokens.Toolbar.radius,
-                        fill: GTGlassPalette.innerNeutral,
                         fillOpacity: 0.16,
-                        gradient: true,
+                        gradient: false,
                         interactive: true)
     }
 }
@@ -140,9 +110,8 @@ struct GTSearchField: View {
         .contentShape(Capsule(style: .continuous))
         .gtGlassSurface(.flat,
                         cornerRadius: GTGlassTokens.Toolbar.radius,
-                        fill: GTGlassPalette.innerNeutral,
                         fillOpacity: focused ? 0.20 : 0.12,
-                        gradient: true,
+                        gradient: false,
                         interactive: true)
         .onTapGesture { focused = true }
     }
@@ -177,56 +146,45 @@ struct GTGlassIconButton: View {
     var systemImage: String
     var tint: Color? = nil
     var filled = false
+    var quiet = false
     var size: CGFloat = GTGlassTokens.Toolbar.controlHeight
     var action: () -> Void
 
-    @Environment(\.colorScheme) private var colorScheme
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.colorScheme) private var colorScheme
     @State private var hovering = false
 
+    @ViewBuilder
     var body: some View {
-        Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: size * 0.42, weight: .semibold))
-                .frame(width: size, height: size)
-                .foregroundStyle(foreground)
-                .contentShape(Circle())
+        Group {
+            if filled {
+                baseButton
+                    .buttonStyle(.glassProminent)
+                    .tint(tint ?? GTGlassPalette.primaryActionTint(for: colorScheme))
+            } else if let tint {
+                baseButton
+                    .buttonStyle(.glass)
+                    .tint(tint)
+            } else {
+                baseButton
+                    .buttonStyle(.glass)
+                    .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
+            }
         }
-        .buttonStyle(.plain)
-        .background {
-            Circle()
-                .fill(background)
-                .opacity(isEnabled ? 1 : 0.45)
-        }
-        .glassEffect(glass, in: Circle())
-        .overlay {
-            Circle()
-                .strokeBorder(Color.white.opacity(colorScheme == .dark ? 0.14 : 0.26), lineWidth: 1)
-        }
+        .opacity(isEnabled ? (quiet && !hovering ? 0.72 : 1) : 0.5)
         .onHover { hovering = $0 }
-        .opacity(isEnabled ? 1 : 0.55)
         .help(title)
         .accessibilityLabel(title)
     }
 
-    private var foreground: Color {
-        if filled { return GTGlassPalette.primaryActionForeground(for: colorScheme) }
-        return tint ?? Color.primary
-    }
-
-    private var background: Color {
-        if filled {
-            return GTGlassPalette.primaryActionFill(for: colorScheme)
-                .opacity(hovering ? 0.94 : 0.86)
+    private var baseButton: some View {
+        Button(action: action) {
+            Image(systemName: systemImage)
+                .font(.system(size: size * 0.42, weight: .semibold))
+                .frame(width: max(14, size - 10), height: max(14, size - 10))
+                .contentShape(Circle())
         }
-        return (tint ?? GTGlassPalette.innerNeutral)
-            .opacity(hovering ? 0.22 : 0.12)
-    }
-
-    private var glass: Glass {
-        let base = filled
-            ? Glass.regular.tint(GTGlassPalette.primaryActionFill(for: colorScheme).opacity(0.28))
-            : Glass.regular
-        return base.interactive()
+        .buttonBorderShape(.circle)
+        .controlSize(.small)
     }
 }

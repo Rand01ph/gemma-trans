@@ -1,64 +1,31 @@
 import AppKit
-import Observation
 import SwiftUI
 
-enum MainWindowSection: String, CaseIterable, Identifiable {
-    case translate
-    case settings
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .translate: return "翻译"
-        case .settings: return "设置"
-        }
-    }
-
-    var symbol: String {
-        switch self {
-        case .translate: return "character.bubble"
-        case .settings: return "gearshape"
-        }
-    }
-}
-
-@MainActor
-@Observable
-final class MainWindowState {
-    var selectedSection: MainWindowSection = .translate
-    var searchText = ""
-}
-
 /// 主窗口的 AppKit 宿主。GemmaTrans 仍是菜单栏 app；这里只负责一个当前 Space 的
-/// hidden-titlebar glass window，不改变 Dock/activation 策略。
+/// native-toolbar glass window，不改变 Dock/activation 策略。
 @MainActor
-final class MainWindowController {
+final class MainWindowController: NSObject, NSToolbarDelegate {
     static let shared = MainWindowController()
 
-    private let state = MainWindowState()
     private var window: NSWindow?
 
     func show() {
-        state.selectedSection = .translate
-        showWindow()
-    }
-
-    func showSettings() {
-        state.selectedSection = .settings
         showWindow()
     }
 
     private func showWindow() {
         if window == nil {
             let hosting = NSHostingController(
-                rootView: MainView(controller: EngineController.shared, windowState: state)
+                rootView: MainView(controller: EngineController.shared)
             )
             let win = NSWindow(contentViewController: hosting)
             win.title = "GemmaTrans"
             win.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
-            win.titleVisibility = .hidden
+            win.titleVisibility = .visible
             win.titlebarAppearsTransparent = true
+            win.titlebarSeparatorStyle = .none
+            win.toolbarStyle = .unifiedCompact
+            win.toolbar = makeToolbar()
             win.isMovableByWindowBackground = true
             win.isOpaque = false
             win.backgroundColor = .clear
@@ -79,6 +46,78 @@ final class MainWindowController {
         NSApp.activate(ignoringOtherApps: true)
         window?.makeKeyAndOrderFront(nil)
         window?.orderFrontRegardless()
+    }
+
+    private func makeToolbar() -> NSToolbar {
+        let toolbar = NSToolbar(identifier: .gemmaTransMain)
+        toolbar.delegate = self
+        toolbar.displayMode = .iconOnly
+        toolbar.allowsUserCustomization = false
+        toolbar.autosavesConfiguration = false
+        return toolbar
+    }
+
+    nonisolated func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace, .engineStatus, .settings]
+    }
+
+    nonisolated func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        [.flexibleSpace, .engineStatus, .settings]
+    }
+
+    nonisolated func toolbar(_ toolbar: NSToolbar,
+                             itemForItemIdentifier itemIdentifier: NSToolbarItem.Identifier,
+                             willBeInsertedIntoToolbar flag: Bool) -> NSToolbarItem? {
+        MainActor.assumeIsolated {
+            switch itemIdentifier {
+            case .engineStatus:
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "引擎状态"
+                item.paletteLabel = "引擎状态"
+                item.visibilityPriority = .high
+                item.view = NSHostingView(
+                    rootView: MainToolbarStatus(controller: EngineController.shared)
+                )
+                return item
+
+            case .settings:
+                let item = NSToolbarItem(itemIdentifier: itemIdentifier)
+                item.label = "设置"
+                item.paletteLabel = "设置"
+                item.toolTip = "设置"
+                item.image = NSImage(systemSymbolName: "gearshape", accessibilityDescription: "设置")
+                item.target = self
+                item.action = #selector(openSettings(_:))
+                item.visibilityPriority = .high
+                return item
+
+            default:
+                return nil
+            }
+        }
+    }
+
+    @objc private func openSettings(_ sender: Any?) {
+        guard let item = settingsMenuItem(in: NSApp.mainMenu), let action = item.action else {
+            NSSound.beep()
+            return
+        }
+        NSApp.sendAction(action, to: item.target, from: item)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func settingsMenuItem(in menu: NSMenu?) -> NSMenuItem? {
+        guard let menu else { return nil }
+        for item in menu.items {
+            if item.keyEquivalent == ",",
+               item.keyEquivalentModifierMask.contains(.command) {
+                return item
+            }
+            if let match = settingsMenuItem(in: item.submenu) {
+                return match
+            }
+        }
+        return nil
     }
 
     private func centerOnActiveScreen(_ window: NSWindow) {
@@ -102,5 +141,64 @@ final class MainWindowController {
 
     private func isVisibleOnAnyScreen(_ window: NSWindow) -> Bool {
         NSScreen.screens.contains { $0.visibleFrame.intersects(window.frame) }
+    }
+}
+
+private extension NSToolbar.Identifier {
+    static let gemmaTransMain = NSToolbar.Identifier("com.gemmatrans.main-toolbar")
+}
+
+private extension NSToolbarItem.Identifier {
+    static let engineStatus = NSToolbarItem.Identifier("com.gemmatrans.engine-status")
+    static let settings = NSToolbarItem.Identifier("com.gemmatrans.settings")
+}
+
+private struct MainToolbarStatus: View {
+    let controller: EngineController
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Circle()
+                .fill(statusTint)
+                .frame(width: 6, height: 6)
+            Text(statusTitle)
+                .fontWeight(.medium)
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        // The native toolbar supplies the group's trailing control padding. The hosted
+        // status view only compensates the leading edge and the inter-item handoff.
+        .padding(.leading, GTGlassTokens.Space.s)
+        .padding(.trailing, 0)
+        .frame(height: 22)
+        .fixedSize()
+        .help(controller.activeModelName)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("引擎状态：\(statusTitle)")
+    }
+
+    private var statusTitle: String {
+        switch controller.engineStatus {
+        case .needsModel:
+            return "选择模型"
+        case .ready:
+            return "就绪"
+        case .loading:
+            return "正在加载"
+        case .downloading(let progress):
+            return "下载中 \(Int(progress.fraction * 100))%"
+        case .failed:
+            return "需要处理"
+        }
+    }
+
+    private var statusTint: Color {
+        switch controller.engineStatus {
+        case .needsModel: return .secondary
+        case .ready: return GTGlassPalette.semanticGreen
+        case .loading: return GTGlassPalette.semanticOrange
+        case .downloading: return GTGlassPalette.semanticBlue
+        case .failed: return GTGlassPalette.semanticOrange
+        }
     }
 }

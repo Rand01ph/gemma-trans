@@ -24,20 +24,18 @@ struct GTPanelSection<Content: View>: View {
             }
             .padding(GTGlassTokens.Space.m)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .gtGlassSurface(.flat,
-                            cornerRadius: GTGlassTokens.Radius.card,
-                            fill: GTGlassPalette.innerNeutral,
-                            fillOpacity: 0.13,
-                            gradient: true)
+            .gtContentSurface(.form, cornerRadius: GTGlassTokens.Radius.card)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
 struct GTPanelDivider: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         Divider()
-            .opacity(0.55)
+            .opacity(colorScheme == .dark ? 0.55 : 0.36)
     }
 }
 
@@ -122,20 +120,64 @@ struct GTPanelToggleRow: View {
     }
 }
 
-struct GTActiveBadge: View {
-    var text = "活跃"
+struct GTSettingsGlassButton: View {
+    var title: String
+    var systemImage: String
+    var minWidth: CGFloat = 72
+    var action: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        Text(text)
-            .font(.caption.weight(.bold))
-            .padding(.horizontal, GTGlassTokens.Space.s)
-            .padding(.vertical, 3)
-            .foregroundStyle(GTGlassPalette.semanticGreen)
-            .gtGlassSurface(.flat,
-                            cornerRadius: 7,
-                            fill: GTGlassPalette.semanticGreen,
-                            fillOpacity: 0.20,
-                            gradient: false,
-                            stroke: false)
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.callout.weight(.semibold))
+                .lineLimit(1)
+                .frame(minWidth: minWidth, minHeight: 20)
+        }
+        .buttonStyle(.glass)
+        .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
+        .buttonBorderShape(.roundedRectangle(radius: 9))
+        .controlSize(.regular)
+    }
+}
+
+struct GTSettingsGlassMenu<Content: View>: View {
+    var title: String
+    @ViewBuilder var content: () -> Content
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Menu(content: content) {
+            Image(systemName: "ellipsis")
+                .font(.callout.weight(.semibold))
+                .frame(width: 28, height: 20)
+        }
+        .menuIndicator(.hidden)
+        .buttonStyle(.glass)
+        .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
+        .buttonBorderShape(.roundedRectangle(radius: 9))
+        .controlSize(.regular)
+        .help(title)
+        .accessibilityLabel(title)
+    }
+}
+
+struct GTModelStateBadge: View {
+    var text = "当前使用"
+
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Label(text, systemImage: "checkmark")
+            .font(.caption.weight(.semibold))
+            .padding(.horizontal, 10)
+            .frame(height: 30)
+            .foregroundStyle(GTGlassPalette.positiveForeground(for: colorScheme))
+            .glassEffect(
+                .regular.tint(GTGlassPalette.positiveSurfaceTint(for: colorScheme)),
+                in: RoundedRectangle(cornerRadius: 9, style: .continuous)
+            )
     }
 }

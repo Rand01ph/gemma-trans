@@ -48,14 +48,23 @@ struct GTGlassSurface: ViewModifier {
 
     private var fillStyle: AnyShapeStyle {
         let base = fill ?? GTGlassPalette.defaultSurfaceBase(for: colorScheme)
-        let opacity = fillOpacity * (colorScheme == .dark ? 0.92 : 0.68)
+        let opacity = fillOpacity * (colorScheme == .dark ? 1.0 : 0.68)
         if gradient {
+            if colorScheme == .light {
+                return AnyShapeStyle(LinearGradient(
+                    colors: [
+                        base.opacity(opacity * 0.82),
+                        base.opacity(opacity * 0.58)
+                    ],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                ))
+            }
             return AnyShapeStyle(LinearGradient(
                 colors: [
                     base.opacity(opacity * 1.08),
-                    GTGlassPalette.lavender.opacity(opacity * (colorScheme == .dark ? 0.26 : 0.42)),
-                    GTGlassPalette.peach.opacity(opacity * (colorScheme == .dark ? 0.20 : 0.36)),
-                    GTGlassPalette.innerNeutral.opacity(opacity * 0.54)
+                    base.opacity(opacity * 0.88),
+                    Color.black.opacity(opacity * 0.20)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -65,7 +74,13 @@ struct GTGlassSurface: ViewModifier {
     }
 
     private var strokeColor: Color {
-        colorScheme == .dark ? .white.opacity(0.18) : .white.opacity(0.34)
+        if colorScheme == .dark { return .white.opacity(0.12) }
+        switch level {
+        case .window: return .black.opacity(0.09)
+        case .panel: return .black.opacity(0.075)
+        case .card: return .black.opacity(0.055)
+        case .flat: return .black.opacity(0.04)
+        }
     }
 
     private var shadowColor: Color {
@@ -75,7 +90,7 @@ struct GTGlassSurface: ViewModifier {
         case .panel:
             return .black.opacity(colorScheme == .dark ? 0.52 : 0.20)
         case .card:
-            return .black.opacity(colorScheme == .dark ? 0.38 : 0.14)
+            return .black.opacity(colorScheme == .dark ? 0.32 : 0.07)
         case .flat:
             return .clear
         }
@@ -85,7 +100,7 @@ struct GTGlassSurface: ViewModifier {
         switch level {
         case .window: return 30
         case .panel: return 24
-        case .card: return 14
+        case .card: return colorScheme == .dark ? 12 : 8
         case .flat: return 0
         }
     }
@@ -94,7 +109,7 @@ struct GTGlassSurface: ViewModifier {
         switch level {
         case .window: return 16
         case .panel: return 10
-        case .card: return 5
+        case .card: return colorScheme == .dark ? 5 : 3
         case .flat: return 0
         }
     }
@@ -118,6 +133,85 @@ extension View {
     }
 }
 
+enum GTContentSurfaceRole {
+    case reading
+    case form
+    case subtle
+}
+
+struct GTContentSurface: ViewModifier {
+    var role: GTContentSurfaceRole = .reading
+    var cornerRadius: CGFloat = GTGlassTokens.Radius.control
+    var fill: Color? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        let base = fill ?? surfaceBase
+
+        content
+            .clipShape(shape)
+            .background {
+                shape.fill(base.opacity(surfaceOpacity))
+            }
+            .overlay {
+                shape.strokeBorder(Color.primary.opacity(strokeOpacity), lineWidth: 1)
+            }
+    }
+
+    private var surfaceBase: Color {
+        switch role {
+        case .reading: return GTGlassPalette.contentSurfaceBase(for: colorScheme)
+        case .form: return GTGlassPalette.formSurfaceBase(for: colorScheme)
+        case .subtle: return GTGlassPalette.subtleSurfaceBase(for: colorScheme)
+        }
+    }
+
+    private var surfaceOpacity: Double {
+        if reduceTransparency {
+            switch role {
+            case .reading: return colorScheme == .dark ? 0.92 : 0.96
+            case .form: return colorScheme == .dark ? 0.82 : 0.88
+            case .subtle: return colorScheme == .dark ? 0.70 : 0.78
+            }
+        }
+        if contrast == .increased {
+            switch role {
+            case .reading: return colorScheme == .dark ? 0.82 : 0.90
+            case .form: return colorScheme == .dark ? 0.64 : 0.74
+            case .subtle: return colorScheme == .dark ? 0.50 : 0.60
+            }
+        }
+        switch role {
+        case .reading: return colorScheme == .dark ? 0.66 : 0.66
+        case .form: return colorScheme == .dark ? 0.40 : 0.48
+        case .subtle: return colorScheme == .dark ? 0.24 : 0.22
+        }
+    }
+
+    private var strokeOpacity: Double {
+        if contrast == .increased {
+            return colorScheme == .dark ? 0.42 : 0.28
+        }
+        switch role {
+        case .reading: return colorScheme == .dark ? 0.14 : 0.06
+        case .form: return colorScheme == .dark ? 0.11 : 0.045
+        case .subtle: return colorScheme == .dark ? 0.08 : 0.07
+        }
+    }
+}
+
+extension View {
+    func gtContentSurface(_ role: GTContentSurfaceRole = .reading,
+                          cornerRadius: CGFloat = GTGlassTokens.Radius.control,
+                          fill: Color? = nil) -> some View {
+        modifier(GTContentSurface(role: role, cornerRadius: cornerRadius, fill: fill))
+    }
+}
+
 struct GTGlassCard<Content: View>: View {
     var title: String? = nil
     var subtitle: String? = nil
@@ -133,13 +227,13 @@ struct GTGlassCard<Content: View>: View {
                     if let systemImage {
                         Image(systemName: systemImage)
                             .font(.headline)
+                            .foregroundStyle(.secondary)
                             .frame(width: GTGlassTokens.Icon.chip, height: GTGlassTokens.Icon.chip)
-                            .gtGlassSurface(.flat,
-                                            cornerRadius: GTGlassTokens.Radius.control,
-                                            fill: fill ?? GTGlassPalette.innerNeutral,
-                                            fillOpacity: 0.22,
-                                            gradient: true,
-                                            stroke: false)
+                            .background {
+                                RoundedRectangle(cornerRadius: GTGlassTokens.Radius.control,
+                                                 style: .continuous)
+                                    .fill(Color.primary.opacity(0.07))
+                            }
                     }
                     VStack(alignment: .leading, spacing: 2) {
                         if let title {

@@ -32,9 +32,9 @@ import Foundation
         #expect(AppSettings.suiteName == "com.gemmatrans.app")
     }
 
-    /// selectedModelID 默认为 "auto"（RAM 自选 Gemma）
-    @Test func test_selectedModelID_defaultsToAuto() {
-        #expect(AppSettings().selectedModelID == "auto")
+    /// 新用户默认不选择模型，启动时不得因此触发下载。
+    @Test func selectedModelIDDefaultsToNil() {
+        #expect(AppSettings().selectedModelID == nil)
     }
 
     /// selectedModelID 随 UserDefaults 持久化往返
@@ -46,6 +46,18 @@ import Foundation
         s.selectedModelID = "hymt2-8bit"
         s.save(suiteName: suite)
         #expect(AppSettings.load(suiteName: suite).selectedModelID == "hymt2-8bit")
+    }
+
+    @Test func legacyAutoAndUnknownModelIDsMigrateToNoSelection() {
+        let suite = "test.legacyModel.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        defaults.set("auto", forKey: "selectedModelID")
+        #expect(AppSettings.load(suiteName: suite).selectedModelID == nil)
+
+        defaults.set("unknown-model", forKey: "selectedModelID")
+        #expect(AppSettings.load(suiteName: suite).selectedModelID == nil)
     }
 
     @Test func appearanceDefaultsToSystem() {

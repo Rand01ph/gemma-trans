@@ -26,6 +26,7 @@ struct GTContentBackground: View {
     var body: some View {
         ZStack {
             GTVisualEffectBackground(material: .fullScreenUI, blendingMode: .behindWindow)
+            GTGlassPalette.backgroundOverlay(for: colorScheme)
             LinearGradient(
                 colors: backgroundStops,
                 startPoint: .topLeading,
@@ -39,17 +40,15 @@ struct GTContentBackground: View {
     private var backgroundStops: [Color] {
         if colorScheme == .dark {
             return [
-                GTGlassPalette.warmNeutral.opacity(0.12),
-                GTGlassPalette.lavender.opacity(0.14),
-                GTGlassPalette.peach.opacity(0.08),
-                GTGlassPalette.coolNeutral.opacity(0.10)
+                Color.black.opacity(0.16),
+                GTGlassPalette.semanticBlue.opacity(0.035),
+                Color.black.opacity(0.08)
             ]
         }
         return [
-            GTGlassPalette.warmNeutral.opacity(0.28),
-            GTGlassPalette.peach.opacity(0.16),
-            GTGlassPalette.lavender.opacity(0.12),
-            GTGlassPalette.coolNeutral.opacity(0.10)
+            Color.clear,
+            GTGlassPalette.semanticBlue.opacity(0.018),
+            Color.black.opacity(0.018)
         ]
     }
 }

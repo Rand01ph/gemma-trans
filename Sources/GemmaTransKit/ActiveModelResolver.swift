@@ -7,21 +7,22 @@ public struct ResolvedModel: Sendable, Equatable {
 
 public enum ActiveModelResolver {
     public static func resolve(
-        selectedID: String, physicalMemory: UInt64, availableMemory: UInt64?
-    ) -> ResolvedModel {
-        // Auto 或未知 id：按内存选 Gemma（沿用既有分档），映射到对应 catalog 条目
-        if selectedID == ModelCatalog.autoID || ModelCatalog.entry(id: selectedID) == nil {
-            let t = EngineTuning.recommended(
-                physicalMemory: physicalMemory, availableMemory: availableMemory)
-            let id = (t.variant == .gemma4E4B4bit) ? "gemma-e4b-4bit" : "gemma-e2b-4bit"
-            return ResolvedModel(entry: ModelCatalog.entry(id: id)!, tuning: t)
-        }
-        // 显式选择：用 entry 默认参数构造 tuning。variant 字段仅 Gemma 加载路径用到，
+        selectedID: String,
+        parameterSettings: AppSettings = AppSettings()
+    ) -> ResolvedModel? {
+        guard let entry = ModelCatalog.entry(id: selectedID) else { return nil }
+        // 显式选择只决定模型；参数自动配置使用 entry 建议值，关闭后使用用户手动上限。
+        // variant 字段仅 Gemma 加载路径用到，
         // 非 Gemma family 时填一个占位（.gemma4E2B4bit），加载分发以 entry.family 为准。
-        let e = ModelCatalog.entry(id: selectedID)!
-        let variant: ModelVariant = (e.id == "gemma-e4b-4bit") ? .gemma4E4B4bit : .gemma4E2B4bit
+        let variant: ModelVariant = entry.id == "gemma-e4b-4bit" ? .gemma4E4B4bit : .gemma4E2B4bit
+        let maxTokens = parameterSettings.autoTuning
+            ? entry.defaultMaxTokens
+            : parameterSettings.manualMaxTokens
+        let maxInputChars = parameterSettings.autoTuning
+            ? entry.defaultMaxInputChars
+            : parameterSettings.maxInputChars
         let tuning = EngineTuning(variant: variant,
-            maxTokens: e.defaultMaxTokens, maxInputChars: e.defaultMaxInputChars)
-        return ResolvedModel(entry: e, tuning: tuning)
+            maxTokens: maxTokens, maxInputChars: maxInputChars)
+        return ResolvedModel(entry: entry, tuning: tuning)
     }
 }

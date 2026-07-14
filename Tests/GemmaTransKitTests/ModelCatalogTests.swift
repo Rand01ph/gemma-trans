@@ -5,8 +5,7 @@ final class ModelCatalogTests: XCTestCase {
     func test_entries_haveUniqueStableIDs() {
         let ids = ModelCatalog.entries.map(\.id)
         XCTAssertEqual(Set(ids).count, ids.count, "catalog id 必须唯一")
-        XCTAssertTrue(ids.contains("gemma-e4b-4bit"))
-        XCTAssertTrue(ids.contains("gemma-e2b-4bit"))
+        XCTAssertEqual(ids, ["gemma-e4b-4bit", "gemma-e2b-4bit", "hymt2-4bit", "hymt2-8bit"])
     }
 
     func test_entry_lookupByID() {
@@ -16,7 +15,7 @@ final class ModelCatalogTests: XCTestCase {
         XCTAssertNil(ModelCatalog.entry(id: "nope"))
     }
 
-    func test_autoID_isNotAnEntry() {
-        XCTAssertNil(ModelCatalog.entry(id: ModelCatalog.autoID))
+    func test_autoIsNotAnEntry() {
+        XCTAssertNil(ModelCatalog.entry(id: "auto"))
     }
 }

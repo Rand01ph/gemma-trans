@@ -23,17 +23,12 @@ enum GTGlassTokens {
     }
 
     enum Toolbar {
-        static let band: CGFloat = 58
         static let controlHeight: CGFloat = 38
-        static let outerPadding: CGFloat = 10
-        static let groupSpacing: CGFloat = 8
-        static let leadingTrafficInset: CGFloat = 92
-        static let searchWidth: CGFloat = 390
         static var radius: CGFloat { controlHeight / 2 }
     }
 
     enum Window {
-        static let defaultSize = CGSize(width: 980, height: 680)
+        static let defaultSize = CGSize(width: 980, height: 600)
         static let minSize = CGSize(width: 760, height: 520)
         static let contentInset: CGFloat = 18
     }
@@ -41,6 +36,7 @@ enum GTGlassTokens {
     enum Panel {
         static let translationVisualWidth = CGFloat(PanelGeometry.panelWidth)
         static let translationMinVisualHeight = CGFloat(PanelGeometry.minHeight)
+        static let translationInitialVisualHeight = CGFloat(PanelGeometry.initialHeight)
         static let translationMaxVisualHeight = CGFloat(PanelGeometry.maxHeight)
         static let translationShadowGutter = CGFloat(PanelGeometry.shadowGutter)
         static let translationWindowWidth = translationVisualWidth + translationShadowGutter * 2
@@ -49,7 +45,7 @@ enum GTGlassTokens {
         static let messageWindowSize = CGSize(width: messageVisualSize.width + translationShadowGutter * 2,
                                               height: messageVisualSize.height + translationShadowGutter * 2)
         static let settingsWidth: CGFloat = 640
-        static let settingsHeight: CGFloat = 680
+        static let settingsHeight: CGFloat = 500
     }
 
     enum Icon {
