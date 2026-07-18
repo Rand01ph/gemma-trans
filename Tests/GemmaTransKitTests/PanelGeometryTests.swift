@@ -7,7 +7,7 @@ import Testing
     }
 
     @Test func tinyContentClampsToMinimum() {
-        #expect(PanelGeometry.targetHeight(contentHeight: 10, screenVisibleHeight: 900) == 176)
+        #expect(PanelGeometry.targetHeight(contentHeight: 10, screenVisibleHeight: 900) == 132)
     }
 
     @Test func hugeContentClampsToMaxHeight() {
@@ -19,10 +19,10 @@ import Testing
     }
 
     @Test func shadowGutterDoesNotChangeVisualHeight() {
-        #expect(PanelGeometry.targetHeight(contentHeight: 176, screenVisibleHeight: 900) == 176)
-        #expect(PanelGeometry.windowWidth() == 560)
-        #expect(PanelGeometry.windowHeight(forVisualHeight: 176) == 236)
-        #expect(PanelGeometry.windowHeight(forVisualHeight: PanelGeometry.initialHeight) == 280)
+        #expect(PanelGeometry.targetHeight(contentHeight: 132, screenVisibleHeight: 900) == 132)
+        #expect(PanelGeometry.windowWidth() == 540)
+        #expect(PanelGeometry.windowHeight(forVisualHeight: 132) == 192)
+        #expect(PanelGeometry.windowHeight(forVisualHeight: PanelGeometry.initialHeight) == 234)
     }
 
     @Test func resizeThresholdAvoidsStreamingJitter() {
@@ -30,19 +30,19 @@ import Testing
     }
 
     @Test func measuredResultSurfaceClampsToReadableRange() {
-        #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 20) == 76)
+        #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 20) == 50)
         #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 108) == 108)
-        #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 800) == 240)
+        #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 800) == 258)
     }
 
     @Test func measuredResultDeterminesFinalVisualHeight() {
         #expect(PanelGeometry.chromeHeight + PanelGeometry.streamingResultSurfaceHeight
             == PanelGeometry.initialHeight)
-        #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 20) == 176)
+        #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 20) == 132)
         #expect(PanelGeometry.preferredHeight(
             resultSurfaceHeight: PanelGeometry.streamingResultSurfaceHeight
         ) == PanelGeometry.initialHeight)
-        #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 180) == 280)
+        #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 180) == 262)
         #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 1_000) == 340)
     }
 }

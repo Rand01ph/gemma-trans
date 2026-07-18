@@ -13,6 +13,7 @@ import Foundation
         s.manualMaxTokens = 512
         s.useCNSource = true
         s.appearance = .dark
+        s.translationFontSize = 17
         s.save(suiteName: suite)
 
         let loaded = AppSettings.load(suiteName: suite)
@@ -20,6 +21,7 @@ import Foundation
         #expect(loaded.manualMaxTokens == 512)
         #expect(loaded.useCNSource == true)
         #expect(loaded.appearance == .dark)
+        #expect(loaded.translationFontSize == 17)
     }
 
     /// 国内源开关默认关闭（HF 直连可用的用户不受影响）
@@ -62,5 +64,12 @@ import Foundation
 
     @Test func appearanceDefaultsToSystem() {
         #expect(AppSettings().appearance == .system)
+    }
+
+    @Test func translationFontSizeHasCompactDefaultAndSafeBounds() {
+        #expect(AppSettings().translationFontSize == 13)
+        #expect(AppSettings(translationFontSize: 8).translationFontSize == 12)
+        #expect(AppSettings(translationFontSize: 24).translationFontSize == 18)
+        #expect(AppSettings.normalizedTranslationFontSize(.nan) == 13)
     }
 }

@@ -47,6 +47,12 @@ final class TranslationPanel {
     private func present(model: TranslationViewModel,
                          mode: TranslationPanelLayoutMode = .translation,
                          onRetry: (() -> Void)? = nil) {
+        // A shortcut invoked from another app must not promote GemmaTrans's normal window.
+        // Remember the real foreground app so AppKit can hand focus back after ordering the
+        // non-activating floating panel.
+        let foregroundApplication = NSWorkspace.shared.frontmostApplication
+        let shouldRestoreForegroundApplication = !NSApp.isActive
+            && foregroundApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier
         currentModel?.cancel()
         currentModel = model
         currentMode = mode
@@ -56,6 +62,7 @@ final class TranslationPanel {
             model: model,
             mode: mode,
             action: .translate,
+            resultFontSize: CGFloat(AppSettings.load().translationFontSize),
             onRetry: onRetry,
             onClose: { [weak self] in self?.close() },
             onStop: { model.cancel() },
@@ -96,6 +103,9 @@ final class TranslationPanel {
         self.panel = panel
         installEscapeMonitor()
         panel.orderFrontRegardless()
+        if shouldRestoreForegroundApplication {
+            foregroundApplication?.activate(options: [])
+        }
     }
 
     private func installEscapeMonitor() {
@@ -194,14 +204,14 @@ private enum TranslationPanelLayoutMode {
 
     var surfacePadding: CGFloat {
         switch self {
-        case .translation: return 14
+        case .translation: return 10
         case .message: return 16
         }
     }
 
     var cornerRadius: CGFloat {
         switch self {
-        case .translation: return 20
+        case .translation: return 18
         case .message: return 22
         }
     }
@@ -329,6 +339,7 @@ private struct GTTranslationPanelView: View {
     let model: TranslationViewModel
     let mode: TranslationPanelLayoutMode
     let action: TextActionKind
+    let resultFontSize: CGFloat
     let onRetry: (() -> Void)?
     let onClose: () -> Void
     let onStop: () -> Void
@@ -418,7 +429,7 @@ private struct GTTranslationPanelView: View {
     }
 
     private var panelContent: some View {
-        VStack(alignment: .leading, spacing: GTGlassTokens.Space.s) {
+        VStack(alignment: .leading, spacing: 6) {
             actionHeader
             resultSurface
             resultActions
@@ -430,10 +441,10 @@ private struct GTTranslationPanelView: View {
             actionIdentity
             Spacer(minLength: GTGlassTokens.Space.s)
             phaseMetadata
-            GTGlassIconButton(title: "关闭", systemImage: "xmark", quiet: true, size: 26, action: onClose)
+            GTGlassIconButton(title: "关闭", systemImage: "xmark", quiet: true, size: 24, action: onClose)
                 .keyboardShortcut(.cancelAction)
         }
-        .frame(minHeight: 28)
+        .frame(minHeight: 24)
     }
 
     @ViewBuilder
@@ -494,17 +505,18 @@ private struct GTTranslationPanelView: View {
     private var resultSurface: some View {
         ScrollView(.vertical) {
             Text(resultText)
-                .font(.system(size: 15, weight: .regular))
-                .lineSpacing(2)
+                .font(.system(size: resultFontSize, weight: .regular))
+                .lineSpacing(resultLineSpacing)
                 .foregroundStyle(resultForeground)
                 .frame(maxWidth: .infinity, alignment: .topLeading)
                 .fixedSize(horizontal: false, vertical: true)
                 .textSelection(.enabled)
+                .padding(.horizontal, resultHorizontalInset)
+                .padding(.vertical, resultVerticalInset)
         }
+        .scrollIndicators(.hidden)
         .scrollBounceBehavior(.basedOnSize)
-        .padding(GTGlassTokens.Space.s + 2)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .gtContentSurface(.reading, cornerRadius: GTGlassTokens.Radius.control)
         .frame(height: resultSurfaceHeight)
     }
 
@@ -540,7 +552,7 @@ private struct GTTranslationPanelView: View {
             }
             Spacer()
         }
-        .frame(height: 28)
+        .frame(height: 26)
     }
 
     private var resultText: String {
@@ -575,11 +587,11 @@ private struct GTTranslationPanelView: View {
 
     private func measuredResultSurfaceHeight(for text: String) -> CGFloat {
         let paragraph = NSMutableParagraphStyle()
-        paragraph.lineSpacing = 2
-        let font = NSFont.systemFont(ofSize: 15, weight: .regular)
+        paragraph.lineSpacing = resultLineSpacing
+        let font = NSFont.systemFont(ofSize: resultFontSize, weight: .regular)
         let contentWidth = mode.visualWidth
             - mode.surfacePadding * 2
-            - (GTGlassTokens.Space.s + 2) * 2
+            - resultHorizontalInset * 2
         let bounds = (text as NSString).boundingRect(
             with: NSSize(width: contentWidth, height: .greatestFiniteMagnitude),
             options: [.usesLineFragmentOrigin, .usesFontLeading],
@@ -588,11 +600,15 @@ private struct GTTranslationPanelView: View {
                 .paragraphStyle: paragraph,
             ]
         )
-        let measuredWithInsets = ceil(bounds.height) + (GTGlassTokens.Space.s + 2) * 2
+        let measuredWithInsets = ceil(bounds.height) + resultVerticalInset * 2
         return CGFloat(PanelGeometry.resultSurfaceHeight(
             measuredContentHeight: Double(measuredWithInsets)
         ))
     }
+
+    private var resultHorizontalInset: CGFloat { 2 }
+    private var resultVerticalInset: CGFloat { 1 }
+    private var resultLineSpacing: CGFloat { max(1, resultFontSize * 0.12) }
 
     private var completedStatus: some View {
         Text(completedStatusText)

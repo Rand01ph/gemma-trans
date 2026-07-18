@@ -44,9 +44,7 @@ struct GemmaTransApp: App {
                 get: { EngineController.shared.settings.apiEnabled },
                 set: { EngineController.shared.setAPIEnabled($0) }
             ))
-            SettingsLink {
-                Text("设置…")
-            }
+            Button("设置…") { MainWindowController.shared.showSettings() }
             Button("退出") { NSApplication.shared.terminate(nil) }
         } label: {
             Image(systemName: controller.engineStatus == .ready ? "character.book.closed.fill" : "character.book.closed")

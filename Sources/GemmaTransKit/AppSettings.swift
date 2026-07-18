@@ -8,6 +8,10 @@ public enum AppAppearance: String, CaseIterable, Sendable {
 
 /// 全局配置。CLI 与 App 共用，UserDefaults 持久化（App 修改，CLI 读取）。
 public struct AppSettings: Sendable {
+    public static let defaultTranslationFontSize = 13.0
+    public static let minimumTranslationFontSize = 12.0
+    public static let maximumTranslationFontSize = 18.0
+
     public var port: UInt16
     /// 检测为中文时的目标语言
     public var targetForChinese: String
@@ -27,6 +31,8 @@ public struct AppSettings: Sendable {
     public var selectedModelID: String?
     /// macOS 外观：默认跟随系统；CLI/iOS 可忽略该字段。
     public var appearance: AppAppearance
+    /// macOS 翻译浮窗译文字号；其他平台可忽略该字段。
+    public var translationFontSize: Double
 
     public static let suiteName = "com.gemmatrans.app"
 
@@ -40,7 +46,8 @@ public struct AppSettings: Sendable {
         apiEnabled: Bool = true,
         useCNSource: Bool = false,
         selectedModelID: String? = nil,
-        appearance: AppAppearance = .system
+        appearance: AppAppearance = .system,
+        translationFontSize: Double = Self.defaultTranslationFontSize
     ) {
         self.port = port
         self.targetForChinese = targetForChinese
@@ -52,6 +59,7 @@ public struct AppSettings: Sendable {
         self.useCNSource = useCNSource
         self.selectedModelID = selectedModelID
         self.appearance = appearance
+        self.translationFontSize = Self.normalizedTranslationFontSize(translationFontSize)
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
@@ -73,6 +81,11 @@ public struct AppSettings: Sendable {
         if let v = d.string(forKey: "appearance"), let appearance = AppAppearance(rawValue: v) {
             s.appearance = appearance
         }
+        if d.object(forKey: "translationFontSize") != nil {
+            s.translationFontSize = Self.normalizedTranslationFontSize(
+                d.double(forKey: "translationFontSize")
+            )
+        }
         return s
     }
 
@@ -92,5 +105,12 @@ public struct AppSettings: Sendable {
             d.removeObject(forKey: "selectedModelID")
         }
         d.set(appearance.rawValue, forKey: "appearance")
+        d.set(Self.normalizedTranslationFontSize(translationFontSize),
+              forKey: "translationFontSize")
+    }
+
+    public static func normalizedTranslationFontSize(_ value: Double) -> Double {
+        guard value.isFinite else { return defaultTranslationFontSize }
+        return min(max(value, minimumTranslationFontSize), maximumTranslationFontSize)
     }
 }

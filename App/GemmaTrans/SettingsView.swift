@@ -81,6 +81,7 @@ struct SettingsView: View {
         }
         .frame(width: GTGlassTokens.Panel.settingsWidth,
                height: GTGlassTokens.Panel.settingsHeight)
+        .background(SettingsWindowReader())
         .gtApplicationAppearance()
         .onAppear(perform: reloadSettings)
         .onChange(of: EngineController.shared.engineStatus) { _, _ in refreshInstalledModels() }
@@ -151,6 +152,23 @@ struct SettingsView: View {
                 .pickerStyle(.segmented)
                 .frame(width: 232)
                 .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            GTPanelDivider()
+            GTPanelField(label: "浮窗译文字号", subtitle: "用于划词与剪贴板翻译结果。") {
+                HStack(spacing: GTGlassTokens.Space.s) {
+                    Slider(value: translationFontSizeBinding,
+                           in: AppSettings.minimumTranslationFontSize
+                            ... AppSettings.maximumTranslationFontSize,
+                           step: 1)
+                        .frame(width: 148)
+                        .accessibilityLabel("浮窗译文字号")
+                        .accessibilityValue("\(Int(settings.translationFontSize)) 点")
+
+                    Text("\(Int(settings.translationFontSize)) pt")
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                        .frame(width: 38, alignment: .trailing)
+                }
             }
         }
     }
@@ -321,6 +339,15 @@ struct SettingsView: View {
             settings.appearance = newValue
             settings.save()
             appearanceStore.set(newValue, persist: false)
+        }
+    }
+
+    private var translationFontSizeBinding: Binding<Double> {
+        Binding {
+            settings.translationFontSize
+        } set: { newValue in
+            settings.translationFontSize = AppSettings.normalizedTranslationFontSize(newValue)
+            settings.save()
         }
     }
 
@@ -572,5 +599,28 @@ struct SettingsView: View {
         for candidate in candidates {
             if let url = URL(string: candidate), NSWorkspace.shared.open(url) { return }
         }
+    }
+}
+
+private struct SettingsWindowReader: NSViewRepresentable {
+    func makeNSView(context: Context) -> SettingsWindowProbe {
+        let view = SettingsWindowProbe()
+        view.onWindowChange = { window in
+            guard let window else { return }
+            MainWindowController.shared.registerSettingsWindow(window)
+        }
+        return view
+    }
+
+    func updateNSView(_ nsView: SettingsWindowProbe, context: Context) {}
+}
+
+@MainActor
+private final class SettingsWindowProbe: NSView {
+    var onWindowChange: ((NSWindow?) -> Void)?
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        onWindowChange?(window)
     }
 }

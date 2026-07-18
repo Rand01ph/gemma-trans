@@ -1,4 +1,5 @@
 import AppKit
+import OSLog
 import SwiftUI
 
 /// 主窗口的 AppKit 宿主。GemmaTrans 仍是菜单栏 app；这里只负责一个当前 Space 的
@@ -8,12 +9,48 @@ final class MainWindowController: NSObject, NSToolbarDelegate {
     static let shared = MainWindowController()
 
     private var window: NSWindow?
+    private weak var settingsWindow: NSWindow?
+    private var shouldFocusSettingsWindowOnRegistration = false
+    private let logger = Logger(
+        subsystem: Bundle.main.bundleIdentifier ?? "com.gemmatrans.GemmaTrans",
+        category: "Windowing"
+    )
 
     func show() {
-        showWindow()
+        let window = makeMainWindowIfNeeded()
+        if !isVisibleOnAnyScreen(window) {
+            centerOnActiveScreen(window)
+        }
+        scheduleBringToFront(window)
     }
 
-    private func showWindow() {
+    func showSettings() {
+        if let settingsWindow {
+            scheduleBringToFront(settingsWindow)
+            return
+        }
+
+        guard let item = settingsMenuItem(in: NSApp.mainMenu), let action = item.action else {
+            NSSound.beep()
+            return
+        }
+        shouldFocusSettingsWindowOnRegistration = true
+        guard NSApp.sendAction(action, to: item.target, from: item) else {
+            shouldFocusSettingsWindowOnRegistration = false
+            NSSound.beep()
+            return
+        }
+    }
+
+    func registerSettingsWindow(_ window: NSWindow) {
+        settingsWindow = window
+        window.collectionBehavior.insert(.moveToActiveSpace)
+        guard shouldFocusSettingsWindowOnRegistration else { return }
+        shouldFocusSettingsWindowOnRegistration = false
+        scheduleBringToFront(window)
+    }
+
+    private func makeMainWindowIfNeeded() -> NSWindow {
         if window == nil {
             let hosting = NSHostingController(
                 rootView: MainView(controller: EngineController.shared)
@@ -38,14 +75,46 @@ final class MainWindowController: NSObject, NSToolbarDelegate {
             window = win
         }
 
-        if let window, !isVisibleOnAnyScreen(window) {
-            centerOnActiveScreen(window)
+        guard let window else {
+            preconditionFailure("Main window must exist after creation")
         }
+        return window
+    }
+
+    /// MenuBarExtra actions run while the status menu is still tracking. Waiting until the
+    /// next main-loop turn prevents the menu dismissal from cancelling the activation request.
+    private func scheduleBringToFront(_ window: NSWindow) {
+        DispatchQueue.main.async { [weak self, weak window] in
+            guard let self, let window else { return }
+            self.bringToFront(window)
+        }
+    }
+
+    private func bringToFront(_ window: NSWindow) {
         NSApp.setActivationPolicy(.accessory)
         NSApp.unhide(nil)
-        NSApp.activate(ignoringOtherApps: true)
-        window?.makeKeyAndOrderFront(nil)
-        window?.orderFrontRegardless()
+        window.collectionBehavior.insert(.moveToActiveSpace)
+        if window.isMiniaturized {
+            window.deminiaturize(nil)
+        }
+
+        // A MenuBarExtra belongs to an accessory app. Establish the intended key window first,
+        // then activate and order once more after the status menu has dismissed. The final
+        // one-shot order prevents the existing main window from covering Settings without
+        // changing either window's normal level.
+        window.makeKeyAndOrderFront(nil)
+        NSApp.activate()
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
+
+        let title = window.title
+        logger.info("Requested front window: \(title, privacy: .public)")
+        DispatchQueue.main.async { [weak self, weak window] in
+            guard let self, let window else { return }
+            self.logger.debug(
+                "Front result: active=\(NSApp.isActive) key=\(window.isKeyWindow) main=\(window.isMainWindow)"
+            )
+        }
     }
 
     private func makeToolbar() -> NSToolbar {
@@ -98,12 +167,7 @@ final class MainWindowController: NSObject, NSToolbarDelegate {
     }
 
     @objc private func openSettings(_ sender: Any?) {
-        guard let item = settingsMenuItem(in: NSApp.mainMenu), let action = item.action else {
-            NSSound.beep()
-            return
-        }
-        NSApp.sendAction(action, to: item.target, from: item)
-        NSApp.activate(ignoringOtherApps: true)
+        showSettings()
     }
 
     private func settingsMenuItem(in menu: NSMenu?) -> NSMenuItem? {
