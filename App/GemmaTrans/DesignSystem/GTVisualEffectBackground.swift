@@ -22,34 +22,21 @@ struct GTVisualEffectBackground: NSViewRepresentable {
 
 struct GTContentBackground: View {
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.colorSchemeContrast) private var contrast
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
     var body: some View {
         ZStack {
             GTVisualEffectBackground(material: .fullScreenUI, blendingMode: .behindWindow)
-            GTGlassPalette.backgroundOverlay(for: colorScheme)
-            LinearGradient(
-                colors: backgroundStops,
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .blendMode(.softLight)
+            GTGlassPalette.windowBackground(for: colorScheme)
+                .opacity(backgroundOpacity)
         }
         .ignoresSafeArea()
     }
 
-    private var backgroundStops: [Color] {
-        if colorScheme == .dark {
-            return [
-                Color.black.opacity(0.16),
-                GTGlassPalette.semanticBlue.opacity(0.035),
-                Color.black.opacity(0.08)
-            ]
-        }
-        return [
-            Color.clear,
-            GTGlassPalette.semanticBlue.opacity(0.018),
-            Color.black.opacity(0.018)
-        ]
+    private var backgroundOpacity: Double {
+        if reduceTransparency || contrast == .increased { return 1 }
+        return colorScheme == .dark ? 0.92 : 0.86
     }
 }
 

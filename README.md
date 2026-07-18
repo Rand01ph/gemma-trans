@@ -2,6 +2,8 @@
 
 macOS 本地大模型划词翻译。基于 **MLX-Swift**（Apple Silicon 原生加速），支持多个本地翻译模型（Google **Gemma 4** / 腾讯混元 **Hy-MT2**），完全离线运行：
 
+界面原则、组件规范与 Codex 匹配矩阵见 [DESIGN.md](DESIGN.md)。
+
 - **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + 兼容 `/v1/chat/completions` 请求格式，PopClip、Bob、Raycast 等工具直连
 - **menu bar app**：全局热键划词翻译，浮窗流式显示译文
 - **智能双向**：自动检测语言——中文 → 英文，其他语言 → 中文（目标语言可配置）

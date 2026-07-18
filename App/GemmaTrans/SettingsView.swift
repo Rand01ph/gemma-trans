@@ -126,7 +126,7 @@ struct SettingsView: View {
                         }
                     VStack(alignment: .leading, spacing: 2) {
                         Text(title).font(.title3.weight(.semibold))
-                        Text(subtitle).font(.caption).foregroundStyle(.secondary)
+                        Text(subtitle).font(.caption).foregroundStyle(GTGlassPalette.secondaryText)
                     }
                     Spacer()
                 }
@@ -166,7 +166,7 @@ struct SettingsView: View {
 
                     Text("\(Int(settings.translationFontSize)) pt")
                         .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(GTGlassPalette.secondaryText)
                         .frame(width: 38, alignment: .trailing)
                 }
             }
@@ -242,15 +242,15 @@ struct SettingsView: View {
                 HStack(spacing: GTGlassTokens.Space.s) {
                     Text(Self.serviceShortcutGlyphs)
                         .font(.callout.monospaced().weight(.bold))
-                        .foregroundStyle(.secondary)
-                    GTSettingsGlassButton(title: "打开设置", systemImage: "keyboard", minWidth: 80) {
+                        .foregroundStyle(GTGlassPalette.secondaryText)
+                    GTSettingsLinkButton(title: "打开设置") {
                         Self.openServicesShortcutSettings()
                     }
                 }
             }
             Text("首次使用若按了没反应，请在系统设置的“键盘快捷键 > 服务”中勾选 Translate with GemmaTrans。")
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(GTGlassPalette.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
         }
     }
@@ -287,7 +287,7 @@ struct SettingsView: View {
         switch EngineController.shared.engineStatus {
         case .needsModel(let message):
             GTPanelRow(title: "请选择模型", subtitle: message) {
-                Image(systemName: "arrow.down.circle").foregroundStyle(.secondary)
+                Image(systemName: "arrow.down.circle").foregroundStyle(GTGlassPalette.secondaryText)
             }
         case .ready:
             GTPanelRow(title: "引擎状态", subtitle: "就绪 · \(EngineController.shared.activeModelName)") {
@@ -301,7 +301,7 @@ struct SettingsView: View {
             }
         case .failed(let message):
             GTPanelRow(title: "引擎状态", subtitle: message) {
-                GTSettingsGlassButton(title: "重试", systemImage: "arrow.clockwise") {
+                GTSettingsActionButton(title: "重试") {
                     EngineController.shared.reload()
                 }
             }
@@ -395,10 +395,11 @@ struct SettingsView: View {
                         if let tps {
                             Text(String(format: "%.1f tok/s", tps))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(GTGlassPalette.secondaryText)
                                 .monospacedDigit()
                         }
                         GTModelStateBadge()
+                        modelOverflowPlaceholder
                     }
                 } else if downloading {
                     HStack(spacing: GTGlassTokens.Space.s) {
@@ -406,33 +407,30 @@ struct SettingsView: View {
                             .frame(width: 92)
                         Text("\(Int((downloadProgress?.fraction ?? 0) * 100))%")
                             .font(.caption.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(GTGlassPalette.secondaryText)
                             .frame(width: 34, alignment: .trailing)
                     }
                 } else if installed {
-                    GlassEffectContainer(spacing: GTGlassTokens.Space.s) {
-                        HStack(spacing: GTGlassTokens.Space.s) {
-                            GTSettingsGlassButton(title: "使用",
-                                                  systemImage: "checkmark.circle",
-                                                  action: switchAction)
+                    HStack(spacing: GTGlassTokens.Space.s) {
+                        GTSettingsActionButton(title: "使用", action: switchAction)
                             .disabled(isEngineBusy)
-                            if let deleteAction {
-                                GTSettingsGlassMenu(title: "更多模型操作") {
-                                    Button("删除模型…", systemImage: "trash", role: .destructive) {
-                                        deleteAction()
-                                    }
+                        if let deleteAction {
+                            GTSettingsOverflowMenu(title: "更多模型操作") {
+                                Button("删除模型…", systemImage: "trash", role: .destructive) {
+                                    deleteAction()
                                 }
-                                .disabled(isEngineBusy)
                             }
+                            .disabled(isEngineBusy)
+                        } else {
+                            modelOverflowPlaceholder
                         }
                     }
                 } else if let downloadAction {
-                    GlassEffectContainer {
-                        GTSettingsGlassButton(title: "下载",
-                                              systemImage: "arrow.down.circle",
-                                              action: downloadAction)
+                    HStack(spacing: GTGlassTokens.Space.s) {
+                        GTSettingsActionButton(title: "下载", action: downloadAction)
+                            .disabled(EngineController.shared.downloadingModelID != nil)
+                        modelOverflowPlaceholder
                     }
-                    .disabled(EngineController.shared.downloadingModelID != nil)
                 }
             }
         }
@@ -444,7 +442,16 @@ struct SettingsView: View {
     ) -> some View {
         content()
             .frame(maxWidth: .infinity, alignment: .trailing)
-            .frame(width: 176, height: 32, alignment: .trailing)
+            .frame(width: 216,
+                   height: GTSettingsControlMetrics.actionHeight,
+                   alignment: .trailing)
+    }
+
+    private var modelOverflowPlaceholder: some View {
+        Color.clear
+            .frame(width: GTSettingsControlMetrics.iconSize,
+                   height: GTSettingsControlMetrics.iconSize)
+            .accessibilityHidden(true)
     }
 
     private var deletionConfirmationMessage: String {

@@ -13,7 +13,7 @@ struct GTPanelSection<Content: View>: View {
                 if let subtitle {
                     Text(subtitle)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(GTGlassPalette.secondaryText)
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -31,11 +31,8 @@ struct GTPanelSection<Content: View>: View {
 }
 
 struct GTPanelDivider: View {
-    @Environment(\.colorScheme) private var colorScheme
-
     var body: some View {
         Divider()
-            .opacity(colorScheme == .dark ? 0.55 : 0.36)
     }
 }
 
@@ -54,7 +51,7 @@ struct GTPanelRow<Trailing: View>: View {
                     if let subtitle {
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(GTGlassPalette.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -92,7 +89,7 @@ struct GTPanelField<Control: View>: View {
                     if let subtitle {
                         Text(subtitle)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(GTGlassPalette.secondaryText)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
@@ -120,47 +117,72 @@ struct GTPanelToggleRow: View {
     }
 }
 
-struct GTSettingsGlassButton: View {
-    var title: String
-    var systemImage: String
-    var minWidth: CGFloat = 72
-    var action: () -> Void
+enum GTSettingsControlMetrics {
+    static let actionWidth: CGFloat = 92
+    static let actionHeight: CGFloat = 28
+    static let iconSize: CGFloat = 28
+    static let cornerRadius: CGFloat = 8
+}
 
-    @Environment(\.colorScheme) private var colorScheme
+struct GTSettingsActionButton: View {
+    var title: String
+    var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.callout.weight(.semibold))
+            Text(title)
+                .font(.callout.weight(.medium))
                 .lineLimit(1)
-                .frame(minWidth: minWidth, minHeight: 20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .buttonStyle(.glass)
-        .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
-        .buttonBorderShape(.roundedRectangle(radius: 9))
-        .controlSize(.regular)
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.roundedRectangle(radius: GTSettingsControlMetrics.cornerRadius))
+        .controlSize(.small)
+        .frame(width: GTSettingsControlMetrics.actionWidth,
+               height: GTSettingsControlMetrics.actionHeight)
     }
 }
 
-struct GTSettingsGlassMenu<Content: View>: View {
+struct GTSettingsOverflowMenu<Content: View>: View {
     var title: String
     @ViewBuilder var content: () -> Content
-
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         Menu(content: content) {
             Image(systemName: "ellipsis")
                 .font(.callout.weight(.semibold))
-                .frame(width: 28, height: 20)
+                .frame(width: GTSettingsControlMetrics.iconSize,
+                       height: GTSettingsControlMetrics.iconSize)
+                .contentShape(Rectangle())
         }
         .menuIndicator(.hidden)
-        .buttonStyle(.glass)
-        .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
-        .buttonBorderShape(.roundedRectangle(radius: 9))
-        .controlSize(.regular)
+        .buttonStyle(.borderless)
+        .frame(width: GTSettingsControlMetrics.iconSize,
+               height: GTSettingsControlMetrics.iconSize)
         .help(title)
         .accessibilityLabel(title)
+    }
+}
+
+struct GTSettingsLinkButton: View {
+    var title: String
+    var systemImage = "arrow.up.forward.square"
+    var action: () -> Void
+
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var hovering = false
+
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: systemImage)
+                .font(.callout.weight(.medium))
+                .foregroundStyle(GTGlassPalette.accent(for: colorScheme))
+                .frame(height: GTSettingsControlMetrics.actionHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .opacity(hovering ? 0.72 : 1)
+        .onHover { hovering = $0 }
     }
 }
 
@@ -171,13 +193,22 @@ struct GTModelStateBadge: View {
 
     var body: some View {
         Label(text, systemImage: "checkmark")
-            .font(.caption.weight(.semibold))
-            .padding(.horizontal, 10)
-            .frame(height: 30)
-            .foregroundStyle(GTGlassPalette.positiveForeground(for: colorScheme))
-            .glassEffect(
-                .regular.tint(GTGlassPalette.positiveSurfaceTint(for: colorScheme)),
-                in: RoundedRectangle(cornerRadius: 9, style: .continuous)
-            )
+            .font(.callout.weight(.medium))
+            .lineLimit(1)
+            .frame(width: GTSettingsControlMetrics.actionWidth,
+                   height: GTSettingsControlMetrics.actionHeight)
+            .foregroundStyle(GTGlassPalette.accent(for: colorScheme))
+            .background {
+                RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
+                                 style: .continuous)
+                    .fill(GTGlassPalette.accent(for: colorScheme)
+                        .opacity(colorScheme == .dark ? 0.14 : 0.08))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
+                                 style: .continuous)
+                    .strokeBorder(GTGlassPalette.accent(for: colorScheme).opacity(0.18), lineWidth: 1)
+            }
+            .accessibilityLabel(text)
     }
 }

@@ -482,20 +482,20 @@ private struct GTTranslationPanelView: View {
         Group {
             switch model.phase {
             case .idle:
-                Text("等待结果").foregroundStyle(.secondary)
+                Text("等待结果").foregroundStyle(GTGlassPalette.secondaryText)
             case .running:
                 HStack(spacing: GTGlassTokens.Space.s) {
                     ProgressView().controlSize(.small)
                     Text("正在翻译…")
                 }
-                .foregroundStyle(.secondary)
+                .foregroundStyle(GTGlassPalette.secondaryText)
             case .completed:
                 completedStatus
             case .failed:
                 Label("翻译失败", systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(GTGlassPalette.semanticRed)
             case .cancelled:
-                Text("已停止").foregroundStyle(.secondary)
+                Text("已停止").foregroundStyle(GTGlassPalette.secondaryText)
             }
         }
         .font(.caption)
@@ -561,7 +561,7 @@ private struct GTTranslationPanelView: View {
 
     private var resultForeground: Color {
         if model.error != nil { return GTGlassPalette.semanticRed }
-        return model.output.isEmpty ? Color.secondary : Color.primary
+        return model.output.isEmpty ? GTGlassPalette.secondaryText : Color.primary
     }
 
     private var preferredVisualHeight: CGFloat {
@@ -612,7 +612,7 @@ private struct GTTranslationPanelView: View {
 
     private var completedStatus: some View {
         Text(completedStatusText)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(GTGlassPalette.secondaryText)
             .help(completedPerformanceHelp)
     }
 

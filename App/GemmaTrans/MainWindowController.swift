@@ -229,7 +229,7 @@ private struct MainToolbarStatus: View {
                 .fontWeight(.medium)
         }
         .font(.caption)
-        .foregroundStyle(.secondary)
+        .foregroundStyle(GTGlassPalette.secondaryText)
         // The native toolbar supplies the group's trailing control padding. The hosted
         // status view only compensates the leading edge and the inter-item handoff.
         .padding(.leading, GTGlassTokens.Space.s)
@@ -258,7 +258,7 @@ private struct MainToolbarStatus: View {
 
     private var statusTint: Color {
         switch controller.engineStatus {
-        case .needsModel: return .secondary
+        case .needsModel: return GTGlassPalette.secondaryText
         case .ready: return GTGlassPalette.semanticGreen
         case .loading: return GTGlassPalette.semanticOrange
         case .downloading: return GTGlassPalette.semanticBlue

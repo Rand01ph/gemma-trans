@@ -129,7 +129,7 @@ private final class PlaceholderTextView: NSTextView {
             string: placeholder,
             attributes: [
                 .font: bodyFont,
-                .foregroundColor: NSColor.secondaryLabelColor
+                .foregroundColor: GTGlassPalette.secondaryTextNSColor
             ]
         )
         placeholderString.draw(at: origin)
@@ -143,7 +143,7 @@ private final class PlaceholderTextView: NSTextView {
             string: supportingText,
             attributes: [
                 .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
-                .foregroundColor: NSColor.secondaryLabelColor
+                .foregroundColor: GTGlassPalette.secondaryTextNSColor
             ]
         ).draw(at: supportingOrigin)
     }

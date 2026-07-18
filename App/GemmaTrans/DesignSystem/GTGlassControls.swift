@@ -24,7 +24,6 @@ struct GTGlassButton<Label: View>: View {
         } else {
             baseButton
                 .buttonStyle(.glass)
-                .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
         }
     }
 
@@ -85,7 +84,7 @@ struct GTSearchField: View {
     var body: some View {
         HStack(spacing: GTGlassTokens.Space.s) {
             Image(systemName: "magnifyingglass")
-                .foregroundStyle(.secondary)
+                .foregroundStyle(GTGlassPalette.secondaryText)
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .font(.body.weight(.medium))
@@ -93,7 +92,7 @@ struct GTSearchField: View {
             if text.isEmpty {
                 Text("⌘K")
                     .font(.caption2.weight(.semibold))
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(GTGlassPalette.tertiaryText)
             } else {
                 Button {
                     text = ""
@@ -101,7 +100,7 @@ struct GTSearchField: View {
                     Image(systemName: "xmark.circle.fill")
                 }
                 .buttonStyle(.plain)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(GTGlassPalette.secondaryText)
                 .help("Clear search")
             }
         }
@@ -168,7 +167,6 @@ struct GTGlassIconButton: View {
             } else {
                 baseButton
                     .buttonStyle(.glass)
-                    .tint(GTGlassPalette.neutralControlTint(for: colorScheme))
             }
         }
         .opacity(isEnabled ? (quiet && !hovering ? 0.72 : 1) : 0.5)

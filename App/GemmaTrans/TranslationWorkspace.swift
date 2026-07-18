@@ -62,7 +62,7 @@ struct TranslationWorkspace: View {
             HStack(spacing: GTGlassTokens.Space.s) {
                 Label("自动检测语言", systemImage: "globe")
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(GTGlassPalette.secondaryText)
                 Spacer()
                 GTGlassButton("清空原文", systemImage: "xmark.circle") {
                     clearInput()
@@ -100,7 +100,7 @@ struct TranslationWorkspace: View {
                 if let tps = viewModel.tokensPerSecond {
                     Text(String(format: "%.1f tok/s", tps))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(GTGlassPalette.secondaryText)
                 }
                 Spacer()
                 if viewModel.isRunning {
@@ -129,7 +129,7 @@ struct TranslationWorkspace: View {
                     .font(.callout.weight(.semibold))
                 Text(engineSubtitle)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(GTGlassPalette.secondaryText)
                     .lineLimit(2)
             }
             Spacer()
