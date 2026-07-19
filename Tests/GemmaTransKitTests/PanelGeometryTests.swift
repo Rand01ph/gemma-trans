@@ -75,4 +75,10 @@ import Testing
         #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 180) == 262)
         #expect(PanelGeometry.preferredHeight(resultSurfaceHeight: 1_000) == 340)
     }
+
+    @Test func overflowFadeOnlyAppearsWhileContentRemainsBelow() {
+        #expect(PanelGeometry.hasContentBelow(contentHeight: 420, visibleMaxY: 258))
+        #expect(!PanelGeometry.hasContentBelow(contentHeight: 420, visibleMaxY: 420))
+        #expect(!PanelGeometry.hasContentBelow(contentHeight: 420, visibleMaxY: 419.5))
+    }
 }

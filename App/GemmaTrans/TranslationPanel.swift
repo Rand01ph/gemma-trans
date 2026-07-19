@@ -439,6 +439,7 @@ private struct GTTranslationPanelView: View {
     @State private var copied = false
     @State private var copyFeedbackTask: Task<Void, Never>?
     @State private var resultSurfaceHeight = CGFloat(PanelGeometry.streamingResultSurfaceHeight)
+    @State private var hasResultContentBelow = false
 
     var body: some View {
         ZStack {
@@ -614,6 +615,27 @@ private struct GTTranslationPanelView: View {
         }
         .scrollIndicators(.hidden)
         .scrollBounceBehavior(.basedOnSize)
+        .onScrollGeometryChange(for: Bool.self) { geometry in
+            PanelGeometry.hasContentBelow(
+                contentHeight: Double(geometry.contentSize.height),
+                visibleMaxY: Double(geometry.visibleRect.maxY)
+            )
+        } action: { _, hasContentBelow in
+            hasResultContentBelow = hasContentBelow
+        }
+        .mask {
+            VStack(spacing: 0) {
+                Rectangle().fill(.black)
+                if hasResultContentBelow {
+                    LinearGradient(
+                        colors: [.black, .black.opacity(0.42), .clear],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                    .frame(height: 14)
+                }
+            }
+        }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .frame(height: resultSurfaceHeight)
     }

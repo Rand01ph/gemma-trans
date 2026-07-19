@@ -28,7 +28,7 @@ enum GTGlassTokens {
     }
 
     enum Window {
-        static let defaultSize = CGSize(width: 980, height: 600)
+        static let defaultSize = CGSize(width: 980, height: 570)
         static let minSize = CGSize(width: 760, height: 520)
         static let contentInset: CGFloat = 18
     }

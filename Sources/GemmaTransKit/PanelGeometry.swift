@@ -56,6 +56,14 @@ public enum PanelGeometry {
         min(max(measuredContentHeight, minimumResultSurfaceHeight), maximumResultSurfaceHeight)
     }
 
+    /// Returns whether the viewport still has meaningful content below it. A small tolerance
+    /// avoids flashing the overflow fade for subpixel layout differences at the bottom edge.
+    public static func hasContentBelow(contentHeight: Double,
+                                       visibleMaxY: Double,
+                                       tolerance: Double = 1) -> Bool {
+        contentHeight > visibleMaxY + tolerance
+    }
+
     /// The translation surface is bounded and scrolls internally. The caller supplies a measured
     /// surface height only after generation finishes, avoiding token-by-token window resizing.
     public static func preferredHeight(resultSurfaceHeight: Double) -> Double {

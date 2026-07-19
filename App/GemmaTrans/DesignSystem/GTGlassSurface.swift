@@ -79,7 +79,7 @@ struct GTGlassSurface: ViewModifier {
         case .panel:
             return .black.opacity(colorScheme == .dark ? 0.52 : 0.20)
         case .card:
-            return .black.opacity(colorScheme == .dark ? 0.32 : 0.07)
+            return .black.opacity(colorScheme == .dark ? 0.32 : 0.06)
         case .flat:
             return .clear
         }
