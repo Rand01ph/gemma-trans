@@ -254,7 +254,7 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(GTGlassPalette.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
-                .padding(.top, GTGlassTokens.Space.s)
+                .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
         }
     }
 

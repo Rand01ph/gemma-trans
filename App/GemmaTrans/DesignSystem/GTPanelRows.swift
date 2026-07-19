@@ -22,7 +22,9 @@ struct GTPanelSection<Content: View>: View {
             VStack(alignment: .leading, spacing: 0) {
                 content()
             }
-            .padding(GTGlassTokens.Space.m)
+            // 垂直留白由每个 row 自己拥有。若把上下 padding 放在整张卡片上，
+            // 首行会显得偏下、末行会显得偏上，Divider 也不再是真正的行边界。
+            .padding(.horizontal, GTGlassTokens.Space.m)
             .frame(maxWidth: .infinity, alignment: .leading)
             .gtContentSurface(.form, cornerRadius: GTGlassTokens.Radius.card)
         }
@@ -64,10 +66,7 @@ struct GTPanelRow<Trailing: View>: View {
                     .foregroundStyle(.red)
             }
         }
-        .contentShape(Rectangle())
-        .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
-        .frame(minHeight: GTSettingsControlMetrics.rowMinHeight)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .gtSettingsRowLayout()
     }
 }
 
@@ -100,9 +99,7 @@ struct GTPanelField<Control: View>: View {
                     .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
-        .contentShape(Rectangle())
-        .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
-        .frame(minHeight: GTSettingsControlMetrics.rowMinHeight)
+        .gtSettingsRowLayout()
     }
 }
 
@@ -147,9 +144,7 @@ struct GTSettingsTextFieldRow: View {
                            alignment: .leading)
             }
         }
-        .contentShape(Rectangle())
-        .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
-        .frame(minHeight: GTSettingsControlMetrics.rowMinHeight)
+        .gtSettingsRowLayout()
     }
 }
 
@@ -169,7 +164,7 @@ struct GTPanelToggleRow: View {
 }
 
 enum GTSettingsControlMetrics {
-    static let rowMinHeight: CGFloat = 40
+    static let rowMinHeight: CGFloat = 44
     static let rowVerticalPadding: CGFloat = 6
     static let labelWidth: CGFloat = 150
     static let compactFieldWidth: CGFloat = 232
@@ -177,6 +172,23 @@ enum GTSettingsControlMetrics {
     static let actionHeight: CGFloat = 28
     static let iconSize: CGFloat = 28
     static let cornerRadius: CGFloat = 8
+}
+
+private struct GTSettingsRowLayoutModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .contentShape(Rectangle())
+            .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
+            .frame(maxWidth: .infinity,
+                   minHeight: GTSettingsControlMetrics.rowMinHeight,
+                   alignment: .center)
+    }
+}
+
+private extension View {
+    func gtSettingsRowLayout() -> some View {
+        modifier(GTSettingsRowLayoutModifier())
+    }
 }
 
 struct GTSettingsActionButton: View {
