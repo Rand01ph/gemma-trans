@@ -42,7 +42,8 @@ notarize() {
 echo "==> 构建 Release $VERSION"
 cd $APP_DIR
 xcodegen generate >/dev/null
-xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Release -skipMacroValidation \
+xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Release \
+    -skipMacroValidation -skipPackagePluginValidation \
     -derivedDataPath build-release build | tail -2
 APP="build-release/Build/Products/Release/GemmaTrans.app"
 

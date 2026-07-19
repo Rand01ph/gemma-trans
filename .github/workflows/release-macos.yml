@@ -6,6 +6,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write # 创建 Release 需要写权限
@@ -18,20 +19,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 校验 tag 与 MARKETING_VERSION 一致
+      - name: 读取版本并校验 tag
         run: |
+          set -euo pipefail
           VERSION=$(grep 'MARKETING_VERSION' App/project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
-          TAG="${GITHUB_REF_NAME#v}"
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "::error::tag v$TAG 与 App/project.yml 的 MARKETING_VERSION $VERSION 不一致，请先对齐再打 tag"
-            exit 1
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$VERSION" != "$TAG" ]; then
+              echo "::error::tag v$TAG 与 App/project.yml 的 MARKETING_VERSION $VERSION 不一致，请先对齐再打 tag"
+              exit 1
+            fi
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: 构建 + 签名 + 公证（zip + dmg）
         run: ./Scripts/release.sh
 
+      - name: 留存手动验收产物
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: GemmaTrans-${{ env.VERSION }}-notarized
+          path: |
+            dist/GemmaTrans-${{ env.VERSION }}.zip
+            dist/GemmaTrans-${{ env.VERSION }}.dmg
+          if-no-files-found: error
+
       - name: 创建 Release 并上传产物
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           name: GemmaTrans ${{ env.VERSION }}

@@ -4,12 +4,12 @@ name: Release MAS (App Store)
 # 关键点：托管 runner 自带 Apple 认可的 Xcode 版本 —— 用它打包可避开本地 beta/超前 SDK
 # 导致的 ITMS-90301（"不接受用此 OS 版本构建的 App"）。
 #
-# 手动触发：Actions → Release MAS → Run workflow，填 build_number（如 8）。
+# 手动触发：Actions → Release MAS → Run workflow，填入高于 App Store Connect 现有值的 build_number。
 on:
   workflow_dispatch:
     inputs:
       build_number:
-        description: "CFBundleVersion / build 号（必须 > App Store 上现有的，如 8）"
+        description: "CFBundleVersion / build 号（必须高于 App Store Connect 现有值）"
         required: true
         type: string
       xcode_version:
@@ -27,12 +27,20 @@ jobs:
 
       - name: 列出可用 Xcode 并选版本
         run: |
+          set -euo pipefail
           echo "可用 Xcode："; ls -d /Applications/Xcode*.app
           if [ -n "${{ inputs.xcode_version }}" ]; then
             sudo xcode-select -s "/Applications/Xcode_${{ inputs.xcode_version }}.app"
           fi
           xcodebuild -version
-          echo "SDK build：$(xcrun --sdk macosx --show-sdk-build-version)"   # 确认不是被拒的 25F70
+          SDK_VERSION="$(xcrun --sdk macosx --show-sdk-version)"
+          SDK_MAJOR="${SDK_VERSION%%.*}"
+          echo "SDK version：$SDK_VERSION"
+          echo "SDK build：$(xcrun --sdk macosx --show-sdk-build-version)"
+          if [ "$SDK_MAJOR" -lt 26 ]; then
+            echo "::error::GemmaTrans 2.0 需要 macOS 26 SDK；请选择包含该 SDK 的正式版 Xcode"
+            exit 1
+          fi
 
       - name: 安装 xcodegen
         run: brew install xcodegen
@@ -78,6 +86,10 @@ jobs:
         run: |
           set -euo pipefail
           BN="${{ inputs.build_number }}"
+          if ! [[ "$BN" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::build_number 必须是正整数"
+            exit 1
+          fi
           # 同步 project.yml 里两个 target 的 build 号
           /usr/bin/sed -i '' -E "s/CURRENT_PROJECT_VERSION: \"[0-9]+\"/CURRENT_PROJECT_VERSION: \"$BN\"/g; s/CFBundleVersion: \"[0-9]+\"/CFBundleVersion: \"$BN\"/g" App/project.yml
           grep -E 'MARKETING_VERSION|CURRENT_PROJECT_VERSION|CFBundleVersion' App/project.yml
@@ -88,7 +100,7 @@ jobs:
           set -euo pipefail
           rm -rf "$RUNNER_TEMP/GemmaTrans-MAS.xcarchive"
           xcodebuild -project App/GemmaTrans.xcodeproj -scheme GemmaTrans-MAS \
-            -configuration Release -skipMacroValidation \
+            -configuration Release -skipMacroValidation -skipPackagePluginValidation \
             -destination 'generic/platform=macOS' \
             -archivePath "$RUNNER_TEMP/GemmaTrans-MAS.xcarchive" \
             clean archive
@@ -111,7 +123,7 @@ jobs:
           xcrun altool --upload-app -t macos -f "$PKG" \
             --apiKey "${{ secrets.ASC_API_KEY_ID }}" \
             --apiIssuer "${{ secrets.ASC_API_ISSUER_ID }}"
-          echo "✅ 已上传 build ${{ inputs.build_number }}。提审：ASC 后台关联该 build → 提交，或用 asc review submit。"
+          echo "✅ 已上传 build ${{ inputs.build_number }}。提审：在 App Store Connect 关联该 build 并提交审核。"
 
       - name: 留存 .pkg 产物
         if: always()

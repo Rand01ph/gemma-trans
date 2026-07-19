@@ -21,8 +21,8 @@ targets:
         CFBundleDisplayName: GemmaTrans
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
-        CFBundleShortVersionString: "1.1.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.0.0"
+        CFBundleVersion: "9"
         ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
         NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
           - NSMenuItem:
@@ -49,8 +49,8 @@ targets:
         DEVELOPMENT_TEAM: G2XC9VU88M
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
-        MARKETING_VERSION: "1.1.0"
-        CURRENT_PROJECT_VERSION: "8"
+        MARKETING_VERSION: "2.0.0"
+        CURRENT_PROJECT_VERSION: "9"
       configs:
         Release:
           # 公证直分：Developer ID + Hardened Runtime（Debug 日常开发不受影响）
@@ -71,8 +71,8 @@ targets:
         CFBundleDisplayName: GemmaTrans
         CFBundleIconFile: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
-        CFBundleShortVersionString: "1.1.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "2.0.0"
+        CFBundleVersion: "9"
         ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
         NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
           - NSMenuItem:
@@ -103,7 +103,7 @@ targets:
         DEVELOPMENT_TEAM: G2XC9VU88M
         CODE_SIGN_STYLE: Automatic
         SWIFT_VERSION: "6.0"
-        MARKETING_VERSION: "1.1.0"
-        CURRENT_PROJECT_VERSION: "8"
+        MARKETING_VERSION: "2.0.0"
+        CURRENT_PROJECT_VERSION: "9"
         PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
         PRODUCT_NAME: GemmaTrans
