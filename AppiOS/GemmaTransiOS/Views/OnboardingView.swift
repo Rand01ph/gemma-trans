@@ -2,7 +2,7 @@ import SwiftUI
 import GemmaTransKit
 
 /// 首启仪式：模型未就绪（idle / downloading / failed）时全屏接管。
-/// 三态线框见 spec 第 3.1–3.3 节。下载是仪式不是报错——失败用 systemOrange 不用红色。
+/// 三态线框见 spec 第 3.1–3.3 节。下载和加载失败均用 systemOrange，不制造破坏性警报感。
 struct OnboardingView: View {
     @State private var holder = EngineHolder.shared
     /// 国内源开关：从原 ContentView 迁来，写入共享 defaults，引擎加载经 ModelStore.modelSource 读取
@@ -23,8 +23,8 @@ struct OnboardingView: View {
         switch holder.status {
         case .downloading(let progress):
             DownloadingView(progress: progress)
-        case .failed(let message):
-            FailedView(message: message, useCNSource: $useCNSource) { holder.download() }
+        case .failed(let message, let kind):
+            FailedView(message: message, kind: kind, useCNSource: $useCNSource) { holder.retry() }
         default:
             // .idle（也兜底 .loading/.ready，这些状态由上层路由到 TranslatorView，不会到这）
             IdleView(useCNSource: $useCNSource) { holder.download() }
@@ -148,36 +148,39 @@ private struct ProgressRing: View {
     }
 }
 
-// MARK: - failed（3.3 下载失败 + 重试）
+// MARK: - failed（3.3 下载或加载失败 + 恢复）
 
 private struct FailedView: View {
     let message: String
+    let kind: EngineHolder.FailureKind
     @Binding var useCNSource: Bool
     let onRetry: () -> Void
+
+    private var isDownloadFailure: Bool { kind == .download }
 
     var body: some View {
         VStack(spacing: Theme.Spacing.section) {
             Spacer()
-            Image(systemName: "wifi.exclamationmark")
+            Image(systemName: isDownloadFailure ? "wifi.exclamationmark" : "exclamationmark.triangle")
                 .font(.system(size: 48, weight: .medium))
                 .symbolRenderingMode(.hierarchical)
                 .foregroundStyle(Color(.systemOrange))
 
             VStack(spacing: 8) {
-                Text("下载中断了")
+                Text(isDownloadFailure ? "下载中断了" : "模型加载失败")
                     .font(.title3.weight(.semibold))
                 Text(message)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
-                Text("已下载的部分已保留，可继续下载。")
+                Text(isDownloadFailure ? "已下载的部分已保留，可继续下载。" : "模型文件已下载完成，无需重新下载。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
             }
 
             Button(action: onRetry) {
-                Text("继续下载")
+                Text(isDownloadFailure ? "继续下载" : "重新加载模型")
                     .font(.body.weight(.semibold))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
@@ -185,15 +188,17 @@ private struct FailedView: View {
             .adaptiveGlassButton()
             .controlSize(.large)
 
-            // 失败态把源开关再次亮出——最常见自救路径就是切源
-            VStack(alignment: .leading, spacing: 4) {
-                Toggle("使用国内源（ModelScope）", isOn: $useCNSource)
-                Text("切换下载源后再次「继续下载」")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+            if isDownloadFailure {
+                // 仅下载失败时亮出源开关；模型加载失败切源或重复下载都无助于恢复。
+                VStack(alignment: .leading, spacing: 4) {
+                    Toggle("使用国内源（ModelScope）", isOn: $useCNSource)
+                    Text("切换下载源后再次「继续下载」")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(Theme.Spacing.cardPadding)
+                .cardBackground()
             }
-            .padding(Theme.Spacing.cardPadding)
-            .cardBackground()
 
             Spacer()
         }
