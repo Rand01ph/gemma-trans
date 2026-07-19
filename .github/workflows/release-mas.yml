@@ -23,7 +23,7 @@ jobs:
     runs-on: macos-15            # GitHub 托管 runner（非 self-hosted），自带多版本 Xcode
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: 校验发布凭证配置
         env:
