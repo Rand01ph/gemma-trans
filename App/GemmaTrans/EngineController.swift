@@ -39,8 +39,7 @@ final class EngineController {
 
     func start() {
         engineStatus = .loading("正在准备…")
-        // 重读设置：重试前用户可能在设置页切了国内源开关，「下次下载生效」靠这里兑现
-        // （apiEnabled 由 setAPIEnabled 即时落盘，重读不会回退用户操作）
+        // 重读设置：模型、参数和 API 偏好可能已在设置页修改。
         settings = AppSettings.load()
         // 镜像选中模型 ID：start() 是切换/重载后重新解析模型的统一入口，镜像在此对齐
         selectedModelID = settings.selectedModelID
@@ -73,7 +72,6 @@ final class EngineController {
                 return
             }
             let engine = TranslationEngine(settings: settings)
-            let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
             // start() 已确认快照完整；这里的进度状态只处理下载完成与加载之间的兼容回调。
             let progressHandler: @Sendable (DownloadProgress) -> Void = { progress in
                 Task { @MainActor in
@@ -99,8 +97,7 @@ final class EngineController {
                             .loading("网络异常，\(delaySeconds)s 后第 \(attempt)/\(maxRetries) 次重试…")
                     }
                 }) {
-                    try await engine.load(
-                        resolved: resolved, modelSource: source, progress: progressHandler)
+                    try await engine.load(resolved: resolved, progress: progressHandler)
                 }
                 guard generation == loadGeneration else { return }
                 self.engine = engine
@@ -194,17 +191,16 @@ final class EngineController {
 
     /// 设置页「下载」入口：把某 catalog 模型下到磁盘，**不切换当前活跃引擎**。
     /// 与 switchModel 的区别：纯磁盘拉取，不动引擎，故可边用当前模型边下新模型。
-    /// 一次只下一个（downloadTask 非空时忽略）；无自动重试，失败后按钮复现可重点。
+    /// 一次只下一个（downloadTask 非空时忽略）；Hugging Face 不可用时自动回退 ModelScope。
     func downloadModel(id: String) {
         guard downloadTask == nil, let entry = ModelCatalog.entry(id: id) else { return }
         downloadingModelID = id
         downloadProgress = DownloadProgress(fraction: 0)
-        let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
         let base = TranslationEngine.defaultModelBase()
         GTLog.info("background download started: \(id)")
         downloadTask = Task {
             do {
-                _ = try await ModelDownloader.download(repo: entry.repo, from: source, into: base) { p in
+                _ = try await ModelDownloader.download(repo: entry.repo, into: base) { p in
                     Task { @MainActor in EngineController.shared.downloadProgress = p }
                 }
                 GTLog.info("background download done: \(id)")
@@ -251,12 +247,6 @@ final class EngineController {
             apiStatus = .disabled
             GTLog.info("API disabled by user")
         }
-    }
-
-    /// 模型源偏好即时持久化；正在下载的任务不切源，下一个下载任务读取新值。
-    func setUseCNSource(_ enabled: Bool) {
-        settings.useCNSource = enabled
-        settings.save()
     }
 
     private func startServer() {

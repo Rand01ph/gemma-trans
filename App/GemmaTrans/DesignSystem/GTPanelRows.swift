@@ -19,7 +19,7 @@ struct GTPanelSection<Content: View>: View {
             }
             .padding(.leading, GTGlassTokens.Space.xs)
 
-            VStack(alignment: .leading, spacing: GTGlassTokens.Space.m) {
+            VStack(alignment: .leading, spacing: 0) {
                 content()
             }
             .padding(GTGlassTokens.Space.m)
@@ -65,6 +65,8 @@ struct GTPanelRow<Trailing: View>: View {
             }
         }
         .contentShape(Rectangle())
+        .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
+        .frame(minHeight: GTSettingsControlMetrics.rowMinHeight)
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
@@ -99,6 +101,8 @@ struct GTPanelField<Control: View>: View {
             }
         }
         .contentShape(Rectangle())
+        .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
+        .frame(minHeight: GTSettingsControlMetrics.rowMinHeight)
     }
 }
 
@@ -144,6 +148,8 @@ struct GTSettingsTextFieldRow: View {
             }
         }
         .contentShape(Rectangle())
+        .padding(.vertical, GTSettingsControlMetrics.rowVerticalPadding)
+        .frame(minHeight: GTSettingsControlMetrics.rowMinHeight)
     }
 }
 
@@ -163,6 +169,8 @@ struct GTPanelToggleRow: View {
 }
 
 enum GTSettingsControlMetrics {
+    static let rowMinHeight: CGFloat = 40
+    static let rowVerticalPadding: CGFloat = 6
     static let labelWidth: CGFloat = 150
     static let compactFieldWidth: CGFloat = 232
     static let actionWidth: CGFloat = 92

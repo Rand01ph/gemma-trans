@@ -37,8 +37,7 @@ public actor TranslationEngine: TranslationService {
     ///   （双源 + 断点续传 + 字节级进度），iOS 传 App Group 容器目录使主 app 与翻译扩展
     ///   共享同一份模型文件；nil（macOS）走默认目录三级策略（见 load 内注释）：
     ///   新快照 → legacy HF 缓存（存量用户不重下）→ 自研下载器。
-    /// - Parameter modelSource: 下载源。约束：国内网络 huggingface.co（Xet CDN）
-    ///   不可达且 hf-mirror 已失效，设置页开关切 ModelScope 国内源。
+    /// - Parameter modelSource: 可选固定下载源；nil 时 Hugging Face 优先、失败自动回退 ModelScope。
     /// - Parameter tuningOverride: 非 nil 时直接采用，跳过 autoTuning/manual 推导。
     ///   iOS 用它固定 E2B 档——autoTuning 在 16GB 设备会选 E4B，与 iOS 侧固定的
     ///   E2B 仓库目录判定错位；nil 时行为与既有 macOS 调用完全一致。
@@ -48,7 +47,7 @@ public actor TranslationEngine: TranslationService {
     ///   setDefault 是进程级全局，actor 内设一次即可。
     public func load(
         cacheDirectory: URL? = nil,
-        modelSource: ModelSource = .huggingFace,
+        modelSource: ModelSource? = nil,
         tuningOverride: EngineTuning? = nil,
         useCPU: Bool = false,
         progress: @Sendable @escaping (DownloadProgress) -> Void = { _ in }
@@ -95,7 +94,7 @@ public actor TranslationEngine: TranslationService {
         let repo = Self.repoName(for: tuning.variant)
         let loaded: ModelContainer
         if let cacheDirectory {
-            // 自研下载路径（iOS/CLI 显式传目录）：快照不完整才触发下载，下载源按 modelSource 切换
+            // 自研下载路径（iOS/CLI 显式传目录）：快照不完整才触发下载；未固定来源时自动换源
             let snapshotDir = ModelDownloader.snapshotDirectory(in: cacheDirectory, repo: repo)
             if !ModelDownloader.isComplete(snapshotDir) {
                 _ = try await ModelDownloader.download(
@@ -137,13 +136,13 @@ public actor TranslationEngine: TranslationService {
     /// - Parameter cacheDirectory: 非 nil 时走自研 ModelDownloader（iOS/CLI）；nil 时走 macOS 三级策略。
     ///   注意：此方法面向「按 catalog 显式切模型」场景，macOS 三级策略在此简化为「新快照优先，无则下载」，
     ///   不再检查 legacyHFCache（legacy 条目是旧两档 Gemma，旧 load() 已覆盖）。
-    /// - Parameter modelSource: 下载源（国内切 ModelScope）。
+    /// - Parameter modelSource: 可选固定下载源；nil 时 Hugging Face 优先、失败自动回退 ModelScope。
     /// - Parameter useCPU: spike 用；true 时切 MLX 全局默认设备到 CPU。
     /// - Parameter progress: 下载进度回调。
     public func load(
         resolved: ResolvedModel,
         cacheDirectory: URL? = nil,
-        modelSource: ModelSource = .huggingFace,
+        modelSource: ModelSource? = nil,
         useCPU: Bool = false,
         progress: @Sendable @escaping (DownloadProgress) -> Void = { _ in }
     ) async throws {

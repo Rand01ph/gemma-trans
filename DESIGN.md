@@ -48,7 +48,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 
 ### 间距
 
-使用 4pt 基线：`4 / 8 / 12 / 16 / 24 / 32`。同一设置行内优先使用 8pt，卡片内部使用 12–16pt，页面区块间使用 24pt。
+使用 4pt 基线：`4 / 8 / 12 / 16 / 24 / 32`。同一设置行内优先使用 8pt，卡片内部使用 12–16pt，页面区块间使用 24pt。设置行统一以 40pt 为单行最小高度；带一行说明时约 45pt。分隔线本身不额外增加垂直间距。
 
 ### 圆角
 
@@ -95,6 +95,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 - 页面头只包含当前标签图标、标题和一句说明。
 - `GTPanelSection` 是同类设置的分组，不是强调卡片。
 - 设置行标题、说明与尾部控件保持同一基线。
+- 模型、API、快捷键和通用设置共享同一行容器，不为某一页面单独增加最小高度。
 - 分隔线使用系统 separator，不自行调成蓝灰色。
 - 语言代码、端口和数值上限属于短配置值，统一使用 232pt 原生圆角输入框并右对齐；不要让短字段铺满内容卡。
 - 字段错误固定显示在输入框下方，不改变左侧标签的垂直位置；端口等纯数字值使用等宽数字。
@@ -111,6 +112,8 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 其他操作 | 无常驻填充 ellipsis 菜单 | 28×28pt |
 
 删除模型只放在“更多”菜单，使用 destructive role，并保留确认弹窗。
+
+模型下载不提供手动来源开关。默认用短超时验证 Hugging Face 清单和权重首字节；遇到远端连接、HTTP 或清单异常时自动回退 ModelScope。取消和磁盘写入错误不得触发换源。
 
 ### 外部设置入口
 
@@ -167,6 +170,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 当前模型 | 蓝色静态状态 | `GTModelStateBadge` | 已实现 |
 | 外部设置入口 | 安静的原生次要按钮 | `GTSettingsActionButton` | 已实现 |
 | 短配置字段 | 原生输入框、固定控制列 | `GTSettingsTextFieldRow` | 已实现 |
+| 设置行密度 | 40pt 单行基线、分隔线无额外间距 | `GTPanelRow` / `GTPanelField` | 已实现 |
 | 主操作 | 有限使用玻璃和 Accent | `GTGlassButton` | 已实现 |
 | 浮窗 | 单层玻璃、结果优先、可锁定位置 | `TranslationPanel` | 已实现，需持续截图回归 |
 
@@ -183,6 +187,8 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 连续翻译时浮窗跟随每次鼠标位置重建 | 图钉固定左上锚点并复用当前浮窗 | 逐段翻译时视线和窗口位置保持稳定 |
 | 完成态复制按钮带文字且比朗读按钮更宽 | 两个 26×26pt 图标按钮，文字转为 hover 与辅助功能标签 | 常用图标已足够明确，并保持操作栏几何与视觉权重一致 |
 | 普通玻璃按钮带灰色 tint | 无 tint 的系统 glass | 避免自定义颜色与系统材质冲突 |
+| 模型行独占 52pt 最小高度、分隔线两侧重复留白 | 所有设置页共享 40pt 单行基线 | 相同语义组件保持相同密度，模型列表更易扫描 |
+| 用户手动选择 Hugging Face / ModelScope | Hugging Face 优先、失败自动回退 ModelScope | 把网络差异作为系统应处理的边缘情况，而不是用户配置 |
 
 ## 11. Do / Don't
 

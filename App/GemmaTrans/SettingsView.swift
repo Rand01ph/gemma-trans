@@ -254,13 +254,17 @@ struct SettingsView: View {
                 .font(.caption)
                 .foregroundStyle(GTGlassPalette.secondaryText)
                 .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, GTGlassTokens.Space.s)
         }
     }
 
     private var modelSection: some View {
         let installedIDs = Set(installed.map(\.id))
 
-        return GTPanelSection(title: "本地模型", subtitle: "先下载模型，再选择当前使用的模型。") {
+        return GTPanelSection(
+            title: "本地模型",
+            subtitle: "下载后选择使用；Hugging Face 不可用时会自动切换 ModelScope。"
+        ) {
             engineStatusRow
             GTPanelDivider()
 
@@ -270,17 +274,6 @@ struct SettingsView: View {
                     GTPanelDivider()
                 }
             }
-
-            GTPanelDivider()
-            GTPanelToggleRow(title: "使用国内源（ModelScope）",
-                             subtitle: "切换后对下一个下载任务生效。",
-                             isOn: Binding(
-                                get: { settings.useCNSource },
-                                set: { enabled in
-                                    settings.useCNSource = enabled
-                                    EngineController.shared.setUseCNSource(enabled)
-                                }
-                             ))
         }
     }
 
@@ -436,7 +429,6 @@ struct SettingsView: View {
                 }
             }
         }
-        .frame(minHeight: 52)
     }
 
     private func modelTrailingSlot<Content: View>(

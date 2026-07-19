@@ -12,8 +12,8 @@ public struct DownloadProgress: Sendable, Equatable {
     }
 }
 
-/// 模型下载源。HF 的 Xet CDN（cas-bridge.xethub.hf.co）国内不可达、hf-mirror.com 已失效，
-/// 故提供 ModelScope（魔搭）作为国内源——同一仓库名在两源的文件清单与字节数完全一致（真机/真网已验证）。
+/// 模型下载源。默认下载策略会先尝试 Hugging Face，连接不可用时自动回退 ModelScope；
+/// 显式 source 只保留给 CLI、诊断和需要固定来源的调用方。
 public enum ModelSource: String, Sendable {
     case huggingFace
     case modelScope
@@ -64,6 +64,9 @@ public enum ModelDownloader {
     /// 写盘缓冲：1MB 一刷，进度回调同频（3.6GB 约 3600 次回调，UI 足够平滑且无开销问题）
     private static let chunkSize = 1 << 20
 
+    /// 自动选源只做轻量探测，不让不可达的 Hugging Face 阻塞完整下载重试。
+    private static let sourceProbeTimeout: TimeInterval = 8
+
     // MARK: - 公开接口
 
     /// 快照目录：`base/<repo 的 "/" 换 "--">/`
@@ -86,6 +89,8 @@ public enum ModelDownloader {
     }
 
     /// 下载整仓库到快照目录并返回该目录。
+    /// source 为 nil 时先尝试 Hugging Face；仅遇到远端连接、HTTP、清单解析或字节校验
+    /// 问题才自动回退 ModelScope。取消、磁盘写入等本地错误不会换源掩盖根因。
     /// - 已存在且字节数相符的文件跳过（计入进度基数）
     /// - 每文件先写 `<file>.part`，已有 N 字节则带 `Range: bytes=N-` 续传（ModelScope 206 已实测）；
     ///   完成校验字节数后改名为正式文件，不符删 .part 抛错
@@ -94,8 +99,100 @@ public enum ModelDownloader {
     ///   重调本函数即从断点继续，进度天然包含已落盘部分
     public static func download(
         repo: String,
+        from source: ModelSource? = nil,
+        into base: URL,
+        progress: @Sendable @escaping (DownloadProgress) -> Void
+    ) async throws -> URL {
+        if let source {
+            return try await download(
+                repo: repo,
+                from: source,
+                into: base,
+                reportInitialProgress: true,
+                progress: progress
+            )
+        }
+
+        do {
+            try await verifyHuggingFaceReachability(repo: repo)
+            return try await download(
+                repo: repo,
+                from: .huggingFace,
+                into: base,
+                reportInitialProgress: true,
+                progress: progress
+            )
+        } catch {
+            guard shouldFallbackToModelScope(after: error) else { throw error }
+            GTLog.info("Hugging Face unavailable for \(repo); falling back to ModelScope: \(error)")
+            return try await download(
+                repo: repo,
+                from: .modelScope,
+                into: base,
+                reportInitialProgress: false,
+                progress: progress
+            )
+        }
+    }
+
+    /// 自动换源只处理“远端不可用或内容异常”，不处理取消和本地文件系统错误。
+    static func shouldFallbackToModelScope(after error: Error) -> Bool {
+        if error is CancellationError { return false }
+
+        let nsError = error as NSError
+        if nsError.domain == NSURLErrorDomain {
+            return nsError.code != NSURLErrorCancelled
+        }
+        if error is DecodingError { return true }
+
+        guard let downloadError = error as? ModelDownloadError else { return false }
+        switch downloadError {
+        case .notHTTPResponse, .httpStatus, .emptyFileList, .sizeMismatch:
+            return true
+        case .modelScopeError:
+            return false
+        }
+    }
+
+    /// 在开始大文件下载前，用短超时验证 Hugging Face 的清单与最大权重首字节。
+    /// 只读 1 byte，既覆盖 API 可达性，也覆盖实际承载权重的 CDN/Xet 路径。
+    private static func verifyHuggingFaceReachability(repo: String) async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.timeoutIntervalForRequest = sourceProbeTimeout
+        configuration.timeoutIntervalForResource = sourceProbeTimeout
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+
+        let list = listURL(repo: repo, source: .huggingFace)
+        let (data, response) = try await session.data(from: list)
+        try ensureOK(response, url: list)
+        let files = try parseFileList(data, source: .huggingFace)
+        guard let probeFile = probeFile(in: files) else {
+            throw ModelDownloadError.emptyFileList(repo: repo)
+        }
+
+        let url = fileURL(repo: repo, path: probeFile.path, source: .huggingFace)
+        var request = URLRequest(url: url)
+        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
+        let (bytes, fileResponse) = try await session.bytes(for: request)
+        guard let http = fileResponse as? HTTPURLResponse else {
+            throw ModelDownloadError.notHTTPResponse(url)
+        }
+        guard (200...299).contains(http.statusCode) else {
+            throw ModelDownloadError.httpStatus(http.statusCode, url)
+        }
+
+        var iterator = bytes.makeAsyncIterator()
+        guard try await iterator.next() != nil else {
+            throw ModelDownloadError.sizeMismatch(path: probeFile.path, expected: 1, actual: 0)
+        }
+    }
+
+    private static func download(
+        repo: String,
         from source: ModelSource,
         into base: URL,
+        reportInitialProgress: Bool,
         progress: @Sendable @escaping (DownloadProgress) -> Void
     ) async throws -> URL {
         let fm = FileManager.default
@@ -130,7 +227,9 @@ public enum ModelDownloader {
         // 清单解析成功即回调一次（首个文件字节到达前）：UI 据此立即从「加载中」切到
         // 「下载 0%」，不会停留在无进度的哑状态；已存在跳过的文件随后在循环里逐个计入
         // （纯磁盘 stat，毫秒级推进进度基数）。
-        report(0)
+        if reportInitialProgress {
+            report(0)
+        }
 
         for file in ordered {
             let dest = dir.appendingPathComponent(file.path)
@@ -215,6 +314,11 @@ public enum ModelDownloader {
         case .modelScope:
             URL(string: "https://modelscope.cn/models/\(repo)/resolve/master/\(escaped)")!
         }
+    }
+
+    /// 用最大文件探测实际权重分发路径，避免只测小型 JSON 后在权重 CDN 上卡住。
+    static func probeFile(in files: [RemoteFile]) -> RemoteFile? {
+        files.max { lhs, rhs in lhs.size < rhs.size }
     }
 
     private static func isSkipped(_ path: String) -> Bool {
