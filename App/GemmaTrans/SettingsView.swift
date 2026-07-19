@@ -175,19 +175,21 @@ struct SettingsView: View {
 
     private var translationSection: some View {
         GTPanelSection(title: "翻译", subtitle: "配置会在下次模型加载后用于新的翻译任务。") {
-            GTPanelField(label: "中文翻译为") {
-                validatedTextField("en", text: $targetForChineseText, error: targetForChineseError)
-                    .onChange(of: targetForChineseText) { _, value in
-                        scheduleLanguageSave(value, field: .chinese)
-                    }
-            }
+            GTSettingsTextFieldRow(label: "中文翻译为",
+                                   prompt: "en",
+                                   text: $targetForChineseText,
+                                   error: targetForChineseError)
+                .onChange(of: targetForChineseText) { _, value in
+                    scheduleLanguageSave(value, field: .chinese)
+                }
             GTPanelDivider()
-            GTPanelField(label: "其他语言翻译为") {
-                validatedTextField("zh-Hans", text: $targetDefaultText, error: targetDefaultError)
-                    .onChange(of: targetDefaultText) { _, value in
-                        scheduleLanguageSave(value, field: .defaultTarget)
-                    }
-            }
+            GTSettingsTextFieldRow(label: "其他语言翻译为",
+                                   prompt: "zh-Hans",
+                                   text: $targetDefaultText,
+                                   error: targetDefaultError)
+                .onChange(of: targetDefaultText) { _, value in
+                    scheduleLanguageSave(value, field: .defaultTarget)
+                }
         }
     }
 
@@ -199,13 +201,11 @@ struct SettingsView: View {
             if !settings.autoTuning {
                 GTPanelDivider()
                 GTPanelField(label: "生成上限") {
-                    numberField(value: persistedBinding(\.manualMaxTokens))
-                        .frame(maxWidth: 140, alignment: .leading)
+                    numberField("生成上限", value: persistedBinding(\.manualMaxTokens))
                 }
                 GTPanelDivider()
                 GTPanelField(label: "输入上限") {
-                    numberField(value: persistedBinding(\.maxInputChars))
-                        .frame(maxWidth: 140, alignment: .leading)
+                    numberField("输入上限", value: persistedBinding(\.maxInputChars))
                 }
             }
         }
@@ -223,11 +223,13 @@ struct SettingsView: View {
                                 }
                              ))
             GTPanelDivider()
-            GTPanelField(label: "端口", subtitle: "修改后在下次 API 启动时生效。") {
-                validatedTextField("8765", text: $portText, error: portError)
-                    .frame(maxWidth: 150, alignment: .leading)
-                    .onChange(of: portText) { _, value in schedulePortSave(value) }
-            }
+            GTSettingsTextFieldRow(label: "端口",
+                                   subtitle: "修改后在下次 API 启动时生效。",
+                                   prompt: "8765",
+                                   text: $portText,
+                                   error: portError,
+                                   usesMonospacedDigits: true)
+                .onChange(of: portText) { _, value in schedulePortSave(value) }
         }
     }
 
@@ -542,27 +544,12 @@ struct SettingsView: View {
         }
     }
 
-    private func validatedTextField(_ prompt: String,
-                                    text: Binding<String>,
-                                    error: String?) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            TextField(prompt, text: text)
-                .textFieldStyle(.plain)
-                .padding(.horizontal, GTGlassTokens.Space.s)
-                .frame(height: 30)
-                .gtContentSurface(.subtle)
-            if let error {
-                Text(error).font(.caption).foregroundStyle(.red)
-            }
-        }
-    }
-
-    private func numberField(value: Binding<Int>) -> some View {
-        TextField("", value: value, format: .number.grouping(.never))
-            .textFieldStyle(.plain)
-            .padding(.horizontal, GTGlassTokens.Space.s)
-            .frame(height: 30)
-            .gtContentSurface(.subtle)
+    private func numberField(_ label: String, value: Binding<Int>) -> some View {
+        TextField(label, value: value, format: .number.grouping(.never))
+            .textFieldStyle(.roundedBorder)
+            .controlSize(.regular)
+            .monospacedDigit()
+            .frame(width: GTSettingsControlMetrics.compactFieldWidth)
     }
 
     private func formatGB(_ bytes: UInt64) -> String {

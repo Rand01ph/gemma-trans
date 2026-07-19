@@ -96,6 +96,8 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 - `GTPanelSection` 是同类设置的分组，不是强调卡片。
 - 设置行标题、说明与尾部控件保持同一基线。
 - 分隔线使用系统 separator，不自行调成蓝灰色。
+- 语言代码、端口和数值上限属于短配置值，统一使用 232pt 原生圆角输入框并右对齐；不要让短字段铺满内容卡。
+- 字段错误固定显示在输入框下方，不改变左侧标签的垂直位置；端口等纯数字值使用等宽数字。
 
 ### 模型操作槽
 
@@ -160,6 +162,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 设置按钮 | 紧凑原生次要按钮 | `GTSettingsActionButton` | 已实现 |
 | 当前模型 | 蓝色静态状态 | `GTModelStateBadge` | 已实现 |
 | 外部设置入口 | 安静的原生次要按钮 | `GTSettingsActionButton` | 已实现 |
+| 短配置字段 | 原生输入框、固定控制列 | `GTSettingsTextFieldRow` | 已实现 |
 | 主操作 | 有限使用玻璃和 Accent | `GTGlassButton` | 已实现 |
 | 浮窗 | 单层玻璃、结果优先 | `TranslationPanel` | 已实现，需持续截图回归 |
 
@@ -172,6 +175,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | “下载 / 使用 / 当前使用”尺寸与色彩语言不同 | 固定 92×28pt 操作/状态槽 | 切换状态时几何稳定，语义一致 |
 | 当前模型使用绿色玻璃 badge | Accent 蓝静态状态 | “当前选择”不是“操作成功” |
 | “打开设置”使用高亮外链图标和 Accent 蓝 | 纯文字“系统设置…”次要按钮 | 降低视觉权重，并与其他设置操作保持一致 |
+| 语言字段铺满整行、端口字段单独缩窄 | 统一 232pt 原生输入框并右对齐 | 建立稳定控制列，降低短配置值的视觉重量 |
 | 普通玻璃按钮带灰色 tint | 无 tint 的系统 glass | 避免自定义颜色与系统材质冲突 |
 
 ## 11. Do / Don't

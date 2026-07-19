@@ -95,7 +95,52 @@ struct GTPanelField<Control: View>: View {
                 }
                 .frame(width: labelWidth, alignment: .leading)
                 control()
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+            }
+        }
+        .contentShape(Rectangle())
+    }
+}
+
+struct GTSettingsTextFieldRow: View {
+    var label: String
+    var subtitle: String? = nil
+    var prompt: String
+    @Binding var text: String
+    var error: String? = nil
+    var usesMonospacedDigits = false
+    var labelWidth: CGFloat = GTSettingsControlMetrics.labelWidth
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 4) {
+            HStack(alignment: .center, spacing: GTGlassTokens.Space.m) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(label)
+                    if let subtitle {
+                        Text(subtitle)
+                            .font(.caption)
+                            .foregroundStyle(GTGlassPalette.secondaryText)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .frame(width: labelWidth, alignment: .leading)
+
+                Spacer(minLength: GTGlassTokens.Space.m)
+
+                TextField(label, text: $text, prompt: Text(prompt))
+                    .textFieldStyle(.roundedBorder)
+                    .controlSize(.regular)
+                    .font(usesMonospacedDigits ? .body.monospacedDigit() : .body)
+                    .frame(width: GTSettingsControlMetrics.compactFieldWidth)
+                    .accessibilityHint(error ?? "示例：\(prompt)")
+            }
+
+            if let error {
+                Text(error)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .frame(width: GTSettingsControlMetrics.compactFieldWidth,
+                           alignment: .leading)
             }
         }
         .contentShape(Rectangle())
@@ -118,6 +163,8 @@ struct GTPanelToggleRow: View {
 }
 
 enum GTSettingsControlMetrics {
+    static let labelWidth: CGFloat = 150
+    static let compactFieldWidth: CGFloat = 232
     static let actionWidth: CGFloat = 92
     static let actionHeight: CGFloat = 28
     static let iconSize: CGFloat = 28
