@@ -633,15 +633,21 @@ private struct GTTranslationPanelView: View {
                     .keyboardShortcut(.return, modifiers: .command)
                 }
             case .completed, .cancelled:
-                GTGlassButton(copied ? "已复制" : "复制",
-                              systemImage: copied ? "checkmark" : "doc.on.doc",
-                              minWidth: 72,
-                              compact: true) {
+                GTGlassIconButton(
+                    title: copied ? "已复制译文" : "复制译文",
+                    systemImage: copied ? "checkmark" : "doc.on.doc",
+                    tint: copied ? GTGlassPalette.semanticGreen : nil,
+                    size: 26
+                ) {
                     copyResult()
                 }
                 .disabled(model.output.isEmpty)
 
-                GTGlassButton("朗读", systemImage: "speaker.wave.2", compact: true) {
+                GTGlassIconButton(
+                    title: "朗读译文",
+                    systemImage: "speaker.wave.2",
+                    size: 26
+                ) {
                     speaker.speak(model.output)
                 }
                 .disabled(model.output.isEmpty)
