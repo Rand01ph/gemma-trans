@@ -29,6 +29,36 @@ import Testing
         #expect(PanelGeometry.resizeThreshold == 24)
     }
 
+    @Test func lockedOriginPreservesTopLeftAnchorWhenItFits() {
+        let origin = PanelGeometry.lockedWindowOrigin(
+            anchorX: 320,
+            anchorTopY: 760,
+            windowWidth: 540,
+            windowHeight: 300,
+            visibleMinX: 0,
+            visibleMinY: 0,
+            visibleMaxX: 1_440,
+            visibleMaxY: 900
+        )
+        #expect(origin.x == 320)
+        #expect(origin.y == 460)
+    }
+
+    @Test func lockedOriginClampsOnlyAtVisibleScreenEdges() {
+        let origin = PanelGeometry.lockedWindowOrigin(
+            anchorX: 1_200,
+            anchorTopY: 260,
+            windowWidth: 540,
+            windowHeight: 300,
+            visibleMinX: 0,
+            visibleMinY: 0,
+            visibleMaxX: 1_440,
+            visibleMaxY: 900
+        )
+        #expect(origin.x == 890)
+        #expect(origin.y == 10)
+    }
+
     @Test func measuredResultSurfaceClampsToReadableRange() {
         #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 20) == 50)
         #expect(PanelGeometry.resultSurfaceHeight(measuredContentHeight: 108) == 108)

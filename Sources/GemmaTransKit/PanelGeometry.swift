@@ -32,6 +32,26 @@ public enum PanelGeometry {
         visualHeight + shadowGutter * 2
     }
 
+    /// Keeps a locked panel's top-left anchor stable while its height changes, clamping only
+    /// when the window would leave the display's visible frame.
+    public static func lockedWindowOrigin(anchorX: Double,
+                                          anchorTopY: Double,
+                                          windowWidth: Double,
+                                          windowHeight: Double,
+                                          visibleMinX: Double,
+                                          visibleMinY: Double,
+                                          visibleMaxX: Double,
+                                          visibleMaxY: Double,
+                                          margin: Double = 10) -> (x: Double, y: Double) {
+        let minimumX = visibleMinX + margin
+        let maximumX = max(minimumX, visibleMaxX - windowWidth - margin)
+        let minimumTopY = visibleMinY + windowHeight + margin
+        let maximumTopY = max(minimumTopY, visibleMaxY - margin)
+        let clampedX = min(max(anchorX, minimumX), maximumX)
+        let clampedTopY = min(max(anchorTopY, minimumTopY), maximumTopY)
+        return (clampedX, clampedTopY - windowHeight)
+    }
+
     public static func resultSurfaceHeight(measuredContentHeight: Double) -> Double {
         min(max(measuredContentHeight, minimumResultSurfaceHeight), maximumResultSurfaceHeight)
     }

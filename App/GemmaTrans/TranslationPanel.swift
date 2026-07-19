@@ -4,6 +4,11 @@ import QuartzCore
 import SwiftUI
 import GemmaTransKit
 
+@MainActor @Observable
+private final class TranslationPanelInteractionState {
+    var isPositionLocked = false
+}
+
 @MainActor
 final class TranslationPanel {
     static let shared = TranslationPanel()
@@ -13,6 +18,8 @@ final class TranslationPanel {
     private var currentMode: TranslationPanelLayoutMode = .translation
     private var didSettleCompletedLayout = false
     private var escapeMonitor: Any?
+    private let interactionState = TranslationPanelInteractionState()
+    private var lockedTopLeft: NSPoint?
 
     func show(text: String, engine: TranslationEngine) {
         let model = TranslationViewModel()
@@ -34,6 +41,9 @@ final class TranslationPanel {
     }
 
     func close() {
+        if interactionState.isPositionLocked, currentMode == .translation, let panel {
+            captureLockedPosition(from: panel)
+        }
         currentModel?.cancel()
         currentModel = nil
         if let escapeMonitor {
@@ -53,6 +63,12 @@ final class TranslationPanel {
         let foregroundApplication = NSWorkspace.shared.frontmostApplication
         let shouldRestoreForegroundApplication = !NSApp.isActive
             && foregroundApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier
+        let previousMode = currentMode
+        let previousPanel = panel
+        if interactionState.isPositionLocked, previousMode == .translation, let previousPanel {
+            captureLockedPosition(from: previousPanel)
+        }
+
         currentModel?.cancel()
         currentModel = model
         currentMode = mode
@@ -62,25 +78,36 @@ final class TranslationPanel {
             model: model,
             mode: mode,
             action: .translate,
+            interactionState: interactionState,
             resultFontSize: CGFloat(AppSettings.load().translationFontSize),
             onRetry: onRetry,
             onClose: { [weak self] in self?.close() },
             onStop: { model.cancel() },
+            onTogglePositionLock: { [weak self] in self?.togglePositionLock() },
             onContentHeight: { [weak self] height, settle in
                 self?.adjustHeight(contentHeight: height, settleCompletedLayout: settle)
             }
         )
         let hosting = NSHostingController(rootView: view)
 
-        let panel = TranslationFloatingPanelWindow(
-            contentRect: NSRect(x: 0,
-                                y: 0,
-                                width: mode.windowSize.width,
-                                height: mode.windowSize.height),
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
+        let canReuseLockedPanel = interactionState.isPositionLocked
+            && previousMode == .translation
+            && mode == .translation
+            && previousPanel != nil
+        let panel: TranslationFloatingPanelWindow
+        if canReuseLockedPanel, let previousPanel {
+            panel = previousPanel
+        } else {
+            panel = TranslationFloatingPanelWindow(
+                contentRect: NSRect(x: 0,
+                                    y: 0,
+                                    width: mode.windowSize.width,
+                                    height: mode.windowSize.height),
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: false
+            )
+        }
         panel.isOpaque = false
         panel.backgroundColor = .clear
         panel.hasShadow = false
@@ -98,8 +125,11 @@ final class TranslationPanel {
         panel.hidesOnDeactivate = false
         panel.isReleasedWhenClosed = false
 
-        panel.setFrame(initialFrame(for: mode), display: false)
-        self.panel?.close()
+        let targetFrame = presentationFrame(for: mode)
+        panel.setFrame(targetFrame, display: false)
+        if let previousPanel, previousPanel !== panel {
+            previousPanel.close()
+        }
         self.panel = panel
         installEscapeMonitor()
         panel.orderFrontRegardless()
@@ -129,11 +159,27 @@ final class TranslationPanel {
         guard abs(targetWindowHeight - panel.frame.height) >= PanelGeometry.resizeThreshold else { return }
 
         var frame = panel.frame
-        let topY = frame.maxY
         frame.size.height = targetWindowHeight
-        frame.origin.y = topY - targetWindowHeight
-        if let visible = screen?.visibleFrame, frame.minY < visible.minY {
-            frame.origin.y = visible.minY
+        if interactionState.isPositionLocked, let lockedTopLeft,
+           let visible = screen?.visibleFrame {
+            let origin = PanelGeometry.lockedWindowOrigin(
+                anchorX: Double(lockedTopLeft.x),
+                anchorTopY: Double(lockedTopLeft.y),
+                windowWidth: Double(frame.width),
+                windowHeight: Double(frame.height),
+                visibleMinX: Double(visible.minX),
+                visibleMinY: Double(visible.minY),
+                visibleMaxX: Double(visible.maxX),
+                visibleMaxY: Double(visible.maxY)
+            )
+            frame.origin = NSPoint(x: CGFloat(origin.x), y: CGFloat(origin.y))
+            self.lockedTopLeft = NSPoint(x: frame.minX, y: frame.maxY)
+        } else {
+            let topY = panel.frame.maxY
+            frame.origin.y = topY - targetWindowHeight
+            if let visible = screen?.visibleFrame, frame.minY < visible.minY {
+                frame.origin.y = visible.minY
+            }
         }
 
         let shouldAnimate = settleCompletedLayout
@@ -169,6 +215,48 @@ final class TranslationPanel {
         if frame.minY < visible.minY + margin { frame.origin.y = visible.minY + margin }
         if frame.maxY > visible.maxY - margin { frame.origin.y = visible.maxY - size.height - margin }
         return frame
+    }
+
+    private func presentationFrame(for mode: TranslationPanelLayoutMode) -> NSRect {
+        guard mode == .translation,
+              interactionState.isPositionLocked,
+              let lockedTopLeft else {
+            return initialFrame(for: mode)
+        }
+
+        let size = mode.windowSize
+        let anchorPoint = NSPoint(x: lockedTopLeft.x + mode.shadowGutter,
+                                  y: lockedTopLeft.y - mode.shadowGutter)
+        let screen = NSScreen.screens.first { NSMouseInRect(anchorPoint, $0.frame, false) }
+            ?? NSScreen.main
+        let visible = screen?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1_200, height: 800)
+        let origin = PanelGeometry.lockedWindowOrigin(
+            anchorX: Double(lockedTopLeft.x),
+            anchorTopY: Double(lockedTopLeft.y),
+            windowWidth: Double(size.width),
+            windowHeight: Double(size.height),
+            visibleMinX: Double(visible.minX),
+            visibleMinY: Double(visible.minY),
+            visibleMaxX: Double(visible.maxX),
+            visibleMaxY: Double(visible.maxY)
+        )
+        return NSRect(x: CGFloat(origin.x),
+                      y: CGFloat(origin.y),
+                      width: size.width,
+                      height: size.height)
+    }
+
+    private func togglePositionLock() {
+        interactionState.isPositionLocked.toggle()
+        if interactionState.isPositionLocked, let panel, currentMode == .translation {
+            captureLockedPosition(from: panel)
+        } else {
+            lockedTopLeft = nil
+        }
+    }
+
+    private func captureLockedPosition(from panel: NSPanel) {
+        lockedTopLeft = NSPoint(x: panel.frame.minX, y: panel.frame.maxY)
     }
 }
 
@@ -339,10 +427,12 @@ private struct GTTranslationPanelView: View {
     let model: TranslationViewModel
     let mode: TranslationPanelLayoutMode
     let action: TextActionKind
+    let interactionState: TranslationPanelInteractionState
     let resultFontSize: CGFloat
     let onRetry: (() -> Void)?
     let onClose: () -> Void
     let onStop: () -> Void
+    let onTogglePositionLock: () -> Void
     var onContentHeight: (CGFloat, Bool) -> Void = { _, _ in }
 
     @State private var speaker = TranslationPanelSpeaker()
@@ -441,6 +531,14 @@ private struct GTTranslationPanelView: View {
             actionIdentity
             Spacer(minLength: GTGlassTokens.Space.s)
             phaseMetadata
+            GTGlassIconButton(
+                title: interactionState.isPositionLocked ? "取消固定位置" : "固定浮窗位置",
+                systemImage: interactionState.isPositionLocked ? "pin.fill" : "pin",
+                tint: interactionState.isPositionLocked ? .accentColor : nil,
+                quiet: !interactionState.isPositionLocked,
+                size: 24,
+                action: onTogglePositionLock
+            )
             GTGlassIconButton(title: "关闭", systemImage: "xmark", quiet: true, size: 24, action: onClose)
                 .keyboardShortcut(.cancelAction)
         }
