@@ -193,41 +193,118 @@ private extension View {
 
 struct GTSettingsActionButton: View {
     var title: String
+    var systemImage: String? = nil
     var action: () -> Void
+
+    @State private var isHovering = false
+    @FocusState private var isFocused: Bool
 
     var body: some View {
         Button(action: action) {
-            Text(title)
-                .font(.callout.weight(.medium))
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            HStack(spacing: 5) {
+                if let systemImage {
+                    Image(systemName: systemImage)
+                        .font(.caption.weight(.semibold))
+                }
+                Text(title)
+                    .font(.callout.weight(.medium))
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .buttonStyle(.bordered)
-        .buttonBorderShape(.roundedRectangle(radius: GTSettingsControlMetrics.cornerRadius))
-        .controlSize(.small)
+        .buttonStyle(GTSettingsQuietButtonStyle(isHovering: isHovering,
+                                                isFocused: isFocused))
         .frame(width: GTSettingsControlMetrics.actionWidth,
                height: GTSettingsControlMetrics.actionHeight)
+        .focused($isFocused)
+        .onHover { isHovering = $0 }
     }
 }
 
-struct GTSettingsOverflowMenu<Content: View>: View {
+struct GTSettingsDestructiveIconButton: View {
     var title: String
-    @ViewBuilder var content: () -> Content
+    var action: () -> Void
+
+    @State private var isHovering = false
+    @FocusState private var isFocused: Bool
 
     var body: some View {
-        Menu(content: content) {
-            Image(systemName: "ellipsis")
-                .font(.callout.weight(.semibold))
-                .frame(width: GTSettingsControlMetrics.iconSize,
-                       height: GTSettingsControlMetrics.iconSize)
-                .contentShape(Rectangle())
+        Button(role: .destructive, action: action) {
+            Image(systemName: "trash")
+                .font(.caption.weight(.semibold))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .menuIndicator(.hidden)
-        .buttonStyle(.borderless)
+        .buttonStyle(GTSettingsQuietButtonStyle(tone: .destructive,
+                                                isHovering: isHovering,
+                                                isFocused: isFocused))
         .frame(width: GTSettingsControlMetrics.iconSize,
                height: GTSettingsControlMetrics.iconSize)
+        .focused($isFocused)
+        .onHover { isHovering = $0 }
         .help(title)
         .accessibilityLabel(title)
+    }
+}
+
+private enum GTSettingsButtonTone {
+    case neutral
+    case destructive
+}
+
+private struct GTSettingsQuietButtonStyle: ButtonStyle {
+    var tone: GTSettingsButtonTone = .neutral
+    var isHovering = false
+    var isFocused = false
+
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundStyle(foregroundColor)
+            .background {
+                RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
+                                 style: .continuous)
+                    .fill(backgroundColor(isPressed: configuration.isPressed))
+            }
+            .overlay {
+                RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
+                                 style: .continuous)
+                    .strokeBorder(borderColor, lineWidth: isFocused ? 2 : 1)
+            }
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.98 : 1)
+            .opacity(isEnabled ? 1 : 0.46)
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.12),
+                       value: configuration.isPressed)
+    }
+
+    private var foregroundColor: Color {
+        tone == .destructive ? GTGlassPalette.semanticRed : .primary
+    }
+
+    private func backgroundColor(isPressed: Bool) -> Color {
+        let emphasized = isPressed || isHovering
+        switch tone {
+        case .neutral:
+            return Color.primary.opacity(emphasized
+                ? (colorScheme == .dark ? 0.12 : 0.08)
+                : (colorScheme == .dark ? 0.065 : 0.045))
+        case .destructive:
+            return GTGlassPalette.semanticRed.opacity(emphasized ? 0.14 : 0.07)
+        }
+    }
+
+    private var borderColor: Color {
+        if isFocused {
+            return GTGlassPalette.accent(for: colorScheme).opacity(0.82)
+        }
+        switch tone {
+        case .neutral:
+            return Color.primary.opacity(colorScheme == .dark ? 0.13 : 0.10)
+        case .destructive:
+            return GTGlassPalette.semanticRed.opacity(isHovering ? 0.34 : 0.20)
+        }
     }
 }
 

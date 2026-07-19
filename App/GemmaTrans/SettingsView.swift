@@ -407,14 +407,13 @@ struct SettingsView: View {
                     }
                 } else if installed {
                     HStack(spacing: GTGlassTokens.Space.s) {
-                        GTSettingsActionButton(title: "使用", action: switchAction)
+                        GTSettingsActionButton(title: "使用",
+                                               systemImage: "checkmark",
+                                               action: switchAction)
                             .disabled(isEngineBusy)
                         if let deleteAction {
-                            GTSettingsOverflowMenu(title: "更多模型操作") {
-                                Button("删除模型…", systemImage: "trash", role: .destructive) {
-                                    deleteAction()
-                                }
-                            }
+                            GTSettingsDestructiveIconButton(title: "删除模型…",
+                                                            action: deleteAction)
                             .disabled(isEngineBusy)
                         } else {
                             modelOverflowPlaceholder
@@ -422,7 +421,9 @@ struct SettingsView: View {
                     }
                 } else if let downloadAction {
                     HStack(spacing: GTGlassTokens.Space.s) {
-                        GTSettingsActionButton(title: "下载", action: downloadAction)
+                        GTSettingsActionButton(title: "下载",
+                                               systemImage: "arrow.down",
+                                               action: downloadAction)
                             .disabled(EngineController.shared.downloadingModelID != nil)
                         modelOverflowPlaceholder
                     }

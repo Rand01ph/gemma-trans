@@ -107,18 +107,18 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 
 | 状态 | 控件 | 尺寸 |
 | --- | --- | ---: |
-| 未下载 | “下载”原生次要按钮 | 92×28pt |
-| 已下载 | “使用”原生次要按钮 | 92×28pt |
+| 未下载 | arrow.down + “下载”安静操作按钮 | 92×28pt |
+| 已下载 | checkmark + “使用”安静操作按钮 | 92×28pt |
 | 当前模型 | checkmark + “当前使用”静态状态 | 92×28pt |
-| 其他操作 | 无常驻填充 ellipsis 菜单 | 28×28pt |
+| 删除 | 已下载且非当前模型时显示 trash 按钮 | 28×28pt |
 
-删除模型只放在“更多”菜单，使用 destructive role，并保留确认弹窗。
+只有一个删除操作时不使用“更多”菜单。已下载且非当前模型直接显示 trash 按钮，使用 destructive role 并保留确认弹窗；当前使用中的模型不可删除，因此不显示无效入口。
 
 模型下载不提供手动来源开关。默认用短超时验证 Hugging Face 清单和权重首字节；遇到远端连接、HTTP 或清单异常时自动回退 ModelScope。取消和磁盘写入错误不得触发换源。
 
 ### 外部设置入口
 
-进入 macOS 系统设置的动作使用固定 92×28pt 原生次要按钮，采用“系统设置…”这类明确短标签。它不显示外链图标、不使用 Accent 蓝，也不增加独立玻璃层。
+进入 macOS 系统设置的动作使用固定 92×28pt 安静操作按钮，采用“系统设置…”这类明确短标签。它不显示外链图标、不使用 Accent 蓝，也不增加独立玻璃层。
 
 ### 翻译浮窗
 
@@ -167,9 +167,9 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | Accent | 克制的系统蓝 | `GTGlassPalette.accent` | 已实现 |
 | 标签结构 | 原生、低装饰导航 | 顶部三标签 | 保留产品差异 |
 | 内容表面 | 轻边界、无多重材质 | `GTContentSurface` | 已实现 |
-| 设置按钮 | 紧凑原生次要按钮 | `GTSettingsActionButton` | 已实现 |
+| 设置按钮 | 轻填充、细描边、具备 hover/按压/焦点反馈 | `GTSettingsActionButton` | 已实现 |
 | 当前模型 | 蓝色静态状态 | `GTModelStateBadge` | 已实现 |
-| 外部设置入口 | 安静的原生次要按钮 | `GTSettingsActionButton` | 已实现 |
+| 外部设置入口 | 安静的轻填充操作按钮 | `GTSettingsActionButton` | 已实现 |
 | 短配置字段 | 原生输入框、固定控制列 | `GTSettingsTextFieldRow` | 已实现 |
 | 设置行密度 | 44pt 常规行基线、行内垂直居中、分隔线无额外间距 | `GTPanelRow` / `GTPanelField` | 已实现 |
 | 主操作 | 有限使用玻璃和 Accent | `GTGlassButton` | 已实现 |
@@ -180,7 +180,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | Before | After | Why |
 | --- | --- | --- |
 | 浅色背景带灰蓝渐变和黑色叠层 | 中性白背景 + 系统材质 | 提升正文对比，减少“脏灰”感 |
-| 普通设置按钮使用中性 tint 的玻璃胶囊 | 原生紧凑次要按钮 | 让 glass 表达层级，而不是装饰所有动作 |
+| 普通设置按钮使用中性 tint 的玻璃胶囊 | 轻填充、细描边的紧凑操作按钮 | 让 glass 表达层级，同时保留清楚的 hover、按压和键盘焦点反馈 |
 | “下载 / 使用 / 当前使用”尺寸与色彩语言不同 | 固定 92×28pt 操作/状态槽 | 切换状态时几何稳定，语义一致 |
 | 当前模型使用绿色玻璃 badge | Accent 蓝静态状态 | “当前选择”不是“操作成功” |
 | “打开设置”使用高亮外链图标和 Accent 蓝 | 纯文字“系统设置…”次要按钮 | 降低视觉权重，并与其他设置操作保持一致 |
@@ -190,6 +190,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 普通玻璃按钮带灰色 tint | 无 tint 的系统 glass | 避免自定义颜色与系统材质冲突 |
 | 模型行独占 52pt 最小高度、分隔线两侧重复留白 | 所有设置页共享 44pt 常规行基线 | 相同语义组件保持相同密度，模型列表更易扫描 |
 | 卡片统一包裹上下 padding，首行偏下、末行偏上 | 卡片只保留水平 padding，垂直留白归每一行所有 | Divider 成为真实行边界，通用、模型和集成页共享同一垂直中心 |
+| “使用 / 下载”使用厚重灰色系统按钮，唯一删除操作藏在 ellipsis | 图标 + 文字的轻填充操作按钮，trash 直接显示 | 降低按钮重量，同时让唯一操作无需二次导航即可发现 |
 | 用户手动选择 Hugging Face / ModelScope | Hugging Face 优先、失败自动回退 ModelScope | 把网络差异作为系统应处理的边缘情况，而不是用户配置 |
 
 ## 11. Do / Don't
