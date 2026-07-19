@@ -19,10 +19,10 @@ targets:
       properties:
         LSUIElement: true            # menu bar app，不出现在 Dock
         CFBundleDisplayName: GemmaTrans
-        CFBundleIconFile: AppIcon
+        CFBundleIconName: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
         CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "9"
+        CFBundleVersion: "12"
         ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
         NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
           - NSMenuItem:
@@ -48,9 +48,10 @@ targets:
         # Apple Development 证书签名后授权按"团队+Bundle ID"绑定，重建不丢权限
         DEVELOPMENT_TEAM: G2XC9VU88M
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "6.0"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "9"
+        CURRENT_PROJECT_VERSION: "12"
       configs:
         Release:
           # 公证直分：Developer ID + Hardened Runtime（Debug 日常开发不受影响）
@@ -69,10 +70,10 @@ targets:
       properties:
         LSUIElement: true            # 纯菜单栏 app（无 Dock 图标）：划词时不被前台化，浮窗只出现在当前 Space
         CFBundleDisplayName: GemmaTrans
-        CFBundleIconFile: AppIcon
+        CFBundleIconName: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
         CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "9"
+        CFBundleVersion: "12"
         ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
         NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
           - NSMenuItem:
@@ -102,8 +103,9 @@ targets:
       base:
         DEVELOPMENT_TEAM: G2XC9VU88M
         CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         SWIFT_VERSION: "6.0"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "9"
+        CURRENT_PROJECT_VERSION: "12"
         PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
         PRODUCT_NAME: GemmaTrans
