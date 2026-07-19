@@ -243,7 +243,7 @@ struct SettingsView: View {
                     Text(Self.serviceShortcutGlyphs)
                         .font(.callout.monospaced().weight(.bold))
                         .foregroundStyle(GTGlassPalette.secondaryText)
-                    GTSettingsLinkButton(title: "打开设置") {
+                    GTSettingsActionButton(title: "系统设置…") {
                         Self.openServicesShortcutSettings()
                     }
                 }

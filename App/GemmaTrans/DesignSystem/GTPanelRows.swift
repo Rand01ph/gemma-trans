@@ -164,28 +164,6 @@ struct GTSettingsOverflowMenu<Content: View>: View {
     }
 }
 
-struct GTSettingsLinkButton: View {
-    var title: String
-    var systemImage = "arrow.up.forward.square"
-    var action: () -> Void
-
-    @Environment(\.colorScheme) private var colorScheme
-    @State private var hovering = false
-
-    var body: some View {
-        Button(action: action) {
-            Label(title, systemImage: systemImage)
-                .font(.callout.weight(.medium))
-                .foregroundStyle(GTGlassPalette.accent(for: colorScheme))
-                .frame(height: GTSettingsControlMetrics.actionHeight)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .opacity(hovering ? 0.72 : 1)
-        .onHover { hovering = $0 }
-    }
-}
-
 struct GTModelStateBadge: View {
     var text = "当前使用"
 

@@ -110,9 +110,9 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 
 删除模型只放在“更多”菜单，使用 destructive role，并保留确认弹窗。
 
-### 行内链接
+### 外部设置入口
 
-“打开设置”等离开当前界面的动作使用 Accent 蓝文字 + `arrow.up.forward.square`。它是行内链接操作，不使用凸起玻璃胶囊。
+进入 macOS 系统设置的动作使用固定 92×28pt 原生次要按钮，采用“系统设置…”这类明确短标签。它不显示外链图标、不使用 Accent 蓝，也不增加独立玻璃层。
 
 ### 翻译浮窗
 
@@ -159,7 +159,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 内容表面 | 轻边界、无多重材质 | `GTContentSurface` | 已实现 |
 | 设置按钮 | 紧凑原生次要按钮 | `GTSettingsActionButton` | 已实现 |
 | 当前模型 | 蓝色静态状态 | `GTModelStateBadge` | 已实现 |
-| 外部设置入口 | 行内链接 | `GTSettingsLinkButton` | 已实现 |
+| 外部设置入口 | 安静的原生次要按钮 | `GTSettingsActionButton` | 已实现 |
 | 主操作 | 有限使用玻璃和 Accent | `GTGlassButton` | 已实现 |
 | 浮窗 | 单层玻璃、结果优先 | `TranslationPanel` | 已实现，需持续截图回归 |
 
@@ -171,7 +171,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | 普通设置按钮使用中性 tint 的玻璃胶囊 | 原生紧凑次要按钮 | 让 glass 表达层级，而不是装饰所有动作 |
 | “下载 / 使用 / 当前使用”尺寸与色彩语言不同 | 固定 92×28pt 操作/状态槽 | 切换状态时几何稳定，语义一致 |
 | 当前模型使用绿色玻璃 badge | Accent 蓝静态状态 | “当前选择”不是“操作成功” |
-| “打开设置”像主按钮 | Accent 行内链接 | 准确表达跳转到系统设置 |
+| “打开设置”使用高亮外链图标和 Accent 蓝 | 纯文字“系统设置…”次要按钮 | 降低视觉权重，并与其他设置操作保持一致 |
 | 普通玻璃按钮带灰色 tint | 无 tint 的系统 glass | 避免自定义颜色与系统材质冲突 |
 
 ## 11. Do / Don't
