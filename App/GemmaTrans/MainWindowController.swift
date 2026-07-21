@@ -22,6 +22,9 @@ final class MainWindowController: NSObject, NSToolbarDelegate {
             centerOnActiveScreen(window)
         }
         scheduleBringToFront(window)
+#if DEBUG
+        GTDebugScreenshotFixture.captureIfRequested(window: window, matching: "main")
+#endif
     }
 
     func showSettings() {
@@ -45,6 +48,14 @@ final class MainWindowController: NSObject, NSToolbarDelegate {
     func registerSettingsWindow(_ window: NSWindow) {
         settingsWindow = window
         window.collectionBehavior.insert(.moveToActiveSpace)
+#if DEBUG
+        if let section = GTDebugScreenshotFixture.settingsSection {
+            GTDebugScreenshotFixture.captureIfRequested(
+                window: window,
+                matching: "settings-\(section.rawValue)"
+            )
+        }
+#endif
         guard shouldFocusSettingsWindowOnRegistration else { return }
         shouldFocusSettingsWindowOnRegistration = false
         scheduleBringToFront(window)

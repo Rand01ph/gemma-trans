@@ -85,6 +85,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task { @MainActor in
             try? await Task.sleep(nanoseconds: 200_000_000)
             MainWindowController.shared.show()  // 启动即弹主窗口，下载进度对用户/审核员可见
+#if DEBUG
+            if GTDebugScreenshotFixture.settingsSection != nil {
+                MainWindowController.shared.showSettings()
+            } else if GTDebugScreenshotFixture.isPanel {
+                TranslationPanel.shared.showScreenshotFixture()
+            }
+#endif
         }
         // 设置窗口由 SwiftUI 管理、拿不到创建句柄：在它成为 key 时补设 moveToActiveSpace，
         // 让从全屏 app 打开「设置」时也来到当前 Space。浮窗(NSPanel)与状态栏(非 titled)跳过。

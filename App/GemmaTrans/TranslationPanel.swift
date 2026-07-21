@@ -40,6 +40,20 @@ final class TranslationPanel {
         }
     }
 
+#if DEBUG
+    func showScreenshotFixture() {
+        let model = TranslationViewModel()
+        model.setMessage(GTDebugScreenshotFixture.panelOutput)
+        model.status = "zh-Hans → en"
+        model.tokensPerSecond = 72.4
+        interactionState.isPositionLocked = true
+        present(model: model)
+        if let panel {
+            GTDebugScreenshotFixture.captureIfRequested(window: panel, matching: "panel")
+        }
+    }
+#endif
+
     func close() {
         if interactionState.isPositionLocked, currentMode == .translation, let panel {
             captureLockedPosition(from: panel)

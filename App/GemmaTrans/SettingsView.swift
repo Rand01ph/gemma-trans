@@ -46,6 +46,9 @@ struct SettingsView: View {
 
     init() {
         let loaded = AppSettings.load()
+#if DEBUG
+        _selectedSection = State(initialValue: GTDebugScreenshotFixture.settingsSection ?? .general)
+#endif
         _settings = State(initialValue: loaded)
         _targetForChineseText = State(initialValue: loaded.targetForChinese)
         _targetDefaultText = State(initialValue: loaded.targetDefault)
