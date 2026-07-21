@@ -261,7 +261,7 @@ private struct MainToolbarStatus: View {
         case .needsModel: return GTGlassPalette.secondaryText
         case .ready: return GTGlassPalette.semanticGreen
         case .loading: return GTGlassPalette.semanticOrange
-        case .downloading: return GTGlassPalette.semanticBlue
+        case .downloading: return GTGlassPalette.controlAccent
         case .failed: return GTGlassPalette.semanticOrange
         }
     }

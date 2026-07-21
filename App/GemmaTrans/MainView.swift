@@ -23,7 +23,6 @@ struct MainView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .gtApplicationAppearance()
-        .tint(GTGlassPalette.semanticBlue)
     }
 
     private func translate() {

@@ -1,23 +1,48 @@
 import SwiftUI
 
+enum GTGlassEmphasis: Equatable {
+    case secondary
+    case primary
+    case selected
+    case warning
+    case destructive
+    case successFeedback
+
+    fileprivate var usesProminentStyle: Bool {
+        self == .primary
+    }
+
+    fileprivate var tint: Color? {
+        switch self {
+        case .secondary:
+            return nil
+        case .primary, .selected:
+            return GTGlassPalette.controlAccent
+        case .warning:
+            return GTGlassPalette.semanticOrange
+        case .destructive:
+            return GTGlassPalette.semanticRed
+        case .successFeedback:
+            return GTGlassPalette.semanticGreen
+        }
+    }
+}
+
 struct GTGlassButton<Label: View>: View {
     var role: ButtonRole? = nil
-    var tint: Color? = nil
-    var prominent = false
+    var emphasis: GTGlassEmphasis = .secondary
     var minWidth: CGFloat? = nil
     var compact = false
     var action: () -> Void
     @ViewBuilder var label: () -> Label
 
-    @Environment(\.colorScheme) private var colorScheme
-
     @ViewBuilder
     var body: some View {
-        if prominent {
+        if emphasis.usesProminentStyle, let tint = emphasis.tint {
             baseButton
                 .buttonStyle(.glassProminent)
-                .tint(tint ?? GTGlassPalette.primaryActionTint(for: colorScheme))
-        } else if let tint {
+                .tint(tint)
+        } else if let tint = emphasis.tint {
             baseButton
                 .buttonStyle(.glass)
                 .tint(tint)
@@ -44,14 +69,12 @@ extension GTGlassButton where Label == SwiftUI.Label<Text, Image> {
     init(_ title: String,
          systemImage: String,
          role: ButtonRole? = nil,
-         tint: Color? = nil,
-         prominent: Bool = false,
+         emphasis: GTGlassEmphasis = .secondary,
          minWidth: CGFloat? = nil,
          compact: Bool = false,
          action: @escaping () -> Void) {
         self.role = role
-        self.tint = tint
-        self.prominent = prominent
+        self.emphasis = emphasis
         self.minWidth = minWidth
         self.compact = compact
         self.action = action
@@ -143,24 +166,22 @@ struct GTStatusBadge: View {
 struct GTGlassIconButton: View {
     var title: String
     var systemImage: String
-    var tint: Color? = nil
-    var filled = false
+    var emphasis: GTGlassEmphasis = .secondary
     var quiet = false
     var size: CGFloat = GTGlassTokens.Toolbar.controlHeight
     var action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
-    @Environment(\.colorScheme) private var colorScheme
     @State private var hovering = false
 
     @ViewBuilder
     var body: some View {
         Group {
-            if filled {
+            if emphasis.usesProminentStyle, let tint = emphasis.tint {
                 baseButton
                     .buttonStyle(.glassProminent)
-                    .tint(tint ?? GTGlassPalette.primaryActionTint(for: colorScheme))
-            } else if let tint {
+                    .tint(tint)
+            } else if let tint = emphasis.tint {
                 baseButton
                     .buttonStyle(.glass)
                     .tint(tint)

@@ -70,7 +70,7 @@ struct TranslationWorkspace: View {
                 }
                 .disabled(input.isEmpty)
 
-                GTGlassButton("翻译", systemImage: "arrow.right.circle.fill", prominent: true) {
+                GTGlassButton("翻译", systemImage: "arrow.right.circle.fill", emphasis: .primary) {
                     translate()
                 }
                 .disabled(!canTranslate)
@@ -104,12 +104,13 @@ struct TranslationWorkspace: View {
                 }
                 Spacer()
                 if viewModel.isRunning {
-                    GTGlassButton("停止", systemImage: "stop.fill", tint: GTGlassPalette.semanticOrange) {
+                    GTGlassButton("停止", systemImage: "stop.fill", emphasis: .warning) {
                         viewModel.cancel()
                     }
                 }
                 GTGlassButton(copied ? "已复制" : "复制译文",
                               systemImage: copied ? "checkmark" : "doc.on.doc",
+                              emphasis: copied ? .successFeedback : .secondary,
                               minWidth: 104) {
                     copyOutput()
                 }
@@ -138,7 +139,7 @@ struct TranslationWorkspace: View {
                     .frame(width: 120)
             }
             if case .failed = controller.engineStatus {
-                GTGlassButton("重试", systemImage: "arrow.clockwise", prominent: true) {
+                GTGlassButton("重试", systemImage: "arrow.clockwise", emphasis: .primary) {
                     controller.reload()
                 }
             }
@@ -193,10 +194,10 @@ struct TranslationWorkspace: View {
 
     private var engineTint: Color {
         switch controller.engineStatus {
-        case .needsModel: return GTGlassPalette.semanticBlue
+        case .needsModel: return GTGlassPalette.controlAccent
         case .ready: return GTGlassPalette.semanticGreen
         case .loading: return GTGlassPalette.semanticOrange
-        case .downloading: return GTGlassPalette.semanticBlue
+        case .downloading: return GTGlassPalette.controlAccent
         case .failed: return GTGlassPalette.semanticOrange
         }
     }

@@ -21,7 +21,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 ### 语义颜色
 
 - 主文字使用系统 `primary`；次要文字使用随 Light/Dark 解析的语义色，并保持至少 4.5:1。
-- Accent 蓝只用于选择、主翻译操作、链接和“当前使用”。
+- 全局 Accent 默认使用 Codex 蓝，只用于选择、主翻译操作、链接和“当前使用”；用户显式选择 macOS 强调色时，所有这些状态统一跟随系统设置。
 - 绿、橙、红只表达成功、进行中/警告和失败，不参与装饰。
 - 浅色模式不叠加灰蓝渐变或黑色蒙层。
 
@@ -37,7 +37,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 
 | Token | Light | Dark | GemmaTrans 映射 |
 | --- | --- | --- | --- |
-| Accent | `#0285FF` | `#339CFF` | 选择、主操作、链接、当前模型 |
+| Accent | `#0285FF` | `#339CFF` | `AccentColor` 默认值；选择、主操作、链接、当前模型，允许 macOS 用户强调色统一覆盖 |
 | Window | `#FFFFFF` | `#181818` | 窗口主背景 |
 | Foreground | `#0D0D0D` | `#FFFFFF` | 主文字由系统 `primary` 解析，次文字由 `secondaryText` 解析 |
 | Contrast reference | 45 | 60 | 作为视觉密度参考，不提供编辑滑杆 |
@@ -82,6 +82,21 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 同一层级只能有一套 fill、stroke 和 shadow。不要同时叠加材质、渐变、黑色蒙层和多重描边。
 
 ## 5. 组件规则
+
+### 按钮颜色语义
+
+所有玻璃按钮通过 `GTGlassEmphasis` 声明语义，不允许页面在根节点设置全局 `.tint`，也不允许普通 hover 临时借用状态颜色。
+
+| Emphasis | 材质与颜色 | 用途 |
+| --- | --- | --- |
+| `secondary` | 无 tint 的系统 glass | 清空、复制、朗读、关闭等次要操作 |
+| `primary` | Accent + `glassProminent` | 翻译、失败重试等当前视图的首要操作 |
+| `selected` | Accent + system glass | 固定浮窗、当前模型等已选择状态 |
+| `warning` | 语义橙 + system glass | 停止生成等警示操作 |
+| `destructive` | 系统红 + destructive role | 删除等不可逆操作 |
+| `successFeedback` | 语义绿 + system glass | “已复制”等不超过 1.2 秒的原位反馈 |
+
+默认多色强调模式下使用 GemmaTrans 的 Light/Dark 蓝色锚点；控件通过动态的 `NSColor.controlAccentColor` 读取它。当用户在 macOS 中选择具体强调色时，`primary`、`selected` 与系统控件必须一起变化，不能出现主窗口仍为品牌蓝而浮窗单独使用系统色的情况。
 
 ### App 图标
 
@@ -172,7 +187,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 | --- | --- | --- | --- |
 | 背景 | Light 白 / Dark `#181818` | `GTContentBackground` | 已实现 |
 | 文字层级 | 高对比主文字、安静次文字 | 系统 `primary` + 动态 `secondaryText` | 已实现 |
-| Accent | 克制的系统蓝 | `GTGlassPalette.accent` | 已实现 |
+| Accent | 单一系统 Accent，默认 Codex 蓝 | `AccentColor` + `GTGlassPalette.accent` | 已实现 |
 | 标签结构 | 原生、低装饰导航 | 顶部三标签 | 保留产品差异 |
 | 内容表面 | 轻边界、无多重材质 | `GTContentSurface` | 已实现 |
 | 设置按钮 | 轻填充、细描边、具备 hover/按压/焦点反馈 | `GTSettingsActionButton` | 已实现 |
@@ -187,6 +202,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 
 | Before | After | Why |
 | --- | --- | --- |
+| 主窗口根节点全局蓝色 tint，浮窗局部使用系统 Accent | 组件通过 `GTGlassEmphasis` 独立声明主次和状态，统一读取 `AccentColor` | 消除“主窗口全蓝、浮窗意外变黄”，同时保留用户的 macOS 强调色偏好 |
 | 浅色背景带灰蓝渐变和黑色叠层 | 中性白背景 + 系统材质 | 提升正文对比，减少“脏灰”感 |
 | 普通设置按钮使用中性 tint 的玻璃胶囊 | 轻填充、细描边的紧凑操作按钮 | 让 glass 表达层级，同时保留清楚的 hover、按压和键盘焦点反馈 |
 | “下载 / 使用 / 当前使用”尺寸与色彩语言不同 | 固定 92×28pt 操作/状态槽 | 切换状态时几何稳定，语义一致 |
@@ -207,12 +223,15 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 
 - 先判断语义层级，再选择材质。
 - 复用固定尺寸、语义颜色和系统控件。
+- 通过 `GTGlassEmphasis` 设置玻璃按钮状态，让 Accent 只有一个来源。
 - 用 Light/Dark 实机截图验证每一次视觉调整。
 - 让状态变化发生在原位置。
 
 **Don't**
 
 - 不给普通设置按钮、静态图标或每一张卡片叠加玻璃。
+- 不在页面根节点设置会传播到所有后代控件的 `.tint`。
+- 不用黄色、绿色等状态色表达普通 hover 或装饰。
 - 不用灰蓝渐变制造“高级感”。
 - 不为尚未实现的功能放禁用图标或空入口。
 - 不用不同宽度的按钮表达同一模型状态机。
@@ -224,7 +243,7 @@ GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空
 1. 设置页“通用 / 模型 / 集成”的 Light 与 Dark。
 2. 模型行“下载 → 使用 → 当前使用”，确认行高和状态槽位置不变。
 3. 翻译浮窗的生成中、完成、失败和长文本。
-4. 系统主题切换、增强对比度、降低透明度。
+4. 系统主题切换、增强对比度、降低透明度；分别验证默认多色 Accent 与一种非蓝色系统 Accent，确认主操作和选中态同步变化、次要按钮保持中性。
 5. Chrome 前台时从菜单栏打开主窗口和设置；切回 Chrome 后 GemmaTrans 正常退后。
 
 截图必须来自本次 fresh build 的 `.app`，并记录 scheme、构建路径和运行进程路径。

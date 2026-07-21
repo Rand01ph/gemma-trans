@@ -535,7 +535,7 @@ private struct GTTranslationPanelView: View {
             GTGlassIconButton(
                 title: interactionState.isPositionLocked ? "取消固定位置" : "固定浮窗位置",
                 systemImage: interactionState.isPositionLocked ? "pin.fill" : "pin",
-                tint: interactionState.isPositionLocked ? .accentColor : nil,
+                emphasis: interactionState.isPositionLocked ? .selected : .secondary,
                 quiet: !interactionState.isPositionLocked,
                 size: 24,
                 action: onTogglePositionLock
@@ -644,12 +644,12 @@ private struct GTTranslationPanelView: View {
         HStack(spacing: GTGlassTokens.Space.s) {
             switch model.phase {
             case .running:
-                GTGlassButton("停止", systemImage: "stop.fill", tint: GTGlassPalette.semanticOrange, compact: true) {
+                GTGlassButton("停止", systemImage: "stop.fill", emphasis: .warning, compact: true) {
                     onStop()
                 }
             case .failed:
                 if let onRetry {
-                    GTGlassButton("重试", systemImage: "arrow.clockwise", prominent: true, compact: true) {
+                    GTGlassButton("重试", systemImage: "arrow.clockwise", emphasis: .primary, compact: true) {
                         onRetry()
                     }
                     .keyboardShortcut(.return, modifiers: .command)
@@ -658,7 +658,7 @@ private struct GTTranslationPanelView: View {
                 GTGlassIconButton(
                     title: copied ? "已复制译文" : "复制译文",
                     systemImage: copied ? "checkmark" : "doc.on.doc",
-                    tint: copied ? GTGlassPalette.semanticGreen : nil,
+                    emphasis: copied ? .successFeedback : .secondary,
                     size: 26
                 ) {
                     copyResult()
