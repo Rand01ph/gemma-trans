@@ -286,7 +286,8 @@ struct SettingsView: View {
             }
         case .ready:
             GTPanelRow(title: "引擎状态", subtitle: "就绪 · \(EngineController.shared.activeModelName)") {
-                Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(GTGlassPalette.semanticReady)
             }
         case .loading(let message):
             GTPanelRow(title: "引擎状态", subtitle: message) { ProgressView().controlSize(.small) }

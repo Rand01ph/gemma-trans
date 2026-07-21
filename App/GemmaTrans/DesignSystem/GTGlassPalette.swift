@@ -2,8 +2,8 @@ import AppKit
 import SwiftUI
 
 enum GTGlassPalette {
-    // Codex reference anchors. Large surfaces remain neutral; blue is reserved for
-    // selection, the primary translation action, and the current-model state.
+    // Codex reference anchors. Large surfaces and routine actions remain neutral;
+    // Accent is reserved for focus and small selection markers.
     static let codexLightBackground = Color.white
     static let codexDarkBackground = Color(red: 24 / 255, green: 24 / 255, blue: 24 / 255)
 
@@ -18,6 +18,16 @@ enum GTGlassPalette {
         )
     }
 
+    static let accentForeground = Color(nsColor: NSColor(name: "GTAccentForeground") { appearance in
+        let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+        let accent = NSColor.controlAccentColor.usingColorSpace(.sRGB)
+            ?? NSColor.controlAccentColor
+        guard isDark else { return accent }
+        // A small white blend keeps the user's Accent hue while reducing the
+        // high-chroma blue-on-black vibration in dark mode.
+        return accent.blended(withFraction: 0.25, of: .white) ?? accent
+    })
+
     static let secondaryTextNSColor = NSColor(name: "GTSecondaryText") { appearance in
         let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         return isDark ? NSColor(white: 1, alpha: 0.68) : NSColor(white: 0, alpha: 0.58)
@@ -27,11 +37,14 @@ enum GTGlassPalette {
         let isDark = appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
         return isDark ? NSColor(white: 1, alpha: 0.58) : NSColor(white: 0, alpha: 0.54)
     })
-    static let semanticGreen = Color(red: 0.09, green: 0.66, blue: 0.36)
-    static let semanticOrange = Color(red: 0.88, green: 0.48, blue: 0.18)
-    static let semanticRed = Color(red: 0.84, green: 0.20, blue: 0.22)
+    static let semanticReady = Color(nsColor: .systemGreen)
+    static let semanticRed = Color(nsColor: .systemRed)
 
     static func accent(for _: ColorScheme) -> Color {
+        accentForeground
+    }
+
+    static func primaryControlTint(for _: ColorScheme) -> Color {
         controlAccent
     }
 

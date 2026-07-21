@@ -49,7 +49,7 @@ struct GTPanelRow<Trailing: View>: View {
             HStack(alignment: .center, spacing: GTGlassTokens.Space.m) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .foregroundStyle(error == nil ? .primary : Color.red)
+                        .foregroundStyle(error == nil ? .primary : GTGlassPalette.semanticRed)
                     if let subtitle {
                         Text(subtitle)
                             .font(.caption)
@@ -63,7 +63,7 @@ struct GTPanelRow<Trailing: View>: View {
             if let error {
                 Text(error)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(GTGlassPalette.semanticRed)
             }
         }
         .gtSettingsRowLayout()
@@ -139,7 +139,7 @@ struct GTSettingsTextFieldRow: View {
             if let error {
                 Text(error)
                     .font(.caption)
-                    .foregroundStyle(.red)
+                    .foregroundStyle(GTGlassPalette.semanticRed)
                     .frame(width: GTSettingsControlMetrics.compactFieldWidth,
                            alignment: .leading)
             }
@@ -158,7 +158,6 @@ struct GTPanelToggleRow: View {
             Toggle("", isOn: $isOn)
                 .labelsHidden()
                 .toggleStyle(.switch)
-                .tint(GTGlassPalette.semanticGreen)
         }
     }
 }
@@ -262,7 +261,7 @@ private struct GTSettingsQuietButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .foregroundStyle(foregroundColor)
+            .foregroundStyle(foregroundColor(isPressed: configuration.isPressed))
             .background {
                 RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
                                  style: .continuous)
@@ -279,8 +278,15 @@ private struct GTSettingsQuietButtonStyle: ButtonStyle {
                        value: configuration.isPressed)
     }
 
-    private var foregroundColor: Color {
-        tone == .destructive ? GTGlassPalette.semanticRed : .primary
+    private func foregroundColor(isPressed: Bool) -> Color {
+        switch tone {
+        case .neutral:
+            return .primary
+        case .destructive:
+            return isHovering || isFocused || isPressed
+                ? GTGlassPalette.semanticRed
+                : GTGlassPalette.secondaryText
+        }
     }
 
     private func backgroundColor(isPressed: Bool) -> Color {
@@ -291,7 +297,9 @@ private struct GTSettingsQuietButtonStyle: ButtonStyle {
                 ? (colorScheme == .dark ? 0.12 : 0.08)
                 : (colorScheme == .dark ? 0.065 : 0.045))
         case .destructive:
-            return GTGlassPalette.semanticRed.opacity(emphasized ? 0.14 : 0.07)
+            return emphasized
+                ? GTGlassPalette.semanticRed.opacity(0.12)
+                : Color.primary.opacity(colorScheme == .dark ? 0.065 : 0.045)
         }
     }
 
@@ -303,7 +311,9 @@ private struct GTSettingsQuietButtonStyle: ButtonStyle {
         case .neutral:
             return Color.primary.opacity(colorScheme == .dark ? 0.13 : 0.10)
         case .destructive:
-            return GTGlassPalette.semanticRed.opacity(isHovering ? 0.34 : 0.20)
+            return isHovering || isFocused
+                ? GTGlassPalette.semanticRed.opacity(0.34)
+                : Color.primary.opacity(colorScheme == .dark ? 0.13 : 0.10)
         }
     }
 }
@@ -314,22 +324,26 @@ struct GTModelStateBadge: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        Label(text, systemImage: "checkmark")
+        HStack(spacing: 5) {
+            Image(systemName: "checkmark")
+                .foregroundStyle(GTGlassPalette.accentForeground)
+            Text(text)
+                .foregroundStyle(.primary)
+        }
             .font(.callout.weight(.medium))
             .lineLimit(1)
             .frame(width: GTSettingsControlMetrics.actionWidth,
                    height: GTSettingsControlMetrics.actionHeight)
-            .foregroundStyle(GTGlassPalette.accent(for: colorScheme))
             .background {
                 RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
                                  style: .continuous)
-                    .fill(GTGlassPalette.accent(for: colorScheme)
-                        .opacity(colorScheme == .dark ? 0.14 : 0.08))
+                    .fill(Color.primary.opacity(colorScheme == .dark ? 0.065 : 0.045))
             }
             .overlay {
                 RoundedRectangle(cornerRadius: GTSettingsControlMetrics.cornerRadius,
                                  style: .continuous)
-                    .strokeBorder(GTGlassPalette.accent(for: colorScheme).opacity(0.18), lineWidth: 1)
+                    .strokeBorder(Color.primary.opacity(colorScheme == .dark ? 0.13 : 0.10),
+                                  lineWidth: 1)
             }
             .accessibilityLabel(text)
     }

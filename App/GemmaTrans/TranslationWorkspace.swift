@@ -90,7 +90,7 @@ struct TranslationWorkspace: View {
                     .textSelection(.enabled)
                     .foregroundStyle(viewModel.error == nil
                         ? (viewModel.output.isEmpty ? AnyShapeStyle(.secondary) : AnyShapeStyle(.primary))
-                        : AnyShapeStyle(Color.red))
+                        : AnyShapeStyle(GTGlassPalette.semanticRed))
                     .padding(GTGlassTokens.Space.m)
             }
             .frame(minHeight: 220, maxHeight: .infinity)
@@ -104,13 +104,13 @@ struct TranslationWorkspace: View {
                 }
                 Spacer()
                 if viewModel.isRunning {
-                    GTGlassButton("停止", systemImage: "stop.fill", emphasis: .warning) {
+                    GTGlassButton("停止", systemImage: "stop.fill", emphasis: .interrupt) {
                         viewModel.cancel()
                     }
                 }
                 GTGlassButton(copied ? "已复制" : "复制译文",
                               systemImage: copied ? "checkmark" : "doc.on.doc",
-                              emphasis: copied ? .successFeedback : .secondary,
+                              emphasis: copied ? .feedback : .secondary,
                               minWidth: 104) {
                     copyOutput()
                 }
@@ -147,9 +147,8 @@ struct TranslationWorkspace: View {
         .padding(GTGlassTokens.Space.m)
         .gtGlassSurface(.flat,
                         cornerRadius: GTGlassTokens.Radius.card,
-                        fill: engineTint,
-                        fillOpacity: 0.14,
-                        gradient: true)
+                        fillOpacity: 0.12,
+                        gradient: false)
     }
 
     private var outputText: String {
@@ -194,11 +193,9 @@ struct TranslationWorkspace: View {
 
     private var engineTint: Color {
         switch controller.engineStatus {
-        case .needsModel: return GTGlassPalette.controlAccent
-        case .ready: return GTGlassPalette.semanticGreen
-        case .loading: return GTGlassPalette.semanticOrange
-        case .downloading: return GTGlassPalette.controlAccent
-        case .failed: return GTGlassPalette.semanticOrange
+        case .failed: return GTGlassPalette.semanticRed
+        case .needsModel, .ready, .loading, .downloading:
+            return GTGlassPalette.secondaryText
         }
     }
 

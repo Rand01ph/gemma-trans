@@ -222,9 +222,7 @@ private struct MainToolbarStatus: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            Circle()
-                .fill(statusTint)
-                .frame(width: 6, height: 6)
+            statusIndicator
             Text(statusTitle)
                 .fontWeight(.medium)
         }
@@ -239,6 +237,28 @@ private struct MainToolbarStatus: View {
         .help(controller.activeModelName)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("引擎状态：\(statusTitle)")
+    }
+
+    @ViewBuilder
+    private var statusIndicator: some View {
+        switch controller.engineStatus {
+        case .loading, .downloading:
+            ProgressView()
+                .controlSize(.mini)
+                .frame(width: 10, height: 10)
+        case .failed:
+            Image(systemName: "exclamationmark.circle.fill")
+                .foregroundStyle(GTGlassPalette.semanticRed)
+                .font(.system(size: 9, weight: .semibold))
+        case .needsModel:
+            Circle()
+                .strokeBorder(GTGlassPalette.secondaryText, lineWidth: 1.25)
+                .frame(width: 7, height: 7)
+        case .ready:
+            Circle()
+                .fill(GTGlassPalette.semanticReady)
+                .frame(width: 6, height: 6)
+        }
     }
 
     private var statusTitle: String {
@@ -256,13 +276,4 @@ private struct MainToolbarStatus: View {
         }
     }
 
-    private var statusTint: Color {
-        switch controller.engineStatus {
-        case .needsModel: return GTGlassPalette.secondaryText
-        case .ready: return GTGlassPalette.semanticGreen
-        case .loading: return GTGlassPalette.semanticOrange
-        case .downloading: return GTGlassPalette.controlAccent
-        case .failed: return GTGlassPalette.semanticOrange
-        }
-    }
 }

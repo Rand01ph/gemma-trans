@@ -57,12 +57,14 @@ final class TranslationPanel {
     private func present(model: TranslationViewModel,
                          mode: TranslationPanelLayoutMode = .translation,
                          onRetry: (() -> Void)? = nil) {
-        // A shortcut invoked from another app must not promote GemmaTrans's normal window.
-        // Remember the real foreground app so AppKit can hand focus back after ordering the
-        // non-activating floating panel.
-        let foregroundApplication = NSWorkspace.shared.frontmostApplication
-        let shouldRestoreForegroundApplication = !NSApp.isActive
-            && foregroundApplication?.processIdentifier != ProcessInfo.processInfo.processIdentifier
+        // Capture the external activation owner before creating or reordering any AppKit
+        // objects. `orderFrontRegardless` is intentionally non-activating; the process ID is
+        // retained only as a guard against delayed activation races from the shortcut path.
+        let currentProcessID = ProcessInfo.processInfo.processIdentifier
+        let foregroundProcessID = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        let externalForegroundProcessID = foregroundProcessID == currentProcessID
+            ? nil
+            : foregroundProcessID
         let previousMode = currentMode
         let previousPanel = panel
         if interactionState.isPositionLocked, previousMode == .translation, let previousPanel {
@@ -123,6 +125,7 @@ final class TranslationPanel {
         hosting.view.layer?.backgroundColor = NSColor.clear.cgColor
         hosting.view.layer?.masksToBounds = false
         panel.hidesOnDeactivate = false
+        panel.becomesKeyOnlyIfNeeded = true
         panel.isReleasedWhenClosed = false
 
         let targetFrame = presentationFrame(for: mode)
@@ -133,9 +136,21 @@ final class TranslationPanel {
         self.panel = panel
         installEscapeMonitor()
         panel.orderFrontRegardless()
-        if shouldRestoreForegroundApplication {
-            foregroundApplication?.activate(options: [])
+        yieldActivationIfNeeded(to: externalForegroundProcessID)
+        // Activation changes can land one run-loop turn after ordering. Re-check once without
+        // ever calling `activate` on GemmaTrans or reordering its normal windows.
+        DispatchQueue.main.async { [weak self] in
+            self?.yieldActivationIfNeeded(to: externalForegroundProcessID)
         }
+    }
+
+    private func yieldActivationIfNeeded(to processIdentifier: pid_t?) {
+        guard let processIdentifier,
+              NSApp.isActive,
+              let foregroundApplication = NSRunningApplication(
+                processIdentifier: processIdentifier
+              ) else { return }
+        NSApp.yieldActivation(to: foregroundApplication)
     }
 
     private func installEscapeMonitor() {
@@ -644,7 +659,7 @@ private struct GTTranslationPanelView: View {
         HStack(spacing: GTGlassTokens.Space.s) {
             switch model.phase {
             case .running:
-                GTGlassButton("停止", systemImage: "stop.fill", emphasis: .warning, compact: true) {
+                GTGlassButton("停止", systemImage: "stop.fill", emphasis: .interrupt, compact: true) {
                     onStop()
                 }
             case .failed:
@@ -658,7 +673,7 @@ private struct GTTranslationPanelView: View {
                 GTGlassIconButton(
                     title: copied ? "已复制译文" : "复制译文",
                     systemImage: copied ? "checkmark" : "doc.on.doc",
-                    emphasis: copied ? .successFeedback : .secondary,
+                    emphasis: copied ? .feedback : .secondary,
                     size: 26
                 ) {
                     copyResult()

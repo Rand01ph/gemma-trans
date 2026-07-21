@@ -4,26 +4,24 @@ enum GTGlassEmphasis: Equatable {
     case secondary
     case primary
     case selected
-    case warning
+    case interrupt
     case destructive
-    case successFeedback
+    case feedback
 
     fileprivate var usesProminentStyle: Bool {
         self == .primary
     }
 
-    fileprivate var tint: Color? {
+    /// Routine actions and feedback stay monochrome. Accent marks selection
+    /// and the single primary action; red is reserved for destructive actions.
+    fileprivate var foregroundTint: Color? {
         switch self {
-        case .secondary:
-            return nil
-        case .primary, .selected:
-            return GTGlassPalette.controlAccent
-        case .warning:
-            return GTGlassPalette.semanticOrange
+        case .selected:
+            return GTGlassPalette.accentForeground
         case .destructive:
             return GTGlassPalette.semanticRed
-        case .successFeedback:
-            return GTGlassPalette.semanticGreen
+        default:
+            return nil
         }
     }
 }
@@ -36,16 +34,15 @@ struct GTGlassButton<Label: View>: View {
     var action: () -> Void
     @ViewBuilder var label: () -> Label
 
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.colorScheme) private var colorScheme
+
     @ViewBuilder
     var body: some View {
-        if emphasis.usesProminentStyle, let tint = emphasis.tint {
+        if emphasis.usesProminentStyle {
             baseButton
                 .buttonStyle(.glassProminent)
-                .tint(tint)
-        } else if let tint = emphasis.tint {
-            baseButton
-                .buttonStyle(.glass)
-                .tint(tint)
+                .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
         } else {
             baseButton
                 .buttonStyle(.glass)
@@ -54,14 +51,27 @@ struct GTGlassButton<Label: View>: View {
 
     private var baseButton: some View {
         Button(role: role, action: action) {
-            label()
-                .font((compact ? Font.callout : Font.body).weight(.semibold))
-                .lineLimit(1)
-                .padding(.horizontal, compact ? 2 : GTGlassTokens.Space.xs)
-                .frame(minWidth: minWidth, minHeight: compact ? 16 : 20)
+            styledLabel
         }
         .buttonBorderShape(.roundedRectangle(radius: 9))
         .controlSize(compact ? .small : .regular)
+    }
+
+    @ViewBuilder
+    private var styledLabel: some View {
+        if let tint = emphasis.foregroundTint {
+            buttonLabel.foregroundStyle(isEnabled ? tint : GTGlassPalette.tertiaryText)
+        } else {
+            buttonLabel
+        }
+    }
+
+    private var buttonLabel: some View {
+        label()
+            .font((compact ? Font.callout : Font.body).weight(.semibold))
+            .lineLimit(1)
+            .padding(.horizontal, compact ? 2 : GTGlassTokens.Space.xs)
+            .frame(minWidth: minWidth, minHeight: compact ? 16 : 20)
     }
 }
 
@@ -172,19 +182,17 @@ struct GTGlassIconButton: View {
     var action: () -> Void
 
     @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.colorScheme) private var colorScheme
     @State private var hovering = false
 
     @ViewBuilder
     var body: some View {
         Group {
-            if emphasis.usesProminentStyle, let tint = emphasis.tint {
+            if emphasis.usesProminentStyle {
                 baseButton
                     .buttonStyle(.glassProminent)
-                    .tint(tint)
-            } else if let tint = emphasis.tint {
-                baseButton
-                    .buttonStyle(.glass)
-                    .tint(tint)
+                    .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
             } else {
                 baseButton
                     .buttonStyle(.glass)
@@ -198,12 +206,28 @@ struct GTGlassIconButton: View {
 
     private var baseButton: some View {
         Button(action: action) {
-            Image(systemName: systemImage)
-                .font(.system(size: size * 0.42, weight: .semibold))
-                .frame(width: max(14, size - 10), height: max(14, size - 10))
-                .contentShape(Circle())
+            styledIcon
         }
         .buttonBorderShape(.circle)
         .controlSize(.small)
+    }
+
+    @ViewBuilder
+    private var styledIcon: some View {
+        if let tint = emphasis.foregroundTint {
+            icon.foregroundStyle(tint)
+        } else {
+            icon
+        }
+    }
+
+    private var icon: some View {
+        Image(systemName: systemImage)
+            .symbolRenderingMode(.monochrome)
+            .font(.system(size: size * 0.42, weight: .semibold))
+            .frame(width: max(14, size - 10), height: max(14, size - 10))
+            .contentShape(Circle())
+            .contentTransition(.symbolEffect(.replace))
+            .animation(reduceMotion ? nil : .easeOut(duration: 0.14), value: systemImage)
     }
 }

@@ -22,7 +22,7 @@ targets:
         CFBundleIconName: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
         CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "13"
+        CFBundleVersion: "14"
         ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
         NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
           - NSMenuItem:
@@ -52,7 +52,7 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_VERSION: "6.0"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "13"
+        CURRENT_PROJECT_VERSION: "14"
       configs:
         Release:
           # 公证直分：Developer ID + Hardened Runtime（Debug 日常开发不受影响）
@@ -74,7 +74,7 @@ targets:
         CFBundleIconName: AppIcon
         LSApplicationCategoryType: public.app-category.productivity
         CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "13"
+        CFBundleVersion: "14"
         ITSAppUsesNonExemptEncryption: false   # 仅用豁免加密(HTTPS)，自动声明出口合规，免去上传后手填
         NSServices:                  # 选中文字 →「服务」菜单翻译（替代辅助功能，零权限）
           - NSMenuItem:
@@ -108,6 +108,6 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SWIFT_VERSION: "6.0"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "13"
+        CURRENT_PROJECT_VERSION: "14"
         PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
         PRODUCT_NAME: GemmaTrans
