@@ -1,12 +1,47 @@
 # App Store 提审材料（粘贴用）
 
+## 0. 产品页字段
+
+| 字段 | 简体中文 | English (U.S.) |
+| --- | --- | --- |
+| 名称 | GemmaTrans | GemmaTrans |
+| 副标题 | 离线 AI 划词翻译 | Private Offline Translation |
+| 推广文本 | 选中文字，按下快捷键，译文即刻浮现。GemmaTrans 2 以全新 Quiet Glass 界面带来完全离线的本地 AI 翻译，支持固定浮窗、四款按需模型、自动下载源回退与本地 API。 | Private, offline translation on your Mac. GemmaTrans 2 adds a refined Quiet Glass UI, a pinnable result panel, four on-device models, and a local API. |
+| 关键词 | 翻译,离线翻译,AI翻译,划词翻译,本地模型,Gemma,隐私,双语,菜单栏,快捷键 | translation,offline,AI,local,Gemma,privacy,hotkey,menu bar,bilingual,LLM |
+| 技术支持网址 | https://github.com/Rand01ph/gemma-trans | https://github.com/Rand01ph/gemma-trans |
+| 营销网址 | https://github.com/Rand01ph/gemma-trans | https://github.com/Rand01ph/gemma-trans |
+
+### 2.0.0 此版本的新增内容
+
+#### 简体中文
+
+GemmaTrans 2.0 带来一次完整的 macOS 体验重构：
+
+- 全新的 Quiet Glass 主窗口、设置页与快捷翻译浮窗
+- 支持固定浮窗位置，连续翻译长文时保持视线稳定
+- 四款本地模型由你按需下载和切换，首次启动不再自动下载
+- Hugging Face 不可用时自动回退国内下载源
+- 统一浅色、深色、按钮状态与窗口置顶行为
+- 修复新版 Gemma 4 模型加载、长译文显示和连续请求覆盖问题
+
+#### English
+
+GemmaTrans 2.0 is a complete macOS experience refresh:
+
+- A new Quiet Glass main window, settings experience, and translation panel
+- Pin the panel while translating long documents paragraph by paragraph
+- Choose and download any of four on-device models; nothing downloads on first launch
+- Automatic download fallback when Hugging Face is unavailable
+- Refined Light and Dark appearances, button states, and window behavior
+- Fixes for current Gemma 4 checkpoints, long results, and rapid consecutive requests
+
 ## 1. 商店描述
 
 ### 中文
 
 **GemmaTrans 2 —— 完全离线的本地 AI 划词翻译**
 
-选中文字，按下快捷键，译文即刻浮现。GemmaTrans 把 Google 开源的 Gemma 4 大语言模型装进你的 menu bar，所有翻译在你的 Mac 上本地完成——不联网、不上传、零订阅。
+选中文字，按下快捷键，译文即刻浮现。GemmaTrans 把翻译模型留在你的 Mac 上，所有翻译都在本地完成——不上传、零订阅，模型下载完成后断网也能使用。
 
 - **划词即译**：任意 app 中选中文字按 ⌥⌘T（系统「服务」快捷键，可改键），浮窗流式显示译文
 - **固定浮窗**：逐段翻译长文时固定阅读位置，连续结果在同一个精致浮窗中更新
@@ -22,7 +57,7 @@
 
 **GemmaTrans 2 — Fully Offline AI Translation, One Hotkey Away**
 
-Select text anywhere, press a hotkey, and the translation streams into a floating panel. GemmaTrans runs Google's open-source Gemma 4 LLM entirely on your Mac — no cloud, no upload, no subscription.
+Select text anywhere, press a hotkey, and the translation streams into a floating panel. GemmaTrans keeps its translation models on your Mac — no text upload, no subscription, and fully offline after a model is downloaded.
 
 - **Select & translate**: works in any app via a macOS Services shortcut (⌥⌘T, rebindable)
 - **Pin the result panel**: keep a stable reading position while translating a document paragraph by paragraph

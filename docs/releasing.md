@@ -1,6 +1,6 @@
 # GemmaTrans macOS 发布指南
 
-GemmaTrans 提供两条独立分发链：Developer ID 签名、公证后的 GitHub Release，以及 Apple Distribution 签名的 Mac App Store 包。两条链都运行在 GitHub 托管的 macOS Runner 上，不依赖个人电脑常驻在线，也不要求安装第三方 `asc` CLI。
+GemmaTrans 提供两条独立分发链：Developer ID 签名、公证后的 GitHub Release，以及由 Xcode Cloud 归档并上传的 Mac App Store 包。两条链都不依赖个人电脑常驻在线，也不要求安装第三方 `asc` CLI。
 
 ## 版本规则
 
@@ -9,30 +9,25 @@ GemmaTrans 提供两条独立分发链：Developer ID 签名、公证后的 GitH
 - MAS 上传前先在 App Store Connect 确认最大 build 号，并输入更大的正整数。
 - 不要在签名验收前创建 `v*` 标签；tag 会直接创建公开 GitHub Release。
 
-## Actions Secrets
+## 发布凭证
 
-在 Repository Settings › Secrets and variables › Actions 配置以下 secrets。证书以带密码的 `.p12` 导出，再进行 base64 编码；私钥与描述文件同样以 base64 保存。
+Developer ID 直分发需要在 Repository Settings › Secrets and variables › Actions 配置以下 secrets。证书以带密码的 `.p12` 导出，再进行 base64 编码；私钥同样以 base64 保存。
 
-### 两条发布链共用
+### GitHub Release / Developer ID
 
 - `ASC_API_KEY_P8_BASE64`
 - `ASC_API_KEY_ID`
 - `ASC_API_ISSUER_ID`
-
-### GitHub Release / Developer ID
-
 - `DEV_ID_CERT_P12_BASE64`
 - `DEV_ID_CERT_PASSWORD`
 
-### Mac App Store
+### Mac App Store / Xcode Cloud
 
-- `MAS_DIST_CERT_P12_BASE64`
-- `MAS_DIST_CERT_PASSWORD`
-- `MAS_INSTALLER_CERT_P12_BASE64`
-- `MAS_INSTALLER_CERT_PASSWORD`
-- `MAS_PROVISION_PROFILE_BASE64`
+- Xcode Cloud 使用 App Store Connect 中的团队、签名和描述文件，不读取 GitHub Actions Secrets。
+- `App/ci_scripts/ci_post_clone.sh` 负责生成 Xcode 工程并解析依赖。
+- `App/ci_scripts/ci_pre_xcodebuild.sh` 保证 Cloud 使用仓库中的 `CURRENT_PROJECT_VERSION`。
 
-Secrets 只会写入 Actions 的临时钥匙串或 `$RUNNER_TEMP`，不会进入构建产物或仓库。
+GitHub Secrets 只会写入 Actions 的临时钥匙串或 `$RUNNER_TEMP`，不会进入构建产物或仓库。
 
 ## 1. 发布前 CI
 
@@ -54,11 +49,12 @@ PR 的 `CI` workflow 必须通过：
 ## 3. Mac App Store
 
 1. 在 App Store Connect 创建或确认 `2.0.0` 版本，并查看当前最大 build 号。
-2. 在 Actions 手动运行 `Release MAS (App Store)`，输入更高的 build number。
-3. 工作流使用 `GemmaTrans-MAS` archive、导出 Apple Distribution `.pkg` 并上传 App Store Connect。
-4. 在 TestFlight 验证后，关联该 build、更新截图和审核备注，再提交审核。
+2. 将 `App/project.yml` 与 `App/GemmaTrans/Info.plist` 中的 build 号同步提高并提交到目标分支。
+3. 在 App Store Connect › Xcode Cloud › 构建版本中启动“发布流水线”，手动分支选择 `codex/codex-design-system`；正式合并后改用 `main`。
+4. 工作流以 `GemmaTrans-MAS` scheme 执行 macOS Archive，并采用 App Store 分发准备。成功后等待 Apple 处理并在 TestFlight 中确认新 build。
+5. 在 TestFlight 验证后，把该 build 关联到 2.0.0，更新截图、描述、What's New 和审核备注，再提交审核。
 
-本地也可以运行 `Scripts/release-mas.sh` 归档和导出；加入 `--upload` 时需要设置 `ASC_API_KEY_ID`、`ASC_API_ISSUER_ID` 并把私钥放到 `~/.appstoreconnect/private/AuthKey_<ID>.p8`。整个流程使用 `xcodebuild` 与 `xcrun altool`，不依赖 `asc`。
+`Scripts/release-mas.sh` 与 GitHub `Release MAS (App Store)` 仅保留为故障时的备用上传路径；当前正式路径是 Xcode Cloud。
 
 ## 停止条件
 
