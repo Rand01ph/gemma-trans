@@ -49,4 +49,57 @@ import Foundation
         try InstalledModels.delete(id: "gemma-e2b-4bit", base: base)
         #expect(!FileManager.default.fileExists(atPath: dir.path))
     }
+
+    @Test func legacyGemmaCacheIsRecognizedAndDeleted() throws {
+        let base = tempBase()
+        let legacyHub = tempBase()
+        defer {
+            try? FileManager.default.removeItem(at: base)
+            try? FileManager.default.removeItem(at: legacyHub)
+        }
+        let entry = ModelCatalog.entry(id: "gemma-e4b-4bit")!
+        let legacy = legacyHub.appendingPathComponent(
+            "models--\(entry.repo.replacingOccurrences(of: "/", with: "--"))",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(at: legacy, withIntermediateDirectories: true)
+        try Data(repeating: 0, count: 1024).write(to: legacy.appendingPathComponent("config.json"))
+
+        #expect(InstalledModels.isInstalled(
+            id: entry.id,
+            base: base,
+            legacyHuggingFaceHub: legacyHub
+        ))
+        let found = InstalledModels.scan(base: base, legacyHuggingFaceHub: legacyHub)
+        #expect(found == [InstalledModel(id: entry.id, bytesOnDisk: 1024)])
+
+        try InstalledModels.delete(
+            id: entry.id,
+            base: base,
+            legacyHuggingFaceHub: legacyHub
+        )
+        #expect(!FileManager.default.fileExists(atPath: legacy.path))
+    }
+
+    @Test func legacyCacheIsNotAppliedToNonGemmaModels() throws {
+        let base = tempBase()
+        let legacyHub = tempBase()
+        defer {
+            try? FileManager.default.removeItem(at: base)
+            try? FileManager.default.removeItem(at: legacyHub)
+        }
+        let entry = ModelCatalog.entry(id: "hymt2-4bit")!
+        let legacy = legacyHub.appendingPathComponent(
+            "models--\(entry.repo.replacingOccurrences(of: "/", with: "--"))",
+            isDirectory: true
+        )
+        try FileManager.default.createDirectory(at: legacy, withIntermediateDirectories: true)
+        try Data([1]).write(to: legacy.appendingPathComponent("config.json"))
+
+        #expect(!InstalledModels.isInstalled(
+            id: entry.id,
+            base: base,
+            legacyHuggingFaceHub: legacyHub
+        ))
+    }
 }

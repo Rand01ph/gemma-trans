@@ -55,7 +55,10 @@ final class EngineController {
             return
         }
         guard InstalledModels.isInstalled(
-            id: selectedID, base: TranslationEngine.defaultModelBase()) else {
+            id: selectedID,
+            base: TranslationEngine.defaultModelBase(),
+            legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+        ) else {
             engine = nil
             loadTask = nil
             engineStatus = .needsModel("\(resolved.entry.displayName) 尚未下载，请先完成下载。")
@@ -134,7 +137,10 @@ final class EngineController {
     func switchModel(to id: String) async -> SwitchBlock? {
         guard ActiveModelResolver.resolve(selectedID: id) != nil,
               InstalledModels.isInstalled(
-                id: id, base: TranslationEngine.defaultModelBase()) else {
+                id: id,
+                base: TranslationEngine.defaultModelBase(),
+                legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+              ) else {
             return .notInstalled
         }
         let generating = await engine?.isGenerating ?? false
@@ -150,8 +156,7 @@ final class EngineController {
             GTLog.info("model switch blocked: \(block)")
             return block
         }
-        settings.selectedModelID = id
-        settings.save()
+        settings = AppSettings.update { $0.selectedModelID = id }
         self.selectedModelID = id
         GTLog.info("switching model to \(id)")
         // 停掉指向旧引擎的 API server；start() 会在新引擎就绪后按 apiEnabled 重启（指向新引擎）。
@@ -173,13 +178,20 @@ final class EngineController {
             GTLog.info("delete refused: \(id) is the active model")
             return
         }
-        try? InstalledModels.delete(id: id, base: TranslationEngine.defaultModelBase())
+        try? InstalledModels.delete(
+            id: id,
+            base: TranslationEngine.defaultModelBase(),
+            legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+        )
         GTLog.info("deleted model \(id)")
     }
 
     /// 设置页展示用：扫描默认目录下已完整安装的 catalog 模型（带磁盘体积）。
     func installedModels() -> [InstalledModel] {
-        InstalledModels.scan(base: TranslationEngine.defaultModelBase())
+        InstalledModels.scan(
+            base: TranslationEngine.defaultModelBase(),
+            legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+        )
     }
 
     // MARK: - 后台下载（只下不切，与正在用的模型并存）
@@ -236,8 +248,7 @@ final class EngineController {
 
     /// 菜单/设置开关入口：即时生效并持久化
     func setAPIEnabled(_ enabled: Bool) {
-        settings.apiEnabled = enabled
-        settings.save()
+        settings = AppSettings.update { $0.apiEnabled = enabled }
         if enabled {
             if engineStatus == .ready { startServer() }
             // 引擎未就绪时由 start() 的 apiEnabled 分支接管

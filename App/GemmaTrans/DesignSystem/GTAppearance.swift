@@ -37,9 +37,7 @@ final class GTAppearanceStore {
         appearance = newValue
         apply(newValue)
         guard persist else { return }
-        var settings = AppSettings.load()
-        settings.appearance = newValue
-        settings.save()
+        AppSettings.update { $0.appearance = newValue }
     }
 
     func reloadFromDefaults() {

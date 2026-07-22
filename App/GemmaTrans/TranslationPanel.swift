@@ -3,6 +3,11 @@ import AVFoundation
 import QuartzCore
 import SwiftUI
 import GemmaTransKit
+import KeyboardShortcuts
+
+private extension KeyboardShortcuts.Name {
+    static let closeTranslationPanel = Self("closeTranslationPanel")
+}
 
 @MainActor @Observable
 private final class TranslationPanelInteractionState {
@@ -17,7 +22,6 @@ final class TranslationPanel {
     private var currentModel: TranslationViewModel?
     private var currentMode: TranslationPanelLayoutMode = .translation
     private var didSettleCompletedLayout = false
-    private var escapeMonitor: Any?
     private let interactionState = TranslationPanelInteractionState()
     private var lockedTopLeft: NSPoint?
 
@@ -60,10 +64,7 @@ final class TranslationPanel {
         }
         currentModel?.cancel()
         currentModel = nil
-        if let escapeMonitor {
-            NSEvent.removeMonitor(escapeMonitor)
-            self.escapeMonitor = nil
-        }
+        uninstallEscapeShortcut()
         panel?.close()
         panel = nil
     }
@@ -148,7 +149,7 @@ final class TranslationPanel {
             previousPanel.close()
         }
         self.panel = panel
-        installEscapeMonitor()
+        installEscapeShortcut()
         panel.orderFrontRegardless()
         yieldActivationIfNeeded(to: externalForegroundProcessID)
         // Activation changes can land one run-loop turn after ordering. Re-check once without
@@ -167,13 +168,19 @@ final class TranslationPanel {
         NSApp.yieldActivation(to: foregroundApplication)
     }
 
-    private func installEscapeMonitor() {
-        if let escapeMonitor { NSEvent.removeMonitor(escapeMonitor) }
-        escapeMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
-            guard event.keyCode == 53 else { return event }
-            self?.close()
-            return nil
+    /// 非激活浮窗不会收到本地 NSEvent；用与 app 全局快捷键相同的 Carbon 路径，
+    /// 仅在浮窗可见期间注册 Esc。它不会激活 GemmaTrans，也不会把普通窗口带到前台。
+    private func installEscapeShortcut() {
+        uninstallEscapeShortcut()
+        KeyboardShortcuts.setShortcut(.init(.escape), for: .closeTranslationPanel)
+        KeyboardShortcuts.onKeyDown(for: .closeTranslationPanel) { [weak self] in
+            Task { @MainActor in self?.close() }
         }
+    }
+
+    private func uninstallEscapeShortcut() {
+        KeyboardShortcuts.removeHandler(for: .closeTranslationPanel)
+        KeyboardShortcuts.setShortcut(nil, for: .closeTranslationPanel)
     }
 
     private func adjustHeight(contentHeight: CGFloat, settleCompletedLayout: Bool) {

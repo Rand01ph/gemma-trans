@@ -336,7 +336,7 @@ struct SettingsView: View {
             settings.appearance
         } set: { newValue in
             settings.appearance = newValue
-            settings.save()
+            AppSettings.update { $0.appearance = newValue }
             appearanceStore.set(newValue, persist: false)
         }
     }
@@ -345,8 +345,9 @@ struct SettingsView: View {
         Binding {
             settings.translationFontSize
         } set: { newValue in
-            settings.translationFontSize = AppSettings.normalizedTranslationFontSize(newValue)
-            settings.save()
+            let normalized = AppSettings.normalizedTranslationFontSize(newValue)
+            settings.translationFontSize = normalized
+            AppSettings.update { $0.translationFontSize = normalized }
         }
     }
 
@@ -355,7 +356,7 @@ struct SettingsView: View {
             settings[keyPath: keyPath]
         } set: { value in
             settings[keyPath: keyPath] = value
-            settings.save()
+            AppSettings.update { $0[keyPath: keyPath] = value }
         }
     }
 
@@ -501,7 +502,7 @@ struct SettingsView: View {
                 try? await Task.sleep(for: .milliseconds(300))
                 guard !Task.isCancelled else { return }
                 settings.targetForChinese = trimmed
-                settings.save()
+                AppSettings.update { $0.targetForChinese = trimmed }
             }
         case .defaultTarget:
             targetDefaultTask?.cancel()
@@ -511,7 +512,7 @@ struct SettingsView: View {
                 try? await Task.sleep(for: .milliseconds(300))
                 guard !Task.isCancelled else { return }
                 settings.targetDefault = trimmed
-                settings.save()
+                AppSettings.update { $0.targetDefault = trimmed }
             }
         }
     }
@@ -527,7 +528,7 @@ struct SettingsView: View {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
             settings.port = UInt16(number)
-            settings.save()
+            AppSettings.update { $0.port = UInt16(number) }
         }
     }
 

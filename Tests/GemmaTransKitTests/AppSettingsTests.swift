@@ -72,4 +72,19 @@ import Foundation
         #expect(AppSettings(translationFontSize: 24).translationFontSize == 18)
         #expect(AppSettings.normalizedTranslationFontSize(.nan) == 13)
     }
+
+    @Test func targetedUpdatesPreserveIndependentChanges() {
+        let suite = "test.targetedSettings.\(UUID().uuidString)"
+        defer { UserDefaults(suiteName: suite)?.removePersistentDomain(forName: suite) }
+
+        AppSettings().save(suiteName: suite)
+        AppSettings.update(suiteName: suite) { $0.port = 9_999 }
+        AppSettings.update(suiteName: suite) { $0.apiEnabled = false }
+        AppSettings.update(suiteName: suite) { $0.appearance = .dark }
+
+        let loaded = AppSettings.load(suiteName: suite)
+        #expect(loaded.port == 9_999)
+        #expect(loaded.apiEnabled == false)
+        #expect(loaded.appearance == .dark)
+    }
 }

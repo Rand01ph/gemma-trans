@@ -10,7 +10,7 @@ public actor TranslationEngine: TranslationService {
     private let settings: AppSettings
     private var model: ModelContainer?
     private var lastGeneration: Task<Void, Never>?
-    private var activeGenerations = 0
+    private var generationTasks: [UUID: Task<Void, Never>] = [:]
     private let detector = LanguageDetector()
     private var resolvedTuning: EngineTuning?
     /// 当前活跃模型的 family，决定 prompt 策略：Gemma 用 systemPrompt；Hy-MT2（混元）按其
@@ -24,7 +24,7 @@ public actor TranslationEngine: TranslationService {
     public var currentTuning: EngineTuning? { resolvedTuning }
 
     /// 是否有生成正在排队或进行（去抖用：避免热键连按在串行队列里堆积，导致可见浮窗长时间挨饿）
-    public var isGenerating: Bool { activeGenerations > 0 }
+    public var isGenerating: Bool { !generationTasks.isEmpty }
 
     public init(settings: AppSettings) {
         self.settings = settings
@@ -134,8 +134,7 @@ public actor TranslationEngine: TranslationService {
     /// 所有既有调用方（EngineController / EngineHolder / CLI）继续使用旧签名，两者互不影响。
     /// - Parameter resolved: 已解析的模型条目 + 调优参数（由 ActiveModelResolver 产出）。
     /// - Parameter cacheDirectory: 非 nil 时走自研 ModelDownloader（iOS/CLI）；nil 时走 macOS 三级策略。
-    ///   注意：此方法面向「按 catalog 显式切模型」场景，macOS 三级策略在此简化为「新快照优先，无则下载」，
-    ///   不再检查 legacyHFCache（legacy 条目是旧两档 Gemma，旧 load() 已覆盖）。
+    ///   macOS 同样使用三级策略：新快照 → 旧版 HF 缓存 → 自研下载器，避免升级用户重下模型。
     /// - Parameter modelSource: 可选固定下载源；nil 时 Hugging Face 优先、失败自动回退 ModelScope。
     /// - Parameter useCPU: spike 用；true 时切 MLX 全局默认设备到 CPU。
     /// - Parameter progress: 下载进度回调。
@@ -158,7 +157,13 @@ public actor TranslationEngine: TranslationService {
         let repo = resolved.entry.repo
         let base = cacheDirectory ?? Self.defaultModelDirectory()
         let snapshotDir = ModelDownloader.snapshotDirectory(in: base, repo: repo)
-        if !ModelDownloader.isComplete(snapshotDir) {
+        let canLoadLegacyGemma = cacheDirectory == nil
+            && resolved.entry.family == .gemma
+            && InstalledModels.legacyCacheHasModel(
+                repo: repo,
+                hub: InstalledModels.defaultLegacyHuggingFaceHub
+            )
+        if !ModelDownloader.isComplete(snapshotDir) && !canLoadLegacyGemma {
             _ = try await ModelDownloader.download(
                 repo: repo, from: modelSource, into: base, progress: progress)
         }
@@ -166,7 +171,20 @@ public actor TranslationEngine: TranslationService {
         let loaded: ModelContainer
         switch resolved.entry.family {
         case .gemma:
-            loaded = try await loadModelContainer(from: snapshotDir, using: #huggingFaceTokenizerLoader())
+            if canLoadLegacyGemma && !ModelDownloader.isComplete(snapshotDir) {
+                let configuration = switch resolved.tuning.variant {
+                case .gemma4E4B4bit: LLMRegistry.gemma4_e4b_it_4bit
+                case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
+                }
+                loaded = try await #huggingFaceLoadModelContainer(configuration: configuration) { p in
+                    progress(DownloadProgress(fraction: p.fractionCompleted))
+                }
+            } else {
+                loaded = try await loadModelContainer(
+                    from: snapshotDir,
+                    using: #huggingFaceTokenizerLoader()
+                )
+            }
         case .hunyuanMT2:
             // 混元架构不在 Swift MLXLLM 内置类型表，加载前注册自定义类型（幂等）。
             await registerHunyuanIfNeeded()
@@ -206,11 +224,13 @@ public actor TranslationEngine: TranslationService {
         let instructions = activeFamily == .gemma ? PromptBuilder.systemPrompt : nil
 
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
+        let generationID = UUID()
         let previous = lastGeneration
-        activeGenerations += 1
-        lastGeneration = Task {
+        let generationTask = Task {
             await previous?.value  // 串行：GPU 单飞，等上一个生成自然结束
+            defer { self.generationFinished(id: generationID) }
             do {
+                try Task.checkCancellation()
                 // 每次翻译一次性会话：无历史、系统指令固定
                 // 翻译是确定性任务：默认温度 0.6 的采样随机性会偶尔走到「复述原文/跑偏」，
                 // 降到 0.1（近贪心）让模型确定性遵循翻译指令。repetitionPenalty 抑制小模型复读。
@@ -221,6 +241,7 @@ public actor TranslationEngine: TranslationService {
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
                 for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                    try Task.checkCancellation()
                     switch item {
                     case .chunk(let text):
                         continuation.yield(text)
@@ -233,11 +254,18 @@ public actor TranslationEngine: TranslationService {
                     }
                 }
                 continuation.finish()
+            } catch is CancellationError {
+                continuation.finish(throwing: CancellationError())
             } catch {
                 GTLog.error("generation failed: \(error)")
                 continuation.finish(throwing: error)
             }
-            self.generationFinished()
+        }
+        generationTasks[generationID] = generationTask
+        lastGeneration = generationTask
+        continuation.onTermination = { @Sendable [weak self] termination in
+            guard case .cancelled = termination else { return }
+            Task { await self?.cancelGeneration(id: generationID) }
         }
         return TranslationStreamResult(
             detected: plan.detected, target: plan.target, truncated: truncated, chunks: stream
@@ -264,11 +292,13 @@ public actor TranslationEngine: TranslationService {
         let instructions = activeFamily == .gemma ? PromptBuilder.processSystemPrompt : nil
 
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
+        let generationID = UUID()
         let previous = lastGeneration
-        activeGenerations += 1
-        lastGeneration = Task {
+        let generationTask = Task {
             await previous?.value
+            defer { self.generationFinished(id: generationID) }
             do {
+                try Task.checkCancellation()
                 let session = ChatSession(
                     model,
                     instructions: instructions,
@@ -276,6 +306,7 @@ public actor TranslationEngine: TranslationService {
                         maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
                 )
                 for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                    try Task.checkCancellation()
                     switch item {
                     case .chunk(let text):
                         continuation.yield(text)
@@ -288,23 +319,35 @@ public actor TranslationEngine: TranslationService {
                     }
                 }
                 continuation.finish()
+            } catch is CancellationError {
+                continuation.finish(throwing: CancellationError())
             } catch {
                 GTLog.error("process generation failed: \(error)")
                 continuation.finish(throwing: error)
             }
-            self.generationFinished()
+        }
+        generationTasks[generationID] = generationTask
+        lastGeneration = generationTask
+        continuation.onTermination = { @Sendable [weak self] termination in
+            guard case .cancelled = termination else { return }
+            Task { await self?.cancelGeneration(id: generationID) }
         }
         var out = ""
         for try await chunk in stream { out += chunk }
+        try Task.checkCancellation()
         return out.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    private func generationFinished() {
-        activeGenerations -= 1
-        // 队列真正排空才回收：连续/排队生成（含 API 串行链）中途 activeGenerations 不归零，
+    private func cancelGeneration(id: UUID) {
+        generationTasks[id]?.cancel()
+    }
+
+    private func generationFinished(id: UUID) {
+        generationTasks[id] = nil
+        // 队列真正排空才回收：连续/排队生成（含 API 串行链）中途任务表不为空，
         // 故不会清掉马上要复用的缓冲、不抖动。clearCache 只把没人引用的空闲缓冲池
         // （上一轮 KV cache/激活那部分工作余量）还给系统，不碰被 model 强引用的权重。
-        if activeGenerations == 0 {
+        if generationTasks.isEmpty {
             let beforeMB = MLX.Memory.cacheMemory >> 20
             MLX.Memory.clearCache()
             GTLog.info("mlx idle reclaim: cache \(beforeMB)MB→\(MLX.Memory.cacheMemory >> 20)MB, " +
@@ -341,7 +384,10 @@ public actor TranslationEngine: TranslationService {
         let repo = repoName(for: variant)
         return ModelDownloader.isComplete(
             ModelDownloader.snapshotDirectory(in: defaultModelDirectory(), repo: repo))
-            || legacyHFCacheHasModel(repo: repo)
+            || InstalledModels.legacyCacheHasModel(
+                repo: repo,
+                hub: InstalledModels.defaultLegacyHuggingFaceHub
+            )
     }
 
     /// 暴露默认模型目录给 App 层（EngineController.deleteModel / installedModels 用）
@@ -369,11 +415,9 @@ public actor TranslationEngine: TranslationService {
     /// 若旧缓存实际损坏，宏路径加载会失败并走上层重试/报错，不会静默吞掉。
     /// NSHomeDirectory：iOS 无 homeDirectoryForCurrentUser；沙盒下与 HF 宏展开 ~ 同源。
     private static func legacyHFCacheHasModel(repo: String) -> Bool {
-        let dir = URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
-            .appendingPathComponent(".cache/huggingface/hub", isDirectory: true)
-            .appendingPathComponent(
-                "models--\(repo.replacingOccurrences(of: "/", with: "--"))", isDirectory: true)
-        let contents = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
-        return !contents.isEmpty
+        InstalledModels.legacyCacheHasModel(
+            repo: repo,
+            hub: InstalledModels.defaultLegacyHuggingFaceHub
+        )
     }
 }

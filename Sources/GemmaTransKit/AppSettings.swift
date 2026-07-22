@@ -109,6 +109,18 @@ public struct AppSettings: Sendable {
               forKey: "translationFontSize")
     }
 
+    /// 基于持久化中的最新值只修改目标字段，避免多个窗口各自持有的设置副本互相覆盖。
+    @discardableResult
+    public static func update(
+        suiteName: String = Self.suiteName,
+        _ mutation: (inout AppSettings) -> Void
+    ) -> AppSettings {
+        var latest = load(suiteName: suiteName)
+        mutation(&latest)
+        latest.save(suiteName: suiteName)
+        return latest
+    }
+
     public static func normalizedTranslationFontSize(_ value: Double) -> Double {
         guard value.isFinite else { return defaultTranslationFontSize }
         return min(max(value, minimumTranslationFontSize), maximumTranslationFontSize)
