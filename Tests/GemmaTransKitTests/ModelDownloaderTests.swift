@@ -70,6 +70,30 @@ import Foundation
             == "https://modelscope.cn/models/mlx-community/gemma-4-e2b-it-4bit/resolve/master/model.safetensors")
     }
 
+    @Test func automaticSourceFallbackOnlyHandlesRemoteFailures() {
+        let networkError = NSError(
+            domain: NSURLErrorDomain,
+            code: NSURLErrorCannotConnectToHost,
+            userInfo: nil
+        )
+        #expect(ModelDownloader.shouldFallbackToModelScope(after: networkError))
+        #expect(ModelDownloader.shouldFallbackToModelScope(after:
+            ModelDownloadError.httpStatus(503, URL(string: "https://huggingface.co")!)))
+        #expect(ModelDownloader.shouldFallbackToModelScope(after:
+            ModelDownloadError.emptyFileList(repo: "mlx-community/model")))
+
+        #expect(!ModelDownloader.shouldFallbackToModelScope(after: CancellationError()))
+        #expect(!ModelDownloader.shouldFallbackToModelScope(after:
+            NSError(domain: NSURLErrorDomain, code: NSURLErrorCancelled, userInfo: nil)))
+        #expect(!ModelDownloader.shouldFallbackToModelScope(after:
+            NSError(domain: NSCocoaErrorDomain, code: 640, userInfo: nil)))
+    }
+
+    @Test func sourceProbeTargetsLargestRemoteFile() throws {
+        let files = try ModelDownloader.parseFileList(hfFixture, source: .huggingFace)
+        #expect(ModelDownloader.probeFile(in: files)?.path == "model.safetensors")
+    }
+
     // MARK: - 快照目录
 
     @Test func snapshotDirectoryReplacesSlashes() {

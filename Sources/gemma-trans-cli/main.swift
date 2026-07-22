@@ -116,10 +116,11 @@ case "engine-translate":
         print("usage: gemma-trans-cli engine-translate <model-id> <cache-dir> [text]")
         exit(2)
     }
-    let resolved = ActiveModelResolver.resolve(
-        selectedID: args[0],
-        physicalMemory: SystemMemory.physical(),
-        availableMemory: SystemMemory.available())
+    guard let resolved = ActiveModelResolver.resolve(
+        selectedID: args[0], parameterSettings: settings) else {
+        print("unknown model id: \(args[0])")
+        exit(2)
+    }
     let engine = TranslationEngine(settings: settings)
     do {
         try await engine.load(

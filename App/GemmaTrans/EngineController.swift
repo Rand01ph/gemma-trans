@@ -7,7 +7,13 @@ import GemmaTransServer
 final class EngineController {
     /// loading 携带阶段文案（「正在准备…」「网络异常，8s 后第 2/5 次重试…」），
     /// 消灭真机现场的哑状态：清单请求挂死/静默退避时菜单永远只见「模型加载中…」
-    enum EngineStatus: Equatable { case loading(String), downloading(DownloadProgress), ready, failed(String) }
+    enum EngineStatus: Equatable {
+        case needsModel(String)
+        case loading(String)
+        case downloading(DownloadProgress)
+        case ready
+        case failed(String)
+    }
     enum APIStatus: Equatable { case disabled, running(UInt16), failed(String) }
 
     static let shared = EngineController()
@@ -23,7 +29,7 @@ final class EngineController {
     private var loadGeneration = 0
 
     /// 当前选中的模型 ID（镜像 AppSettings.selectedModelID，供 Task 8 UI 绑定）
-    private(set) var selectedModelID: String
+    private(set) var selectedModelID: String?
 
     private init() {
         let loaded = AppSettings.load()
@@ -33,13 +39,32 @@ final class EngineController {
 
     func start() {
         engineStatus = .loading("正在准备…")
-        // 重读设置：重试前用户可能在设置页切了国内源开关，「下次下载生效」靠这里兑现
-        // （apiEnabled 由 setAPIEnabled 即时落盘，重读不会回退用户操作）
+        // 重读设置：模型、参数和 API 偏好可能已在设置页修改。
         settings = AppSettings.load()
         // 镜像选中模型 ID：start() 是切换/重载后重新解析模型的统一入口，镜像在此对齐
         selectedModelID = settings.selectedModelID
         loadGeneration += 1
         let generation = loadGeneration
+        guard let selectedID = settings.selectedModelID,
+              let resolved = ActiveModelResolver.resolve(
+                selectedID: selectedID, parameterSettings: settings) else {
+            engine = nil
+            loadTask = nil
+            engineStatus = .needsModel("请在“设置 > 模型”中下载一个模型，再选择使用它。")
+            GTLog.info("engine startup waiting for user model selection")
+            return
+        }
+        guard InstalledModels.isInstalled(
+            id: selectedID,
+            base: TranslationEngine.defaultModelBase(),
+            legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+        ) else {
+            engine = nil
+            loadTask = nil
+            engineStatus = .needsModel("\(resolved.entry.displayName) 尚未下载，请先完成下载。")
+            GTLog.info("engine startup waiting for explicit download: \(selectedID)")
+            return
+        }
         loadTask = Task {
             // 单实例守卫（验明正身）：仅真正的 GemmaTrans 实例才放弃启动，防双模型加载；
             // 无关 HTTP 服务占用端口不影响引擎，仅 API 启动时自然失败
@@ -50,17 +75,7 @@ final class EngineController {
                 return
             }
             let engine = TranslationEngine(settings: settings)
-            let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
-            // settings 是 @MainActor 隔离属性，不能在下面 withNetworkRetry 的 @Sendable 闭包里访问。
-            // 在此（MainActor 上下文）先取出选中档并解析，闭包只捕获 Sendable 值（source/resolved）。
-            let selectedID = settings.selectedModelID
-            let resolved: ResolvedModel? = selectedID == ModelCatalog.autoID
-                ? nil
-                : ActiveModelResolver.resolve(
-                    selectedID: selectedID,
-                    physicalMemory: SystemMemory.physical(),
-                    availableMemory: SystemMemory.available())
-            // 进度回调脚手架两分支共用：仅 engine.load(...) 那一行因选中模型不同而分流
+            // start() 已确认快照完整；这里的进度状态只处理下载完成与加载之间的兼容回调。
             let progressHandler: @Sendable (DownloadProgress) -> Void = { progress in
                 Task { @MainActor in
                     let shared = EngineController.shared
@@ -85,15 +100,7 @@ final class EngineController {
                             .loading("网络异常，\(delaySeconds)s 后第 \(attempt)/\(maxRetries) 次重试…")
                     }
                 }) {
-                    // auto 档保持既有 load(modelSource:) 完全不变——存量 macOS 用户的 Gemma
-                    // 在 legacy HF 缓存里，仅旧路径会复用它，强切新路径会让他们白下 GB 级权重。
-                    // 显式选档走 load(resolved:)：按 catalog 条目下载/加载新快照。
-                    if let resolved {
-                        try await engine.load(
-                            resolved: resolved, modelSource: source, progress: progressHandler)
-                    } else {
-                        try await engine.load(modelSource: source, progress: progressHandler)
-                    }
+                    try await engine.load(resolved: resolved, progress: progressHandler)
                 }
                 guard generation == loadGeneration else { return }
                 self.engine = engine
@@ -118,16 +125,24 @@ final class EngineController {
     /// start()；旧任务的迟到回调由 loadGeneration 隔离。就绪态直接忽略（菜单也不展示按钮）。
     func reload() {
         guard engineStatus != .ready else { return }
+        if case .needsModel = engineStatus { return }
         GTLog.info("engine reload requested by user")
         loadTask?.cancel()
         start()
     }
 
-    /// 设置页「切换模型」入口：守卫不过返回原因且不切；过则卸旧载新（必要时下载）。
+    /// 设置页「切换模型」入口：守卫不过返回原因且不切；过则卸旧载新。
     /// async 以便直接 await actor 的 isGenerating，避免镜像竞态。
-    /// 注意：load(resolved:) 会在快照不完整时自动下载——切到未下载的 catalog 档即触发拉取，
-    /// 不另建「只下不切」后台路径（已延后）。
+    /// 未下载模型在这里直接阻断，下载只能由设置页的显式“下载”按钮触发。
     func switchModel(to id: String) async -> SwitchBlock? {
+        guard ActiveModelResolver.resolve(selectedID: id) != nil,
+              InstalledModels.isInstalled(
+                id: id,
+                base: TranslationEngine.defaultModelBase(),
+                legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+              ) else {
+            return .notInstalled
+        }
         let generating = await engine?.isGenerating ?? false
         let loadingNow: Bool = {
             if case .loading = engineStatus { return true }
@@ -141,8 +156,7 @@ final class EngineController {
             GTLog.info("model switch blocked: \(block)")
             return block
         }
-        settings.selectedModelID = id
-        settings.save()
+        settings = AppSettings.update { $0.selectedModelID = id }
         self.selectedModelID = id
         GTLog.info("switching model to \(id)")
         // 停掉指向旧引擎的 API server；start() 会在新引擎就绪后按 apiEnabled 重启（指向新引擎）。
@@ -160,21 +174,24 @@ final class EngineController {
 
     /// 设置页「删除模型」入口：活跃中的模型禁删（避免删掉正在用的权重）。
     func deleteModel(id: String) {
-        let activeID = ActiveModelResolver.resolve(
-            selectedID: settings.selectedModelID,
-            physicalMemory: SystemMemory.physical(),
-            availableMemory: SystemMemory.available()).entry.id
-        guard id != activeID else {
+        guard id != settings.selectedModelID else {
             GTLog.info("delete refused: \(id) is the active model")
             return
         }
-        try? InstalledModels.delete(id: id, base: TranslationEngine.defaultModelBase())
+        try? InstalledModels.delete(
+            id: id,
+            base: TranslationEngine.defaultModelBase(),
+            legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+        )
         GTLog.info("deleted model \(id)")
     }
 
     /// 设置页展示用：扫描默认目录下已完整安装的 catalog 模型（带磁盘体积）。
     func installedModels() -> [InstalledModel] {
-        InstalledModels.scan(base: TranslationEngine.defaultModelBase())
+        InstalledModels.scan(
+            base: TranslationEngine.defaultModelBase(),
+            legacyHuggingFaceHub: InstalledModels.defaultLegacyHuggingFaceHub
+        )
     }
 
     // MARK: - 后台下载（只下不切，与正在用的模型并存）
@@ -186,20 +203,22 @@ final class EngineController {
 
     /// 设置页「下载」入口：把某 catalog 模型下到磁盘，**不切换当前活跃引擎**。
     /// 与 switchModel 的区别：纯磁盘拉取，不动引擎，故可边用当前模型边下新模型。
-    /// 一次只下一个（downloadTask 非空时忽略）；无自动重试，失败后按钮复现可重点。
+    /// 一次只下一个（downloadTask 非空时忽略）；Hugging Face 不可用时自动回退 ModelScope。
     func downloadModel(id: String) {
         guard downloadTask == nil, let entry = ModelCatalog.entry(id: id) else { return }
         downloadingModelID = id
         downloadProgress = DownloadProgress(fraction: 0)
-        let source: ModelSource = settings.useCNSource ? .modelScope : .huggingFace
         let base = TranslationEngine.defaultModelBase()
         GTLog.info("background download started: \(id)")
         downloadTask = Task {
             do {
-                _ = try await ModelDownloader.download(repo: entry.repo, from: source, into: base) { p in
+                _ = try await ModelDownloader.download(repo: entry.repo, into: base) { p in
                     Task { @MainActor in EngineController.shared.downloadProgress = p }
                 }
                 GTLog.info("background download done: \(id)")
+                if self.selectedModelID == id {
+                    self.start()
+                }
             } catch {
                 GTLog.error("background download failed \(id): \(error)")
             }
@@ -213,28 +232,23 @@ final class EngineController {
     /// 由翻译完成的 ViewModel 通过 recordTokensPerSecond 回填，设置页按行读取。
     var lastTokensPerSecond: [String: Double] = [:]
 
-    /// 把一次翻译的速度记到「当前活跃模型」名下（selectedModelID；Auto 记在 autoID）。
+    /// 把一次翻译的速度记到当前活跃模型名下。
     func recordTokensPerSecond(_ tps: Double?) {
-        guard let tps else { return }
+        guard let tps, let selectedModelID else { return }
         lastTokensPerSecond[selectedModelID] = tps
     }
 
-    /// 当前活跃模型的展示名（就绪状态展示用）；Auto 解析到具体 Gemma 档并加前缀。
+    /// 当前活跃模型的展示名。
     var activeModelName: String {
-        if let entry = ModelCatalog.entry(id: selectedModelID) {
+        if let selectedModelID, let entry = ModelCatalog.entry(id: selectedModelID) {
             return entry.displayName
         }
-        let resolved = ActiveModelResolver.resolve(
-            selectedID: ModelCatalog.autoID,
-            physicalMemory: SystemMemory.physical(),
-            availableMemory: SystemMemory.available())
-        return "Auto · \(resolved.entry.displayName)"
+        return "未选择模型"
     }
 
     /// 菜单/设置开关入口：即时生效并持久化
     func setAPIEnabled(_ enabled: Bool) {
-        settings.apiEnabled = enabled
-        settings.save()
+        settings = AppSettings.update { $0.apiEnabled = enabled }
         if enabled {
             if engineStatus == .ready { startServer() }
             // 引擎未就绪时由 start() 的 apiEnabled 分支接管

@@ -6,32 +6,121 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: write # 创建 Release 需要写权限
 
 jobs:
   release:
-    # 自托管 runner：证书 / 公证密钥 / xcodegen / Metal Toolchain 都在你机器上。
-    # 注册见仓库 Settings → Actions → Runners → New self-hosted runner。
-    runs-on: [self-hosted, macOS]
+    runs-on: macos-15
+    timeout-minutes: 120
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - name: 校验 tag 与 MARKETING_VERSION 一致
+      - name: 校验发布凭证配置
+        env:
+          DEV_ID_CERT_P12: ${{ secrets.DEV_ID_CERT_P12_BASE64 }}
+          DEV_ID_CERT_PWD: ${{ secrets.DEV_ID_CERT_PASSWORD }}
+          ASC_KEY_P8: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+          ASC_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
         run: |
-          VERSION=$(grep 'MARKETING_VERSION' App/project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
-          TAG="${GITHUB_REF_NAME#v}"
-          if [ "$VERSION" != "$TAG" ]; then
-            echo "::error::tag v$TAG 与 App/project.yml 的 MARKETING_VERSION $VERSION 不一致，请先对齐再打 tag"
+          set -euo pipefail
+          for NAME in DEV_ID_CERT_P12 DEV_ID_CERT_PWD ASC_KEY_P8 ASC_KEY_ID ASC_ISSUER_ID; do
+            if [ -z "${!NAME:-}" ]; then
+              echo "::error::缺少 Actions Secret 对应的 $NAME"
+              exit 1
+            fi
+          done
+
+      - name: 选择包含 macOS 26 SDK 的正式 Xcode
+        run: |
+          set -euo pipefail
+          SELECTED=""
+          for APP in $(find /Applications -maxdepth 1 -name 'Xcode*.app' ! -iname '*beta*' -print | sort -r); do
+            DEV="$APP/Contents/Developer"
+            SDK_VERSION="$(DEVELOPER_DIR="$DEV" xcrun --sdk macosx --show-sdk-version 2>/dev/null || true)"
+            SDK_MAJOR="${SDK_VERSION%%.*}"
+            if [[ "$SDK_MAJOR" =~ ^[0-9]+$ ]] && [ "$SDK_MAJOR" -ge 26 ]; then
+              SELECTED="$DEV"
+              break
+            fi
+          done
+          if [ -z "$SELECTED" ]; then
+            echo "::error::Runner 没有包含 macOS 26 SDK 的正式版 Xcode"
             exit 1
+          fi
+          echo "DEVELOPER_DIR=$SELECTED" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$SELECTED" xcodebuild -version
+          DEVELOPER_DIR="$SELECTED" xcrun --sdk macosx --show-sdk-version
+
+      - name: 安装构建工具
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          command -v create-dmg >/dev/null || brew install create-dmg
+
+      - name: 准备 Metal 工具链
+        run: xcodebuild -downloadComponent MetalToolchain || true
+
+      - name: 导入 Developer ID 证书
+        env:
+          DEV_ID_CERT_P12: ${{ secrets.DEV_ID_CERT_P12_BASE64 }}
+          DEV_ID_CERT_PWD: ${{ secrets.DEV_ID_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          KC="$RUNNER_TEMP/build.keychain-db"
+          KCPWD="$(openssl rand -base64 24)"
+          security create-keychain -p "$KCPWD" "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p "$KCPWD" "$KC"
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          echo "$DEV_ID_CERT_P12" | base64 --decode > "$RUNNER_TEMP/developer-id.p12"
+          security import "$RUNNER_TEMP/developer-id.p12" -k "$KC" -P "$DEV_ID_CERT_PWD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KCPWD" "$KC" >/dev/null
+          rm -f "$RUNNER_TEMP/developer-id.p12"
+
+      - name: 写入 App Store Connect API Key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          KEY="$RUNNER_TEMP/AuthKey.p8"
+          echo "$ASC_KEY_P8" | base64 --decode > "$KEY"
+          chmod 600 "$KEY"
+          echo "ASC_API_KEY_PATH=$KEY" >> "$GITHUB_ENV"
+
+      - name: 读取版本并校验 tag
+        run: |
+          set -euo pipefail
+          VERSION=$(grep 'MARKETING_VERSION' App/project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            TAG="${GITHUB_REF_NAME#v}"
+            if [ "$VERSION" != "$TAG" ]; then
+              echo "::error::tag v$TAG 与 App/project.yml 的 MARKETING_VERSION $VERSION 不一致，请先对齐再打 tag"
+              exit 1
+            fi
           fi
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: 构建 + 签名 + 公证（zip + dmg）
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
         run: ./Scripts/release.sh
 
+      - name: 留存手动验收产物
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: GemmaTrans-${{ env.VERSION }}-notarized
+          path: |
+            dist/GemmaTrans-${{ env.VERSION }}.zip
+            dist/GemmaTrans-${{ env.VERSION }}.dmg
+          if-no-files-found: error
+
       - name: 创建 Release 并上传产物
+        if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
           name: GemmaTrans ${{ env.VERSION }}

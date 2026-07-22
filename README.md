@@ -1,29 +1,61 @@
 # GemmaTrans
 
-macOS 本地大模型划词翻译。基于 **MLX-Swift**（Apple Silicon 原生加速），支持多个本地翻译模型（Google **Gemma 4** / 腾讯混元 **Hy-MT2**），完全离线运行：
+macOS 本地大模型划词翻译。基于 **MLX-Swift** 在 Apple Silicon 上运行 Google **Gemma 4** 与腾讯混元 **Hy-MT2**；模型下载完成后，翻译文本不会离开你的 Mac。
+
+[下载正式版](https://github.com/Rand01ph/gemma-trans/releases/latest) · [App Store](https://apps.apple.com/app/id6778876828) · [2.0 更新说明](docs/release-notes-2.0.md) · [设计系统](DESIGN.md) · [隐私政策](PRIVACY.md)
+
+> GemmaTrans 2.0 要求 **Apple Silicon Mac** 与 **macOS 26 或更高版本**。
+
+## 2.0 亮点
 
 - **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + 兼容 `/v1/chat/completions` 请求格式，PopClip、Bob、Raycast 等工具直连
-- **menu bar app**：全局热键划词翻译，浮窗流式显示译文
+- **Quiet Glass 新界面**：重构主窗口、三标签设置页和紧凑的结果优先翻译浮窗，完整适配浅色、深色与系统外观
+- **划词与剪贴板快捷翻译**：macOS Service 处理当前选中文本，`⌥D` 翻译剪贴板；快捷键浮窗不会抢占主窗口
+- **可固定的翻译浮窗**：逐段翻译长文时锁定浮窗位置，连续结果在同一位置更新；译文字号可在设置中调节
 - **智能双向**：自动检测语言——中文 → 英文，其他语言 → 中文（目标语言可配置）
-- **多模型可选**：内置 Gemma 4（E4B/E2B，4-bit）与腾讯混元 **Hy-MT2**（1.8B 翻译专用，4/8-bit）；设置页可下载、切换、删除模型，支持后台下载（边用边下）
+- **明确的模型选择**：首次启动不再自动下载；从 Gemma 4 E4B/E2B 和 Hy-MT2 4/8-bit 中按需下载、使用或删除
+- **自动下载源回退**：优先 Hugging Face，不可用时自动切换 ModelScope，无需手动选择国内源
+- **稳定的模型管理**：新模型可以后台下载，不影响当前模型继续翻译；针对新版 Gemma 4 checkpoint 提供兼容错误提示
 - **性能可视**：翻译后显示每秒 token 速率（按模型分别记录），随时观察各模型快慢
-- **模型下载**：首次启动按内存自动选 Gemma 档拉取（E4B≈4.9GB / E2B≈3.6GB），双源（HuggingFace / 国内 ModelScope）+ 断点续传
+- **本地 HTTP API**（`127.0.0.1:8765`）：提供 `/translate` 与兼容 `/v1/chat/completions` 的请求格式，供 PopClip、Bob、Raycast 等工具连接
 
-## 快速开始
+## 使用 App
 
-### 构建并启动 API 服务
+1. 从 GitHub Releases 下载已签名并公证的 DMG，或从 Mac App Store 安装。
+2. 首次启动进入“设置 › 模型”，选择一个模型并点击“下载”；下载完成后点击“使用”。
+3. 在主窗口输入文本，或使用以下快捷方式：
+   - 任意 App 中选中文字，按 `⌥⌘T` 调用 macOS Service；
+   - 复制文本后按 `⌥D` 翻译剪贴板；
+   - 固定翻译浮窗后，可逐段触发翻译而不改变阅读位置。
+
+模型体积约为：Hy-MT2 4-bit 1.1GB、Hy-MT2 8-bit 1.9GB、Gemma 4 E2B 3.6GB、Gemma 4 E4B 4.9GB。下载属于用户主动操作；下载完成后翻译可完全离线进行。
+
+## 从源码构建 macOS App
+
+需要带 macOS 26 SDK 的 Xcode、XcodeGen 与 Apple Silicon Mac：
+
+```bash
+brew install xcodegen
+./script/build_and_run.sh --verify
+```
+
+脚本只为当前项目设置 `DEVELOPER_DIR`，不会修改系统全局 `xcode-select`。默认使用 `/Applications/Xcode-beta.app/Contents/Developer`，可在脚本调用前覆盖 `DEVELOPER_DIR`。
+
+## CLI 与本地 API
+
+CLI 仍会按机器内存选择推荐的 Gemma 档位，并在首次运行时下载模型；GUI App 则始终由用户明确选择模型。
 
 ```bash
 git clone https://github.com/Rand01ph/gemma-trans && cd gemma-trans
 # MLX 的 Metal 着色器需要 xcodebuild（首次如提示缺 Metal 工具链：xcodebuild -downloadComponent MetalToolchain）
 xcodebuild -scheme gemma-trans-cli -destination 'platform=macOS' -skipMacroValidation -derivedDataPath .build-cli build
 .build-cli/Build/Products/Debug/gemma-trans-cli serve
-# 首次自动下载模型 → Model ready. Listening on http://127.0.0.1:8765
+# CLI 首次运行自动下载推荐模型 → Model ready. Listening on http://127.0.0.1:8765
 ```
 
 国内网络可用镜像：启动前 `export HF_ENDPOINT=https://hf-mirror.com`。`gemma-trans-cli spike` 跑一次最小验证。
 
-### 3. 调用
+### 调用
 
 ```bash
 # 健康检查
@@ -80,20 +112,13 @@ API 可在菜单栏/设置中即时开关，无需重启。关闭后划词翻译
 
 ## Menu bar app（划词翻译）
 
-```bash
-brew install xcodegen   # 首次
-cd App && xcodegen generate
-xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Debug -derivedDataPath build build
-open build/Build/Products/Debug/GemmaTrans.app
-```
-
-- 启动后弹出主窗口（含模型下载进度），同时 menu bar 出现 💬 图标；模型加载完成（约 15s）后图标变实心，并在 `127.0.0.1:8765` 提供 API（app 与 CLI serve 二者跑一个即可，同时跑会端口冲突）
-- **三种译法**（均无需任何系统权限）：
+- 启动后显示主窗口与 menu bar 状态项；尚未选择模型时会引导进入模型设置，不会联网或自动下载
+- **三种译法**（均无需辅助功能权限）：
   - 主窗口里粘贴/输入文字 → 点「翻译」流式显示译文
   - 任意 app 选中文字 → 按 `⌥⌘T` 一键翻译选中内容，**无需先复制**；也可从「服务」菜单点「Translate with GemmaTrans」
     - 这是 macOS「服务」快捷键，默认 `⌥⌘T`。macOS 不一定会自动启用声明的默认值——若按了没反应，去 系统设置 › 键盘 › 键盘快捷键 › 服务 › 文本，勾选并确认 Translate with GemmaTrans 的快捷键（一次性，之后长期生效；也可在这里改键）
-  - 复制文字后按 `⌥D` → 翻译剪贴板内容（鼠标旁浮窗流式显示，Esc 关闭，可一键复制）
-- 菜单"设置…"可改目标语言、API 端口和剪贴板热键
+  - 复制文字后按 `⌥D` → 翻译剪贴板内容（浮窗流式显示，Esc 关闭，可复制、朗读或固定位置）
+- 菜单“设置…”可改外观、目标语言、译文字号、API 端口和剪贴板热键
 - 设置"性能"区默认按机器内存自动配置 KV cache 与输入上限（加载时还会按当前可用内存降档），也可手动覆盖
 
 ## 架构
@@ -103,3 +128,12 @@ GemmaTransKit     核心库：MLX-Swift 引擎封装、语言检测（NaturalLan
 GemmaTransServer  HTTP 层：FlyingFox，/translate + /v1/chat/completions + SSE
 gemma-trans-cli   命令行：spike / serve
 ```
+
+## 发布
+
+- [CHANGELOG.md](CHANGELOG.md)：版本变更记录
+- [docs/release-notes-2.0.md](docs/release-notes-2.0.md)：GemmaTrans 2.0 发布文案与升级说明
+- [docs/store-listing.md](docs/store-listing.md)：Mac App Store 描述、审核备注与提审清单
+- [docs/releasing.md](docs/releasing.md)：版本、Actions Secrets、签名、公证与 MAS 发布步骤
+- `Scripts/release.sh`：Developer ID 签名、公证并生成 ZIP/DMG
+- `Scripts/release-mas.sh`：使用 Xcode 自带工具归档、导出及可选上传 MAS 包，不依赖第三方 `asc` CLI

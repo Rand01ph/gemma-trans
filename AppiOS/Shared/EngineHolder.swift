@@ -6,12 +6,17 @@ import GemmaTransKit
 /// 扩展进程存活期间复用热引擎——连续取词免冷载。
 @MainActor @Observable
 final class EngineHolder {
+    enum FailureKind: Equatable {
+        case download
+        case load
+    }
+
     enum Status: Equatable {
         case idle
         case downloading(DownloadProgress)  // 比例 + 已下/总字节（HF 宏路径字节为 nil）
         case loading            // 权重进显存 + 1-token 预热
         case ready
-        case failed(String)
+        case failed(String, FailureKind)
     }
 
     static let shared = EngineHolder()
@@ -32,6 +37,11 @@ final class EngineHolder {
 
     /// 用户显式触发：允许下载（首次会拉约 3.6GB 权重）
     func download() {
+        startLoad()
+    }
+
+    /// 失败恢复：已下载完成时只重新加载模型，未完成时继续断点下载。
+    func retry() {
         startLoad()
     }
 
@@ -66,7 +76,8 @@ final class EngineHolder {
                 GTLog.info("iOS engine ready")
             } catch {
                 // 非网络错误或重试耗尽：UI 只放短句人话（共享映射），完整错误进日志
-                self.status = .failed(engineLoadFailureMessage(for: error))
+                let failureKind: FailureKind = ModelStore.modelDownloaded ? .load : .download
+                self.status = .failed(engineLoadFailureMessage(for: error), failureKind)
                 self.loadTask = nil
                 GTLog.error("iOS engine load failed: \(error)")
             }

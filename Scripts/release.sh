@@ -5,15 +5,19 @@ cd "$(dirname "$0")/.."
 
 APP_DIR="App"
 VERSION=$(grep 'MARKETING_VERSION' $APP_DIR/project.yml | head -1 | sed 's/.*"\(.*\)"/\1/')
-# 免钥匙串：直接用 API 密钥文件（notarytool 的 keychain profile 在部分环境下读不回）
-NOTARY_KEY="$HOME/.appstoreconnect/private/AuthKey_V288NX3YTW.p8"
-NOTARY_KEY_ID="V288NX3YTW"
-NOTARY_ISSUER="69a6de88-60c6-47e3-e053-5b8c7c11a4d1"
+# 直接使用 App Store Connect API 私钥，兼容本地和 GitHub Actions 临时钥匙串。
+NOTARY_KEY_ID="${ASC_API_KEY_ID:-}"
+NOTARY_ISSUER="${ASC_API_ISSUER_ID:-}"
+NOTARY_KEY="${ASC_API_KEY_PATH:-$HOME/.appstoreconnect/private/AuthKey_${NOTARY_KEY_ID}.p8}"
 
 # 前置检查
 if ! security find-identity -v -p codesigning | grep -q "Developer ID Application"; then
     echo "❌ 缺少 Developer ID Application 证书。"
     echo "   Xcode → Settings → Accounts → Manage Certificates → + → Developer ID Application"
+    exit 1
+fi
+if [ -z "$NOTARY_KEY_ID" ] || [ -z "$NOTARY_ISSUER" ]; then
+    echo "❌ 缺少 ASC_API_KEY_ID 或 ASC_API_ISSUER_ID。"
     exit 1
 fi
 if [ ! -f "$NOTARY_KEY" ]; then
@@ -42,7 +46,8 @@ notarize() {
 echo "==> 构建 Release $VERSION"
 cd $APP_DIR
 xcodegen generate >/dev/null
-xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Release -skipMacroValidation \
+xcodebuild -project GemmaTrans.xcodeproj -scheme GemmaTrans -configuration Release \
+    -skipMacroValidation -skipPackagePluginValidation \
     -derivedDataPath build-release build | tail -2
 APP="build-release/Build/Products/Release/GemmaTrans.app"
 

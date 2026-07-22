@@ -13,8 +13,6 @@ public struct ModelCatalogEntry: Sendable, Equatable, Identifiable {
 }
 
 public enum ModelCatalog {
-    public static let autoID = "auto"
-
     public static let entries: [ModelCatalogEntry] = [
         ModelCatalogEntry(id: "gemma-e4b-4bit", displayName: "Gemma 4 E4B (4-bit)",
             repo: "mlx-community/gemma-4-e4b-it-4bit", family: .gemma,

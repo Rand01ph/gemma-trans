@@ -34,12 +34,18 @@ public func withNetworkRetry<T: Sendable>(
     }
 }
 
-/// 失败信息人性化：网络错误给可行动的短句（保留 code 便于排查），
+/// 失败信息人性化：网络错误和模型结构不兼容错误给可行动的短句，
 /// 其他错误截断 120 字符防 NSError 全文刷屏 UI（完整错误由调用方落日志）。
 public func engineLoadFailureMessage(for error: Error) -> String {
     let nsError = error as NSError
     if nsError.domain == NSURLErrorDomain {
         return "网络中断（已下载部分已保留，可重试继续）[\(nsError.code)]"
     }
+
+    let description = String(describing: error)
+    if description.contains("keyNotFound(path:") && description.contains("language_model") {
+        return "模型格式与当前 App 版本不兼容，请更新 App 后重新加载。"
+    }
+
     return String("加载失败：\(error)".prefix(120))
 }

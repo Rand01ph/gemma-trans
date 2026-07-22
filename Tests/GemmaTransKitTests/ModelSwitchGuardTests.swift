@@ -39,4 +39,8 @@ import Testing
     @Test func message_apiRunning() {
         #expect(SwitchBlock.apiRunning.message == "本地 API 运行中，请先在设置里关闭 API 再切换模型")
     }
+
+    @Test func message_notInstalled() {
+        #expect(SwitchBlock.notInstalled.message == "请先下载这个模型，再选择使用它")
+    }
 }

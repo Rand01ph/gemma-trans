@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: macos-15
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: 选择包含 macOS 26 SDK 的正式 Xcode
+        run: |
+          set -euo pipefail
+          SELECTED=""
+          for APP in $(find /Applications -maxdepth 1 -name 'Xcode*.app' ! -iname '*beta*' -print | sort -r); do
+            DEV="$APP/Contents/Developer"
+            SDK_VERSION="$(DEVELOPER_DIR="$DEV" xcrun --sdk macosx --show-sdk-version 2>/dev/null || true)"
+            SDK_MAJOR="${SDK_VERSION%%.*}"
+            if [[ "$SDK_MAJOR" =~ ^[0-9]+$ ]] && [ "$SDK_MAJOR" -ge 26 ]; then
+              SELECTED="$DEV"
+              break
+            fi
+          done
+          if [ -z "$SELECTED" ]; then
+            echo "::error::Runner 没有包含 macOS 26 SDK 的 Xcode"
+            exit 1
+          fi
+          echo "DEVELOPER_DIR=$SELECTED" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$SELECTED" xcodebuild -version
+          DEVELOPER_DIR="$SELECTED" xcrun --sdk macosx --show-sdk-version
+
+      - name: 安装 XcodeGen
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+
+      - name: 准备 Metal 工具链
+        run: xcodebuild -downloadComponent MetalToolchain || true
+
+      - name: Swift tests
+        run: swift test
+
+      - name: 生成工程
+        run: (cd App && xcodegen generate)
+
+      - name: 构建 Developer ID scheme（无签名）
+        run: |
+          xcodebuild -project App/GemmaTrans.xcodeproj -scheme GemmaTrans \
+            -configuration Debug -destination 'platform=macOS' \
+            -derivedDataPath App/build/ci CODE_SIGNING_ALLOWED=NO \
+            -skipMacroValidation -skipPackagePluginValidation build
+
+      - name: 构建 MAS scheme（无签名）
+        run: |
+          xcodebuild -project App/GemmaTrans.xcodeproj -scheme GemmaTrans-MAS \
+            -configuration Debug -destination 'platform=macOS' \
+            -derivedDataPath App/build/ci CODE_SIGNING_ALLOWED=NO \
+            -skipMacroValidation -skipPackagePluginValidation -skipPackageUpdates build

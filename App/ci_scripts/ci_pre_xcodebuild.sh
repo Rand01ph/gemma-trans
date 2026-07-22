@@ -1,10 +1,13 @@
 #!/bin/sh
-# Xcode Cloud 在 xcodebuild 之前执行：显式设置 build 号。
-# Xcode Cloud 默认用内部构建计数当 CFBundleVersion，会低于本地已上传的 build 7 → 交付被拒
-# (ITMS: bundle version must be higher than previously uploaded)。这里设成 100+CI 计数，
-# 既 >7 又随每次 CI 单调递增。两个 target 共用同一个 Info.plist。
+# Xcode Cloud 在 xcodebuild 之前执行：让静态 Info.plist 与 project.yml 中显式维护的
+# CURRENT_PROJECT_VERSION 保持一致。测试版构建号由仓库单调递增，避免 Cloud 内部计数
+# 覆盖成另一个数字，导致提交记录、TestFlight 与发布说明无法对应。
 set -e
 cd "$CI_PRIMARY_REPOSITORY_PATH/App"
-NEW=$((100 + ${CI_BUILD_NUMBER:-0}))
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $NEW" GemmaTrans/Info.plist
-echo "✅ CFBundleVersion=$NEW"
+BUILD=$(grep 'CURRENT_PROJECT_VERSION' project.yml | head -1 | sed 's/.*"\([0-9][0-9]*\)".*/\1/')
+if ! echo "$BUILD" | grep -Eq '^[1-9][0-9]*$'; then
+  echo "❌ project.yml 中的 CURRENT_PROJECT_VERSION 不是正整数：$BUILD" >&2
+  exit 1
+fi
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD" GemmaTrans/Info.plist
+echo "✅ CFBundleVersion=$BUILD"

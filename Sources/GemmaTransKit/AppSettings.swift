@@ -1,7 +1,17 @@
 import Foundation
 
+public enum AppAppearance: String, CaseIterable, Sendable {
+    case system
+    case light
+    case dark
+}
+
 /// 全局配置。CLI 与 App 共用，UserDefaults 持久化（App 修改，CLI 读取）。
 public struct AppSettings: Sendable {
+    public static let defaultTranslationFontSize = 13.0
+    public static let minimumTranslationFontSize = 12.0
+    public static let maximumTranslationFontSize = 18.0
+
     public var port: UInt16
     /// 检测为中文时的目标语言
     public var targetForChinese: String
@@ -17,8 +27,12 @@ public struct AppSettings: Sendable {
     /// 模型下载走国内源（ModelScope）。国内网络 HF 的 Xet CDN 不可达、hf-mirror 已失效。
     /// key 与 iOS 共享 defaults 的同名开关一致（ModelStore.sourceKey / ContentView @AppStorage）。
     public var useCNSource: Bool
-    /// 活跃模型选择："auto"=按内存选 Gemma；否则为 ModelCatalog 条目 id
-    public var selectedModelID: String
+    /// 活跃模型选择。nil 表示尚未由用户选择；非 nil 必须是 ModelCatalog 条目 id。
+    public var selectedModelID: String?
+    /// macOS 外观：默认跟随系统；CLI/iOS 可忽略该字段。
+    public var appearance: AppAppearance
+    /// macOS 翻译浮窗译文字号；其他平台可忽略该字段。
+    public var translationFontSize: Double
 
     public static let suiteName = "com.gemmatrans.app"
 
@@ -31,7 +45,9 @@ public struct AppSettings: Sendable {
         manualMaxTokens: Int = 2048,
         apiEnabled: Bool = true,
         useCNSource: Bool = false,
-        selectedModelID: String = "auto"
+        selectedModelID: String? = nil,
+        appearance: AppAppearance = .system,
+        translationFontSize: Double = Self.defaultTranslationFontSize
     ) {
         self.port = port
         self.targetForChinese = targetForChinese
@@ -42,6 +58,8 @@ public struct AppSettings: Sendable {
         self.apiEnabled = apiEnabled
         self.useCNSource = useCNSource
         self.selectedModelID = selectedModelID
+        self.appearance = appearance
+        self.translationFontSize = Self.normalizedTranslationFontSize(translationFontSize)
     }
 
     /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
@@ -56,7 +74,18 @@ public struct AppSettings: Sendable {
         if d.integer(forKey: "maxInputChars") > 0 { s.maxInputChars = d.integer(forKey: "maxInputChars") }
         if d.object(forKey: "apiEnabled") != nil { s.apiEnabled = d.bool(forKey: "apiEnabled") }
         if d.object(forKey: "useCNSource") != nil { s.useCNSource = d.bool(forKey: "useCNSource") }
-        if let v = d.string(forKey: "selectedModelID"), !v.isEmpty { s.selectedModelID = v }
+        // `auto` 是旧版值。升级后把它和其他未知值视为未选择，避免启动时隐式下载。
+        if let v = d.string(forKey: "selectedModelID"), ModelCatalog.entry(id: v) != nil {
+            s.selectedModelID = v
+        }
+        if let v = d.string(forKey: "appearance"), let appearance = AppAppearance(rawValue: v) {
+            s.appearance = appearance
+        }
+        if d.object(forKey: "translationFontSize") != nil {
+            s.translationFontSize = Self.normalizedTranslationFontSize(
+                d.double(forKey: "translationFontSize")
+            )
+        }
         return s
     }
 
@@ -70,6 +99,30 @@ public struct AppSettings: Sendable {
         d.set(maxInputChars, forKey: "maxInputChars")
         d.set(apiEnabled, forKey: "apiEnabled")
         d.set(useCNSource, forKey: "useCNSource")
-        d.set(selectedModelID, forKey: "selectedModelID")
+        if let selectedModelID {
+            d.set(selectedModelID, forKey: "selectedModelID")
+        } else {
+            d.removeObject(forKey: "selectedModelID")
+        }
+        d.set(appearance.rawValue, forKey: "appearance")
+        d.set(Self.normalizedTranslationFontSize(translationFontSize),
+              forKey: "translationFontSize")
+    }
+
+    /// 基于持久化中的最新值只修改目标字段，避免多个窗口各自持有的设置副本互相覆盖。
+    @discardableResult
+    public static func update(
+        suiteName: String = Self.suiteName,
+        _ mutation: (inout AppSettings) -> Void
+    ) -> AppSettings {
+        var latest = load(suiteName: suiteName)
+        mutation(&latest)
+        latest.save(suiteName: suiteName)
+        return latest
+    }
+
+    public static func normalizedTranslationFontSize(_ value: Double) -> Double {
+        guard value.isFinite else { return defaultTranslationFontSize }
+        return min(max(value, minimumTranslationFontSize), maximumTranslationFontSize)
     }
 }
