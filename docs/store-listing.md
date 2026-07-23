@@ -6,7 +6,7 @@
 | --- | --- | --- |
 | 名称 | GemmaTrans | GemmaTrans |
 | 副标题 | 离线 AI 划词翻译 | Private Offline Translation |
-| 推广文本 | 选中文字，按下快捷键，译文即刻浮现。GemmaTrans 2 以全新 Quiet Glass 界面带来完全离线的本地 AI 翻译，支持固定浮窗、四款按需模型、自动下载源回退与本地 API。 | Private, offline translation on your Mac. GemmaTrans 2 adds a refined Quiet Glass UI, a pinnable result panel, four on-device models, and a local API. |
+| 推广文本 | 选中文字，按下快捷键，译文即刻浮现。GemmaTrans 2 采用克制而精致的 Liquid Glass 设计，带来完全离线的本地 AI 翻译，支持固定浮窗、四款按需模型、自动下载源回退与本地 API。 | Private, offline translation on your Mac. GemmaTrans 2 adds a refined Liquid Glass interface, a pinnable result panel, four on-device models, and a local API. |
 | 关键词 | 翻译,离线翻译,AI翻译,划词翻译,本地模型,Gemma,隐私,双语,菜单栏,快捷键 | translation,offline,AI,local,Gemma,privacy,hotkey,menu bar,bilingual,LLM |
 | 技术支持网址 | https://github.com/Rand01ph/gemma-trans | https://github.com/Rand01ph/gemma-trans |
 | 营销网址 | https://github.com/Rand01ph/gemma-trans | https://github.com/Rand01ph/gemma-trans |
@@ -17,7 +17,7 @@
 
 GemmaTrans 2.0 带来一次完整的 macOS 体验重构：
 
-- 全新的 Quiet Glass 主窗口、设置页与快捷翻译浮窗
+- 采用克制而精致的 Liquid Glass 设计，全面重构主窗口、设置页与快捷翻译浮窗
 - 支持固定浮窗位置，连续翻译长文时保持视线稳定
 - 四款本地模型由你按需下载和切换，首次启动不再自动下载
 - Hugging Face 不可用时自动回退国内下载源
@@ -28,7 +28,7 @@ GemmaTrans 2.0 带来一次完整的 macOS 体验重构：
 
 GemmaTrans 2.0 is a complete macOS experience refresh:
 
-- A new Quiet Glass main window, settings experience, and translation panel
+- A refined Liquid Glass design across the main window, settings, and translation panel
 - Pin the panel while translating long documents paragraph by paragraph
 - Choose and download any of four on-device models; nothing downloads on first launch
 - Automatic download fallback when Hugging Face is unavailable

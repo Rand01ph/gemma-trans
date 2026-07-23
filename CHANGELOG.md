@@ -2,11 +2,11 @@
 
 GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS App 的正式构建号由 App Store Connect 发布流程单独递增。
 
-## [2.0.0] - Unreleased
+## [2.0.0] - 2026-07-23
 
 ### Added
 
-- Quiet Glass 设计系统，以及主窗口、翻译浮窗和三标签设置窗口的完整重构。
+- Liquid Glass 设计系统，以及主窗口、翻译浮窗和三标签设置窗口的完整重构。
 - 翻译浮窗位置固定、可调译文字号、复制反馈和系统朗读。
 - Gemma 4 E4B/E2B 与 Hy-MT2 4/8-bit 四个明确可选模型。
 - Hugging Face 不可用时自动回退 ModelScope 的下载策略。
@@ -34,4 +34,4 @@ GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS 
 - Apple Silicon Mac。
 - 不修改 HTTP API、UserDefaults key、模型目录或对外数据格式。
 
-[2.0.0]: https://github.com/Rand01ph/gemma-trans/compare/v1.1.0...HEAD
+[2.0.0]: https://github.com/Rand01ph/gemma-trans/compare/v1.1.0...v2.0.0
