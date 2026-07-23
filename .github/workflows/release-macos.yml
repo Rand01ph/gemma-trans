@@ -1,6 +1,6 @@
 name: Release macOS
 
-# 打 tag（vX.Y.Z）即在自托管 Mac runner 上构建、签名、公证，
+# 打 tag（vX.Y.Z）即在 GitHub 托管的 Mac runner 上构建、签名、公证，
 # 产出 Developer ID + 公证的 .zip 与 .dmg，并附到同名 GitHub Release。
 on:
   push:

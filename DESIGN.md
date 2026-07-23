@@ -1,6 +1,6 @@
 # GemmaTrans Design System
 
-GemmaTrans 的界面方向是 **Quiet Glass**：保留 macOS Liquid Glass 的空间感和系统质感，但不让材质、渐变或装饰色盖过翻译内容。
+GemmaTrans 的界面方向是 **Liquid Glass**：使用 macOS 原生玻璃材质建立清晰的空间层级，同时保持克制、安静的表达，不让材质、渐变或装饰色盖过翻译内容。
 
 本文是 macOS App 的设计契约。新增界面和组件应先复用这里的语义、尺寸和状态规则，再考虑增加新的视觉表达。
 
