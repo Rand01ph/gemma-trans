@@ -133,6 +133,7 @@ gemma-trans-cli   命令行：spike / serve
 
 - [CHANGELOG.md](CHANGELOG.md)：版本变更记录
 - [docs/release-notes-2.0.md](docs/release-notes-2.0.md)：GemmaTrans 2.0 发布文案与升级说明
+- [docs/social-launch-2.0.md](docs/social-launch-2.0.md)：小红书首发、连续宣传选题与 V2EX 技术复盘稿
 - [docs/store-listing.md](docs/store-listing.md)：Mac App Store 描述、审核备注与提审清单
 - [docs/releasing.md](docs/releasing.md)：版本、Actions Secrets、签名、公证与 MAS 发布步骤
 - `Scripts/release.sh`：Developer ID 签名、公证并生成 ZIP/DMG
