@@ -50,7 +50,7 @@ PR 的 `CI` workflow 必须通过：
 
 1. 在 App Store Connect 创建或确认 `2.0.0` 版本，并查看当前最大 build 号。
 2. 将 `App/project.yml` 与 `App/GemmaTrans/Info.plist` 中的 build 号同步提高并提交到目标分支。
-3. 在 App Store Connect › Xcode Cloud › 构建版本中启动“发布流水线”，手动分支选择 `codex/codex-design-system`；正式合并后改用 `main`。
+3. 在 App Store Connect › Xcode Cloud › 构建版本中启动“发布流水线”，正式发布始终选择 `main`。
 4. 工作流以 `GemmaTrans-MAS` scheme 执行 macOS Archive，并采用 App Store 分发准备。成功后等待 Apple 处理并在 TestFlight 中确认新 build。
 5. 在 TestFlight 验证后，把该 build 关联到 2.0.0，更新截图、描述、What's New 和审核备注，再提交审核。
 
