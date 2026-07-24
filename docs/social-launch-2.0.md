@@ -1,6 +1,6 @@
 # GemmaTrans 2.0 社交媒体发布文案
 
-本文包含一篇小红书首发文案、一组后续选题，以及一篇面向 V2EX 的技术复盘稿。发布前请用正式版截图替换配图占位，并确认 GitHub Release 链接已经生效。
+本文包含一篇小红书首发文案、一组后续选题，以及一篇面向 V2EX 的技术复盘稿。正式九宫格已整理到 [`docs/social/screenshots/2.0.0`](social/screenshots/2.0.0)，发布前只需确认 GitHub Release 链接已经生效。
 
 ## 一、小红书首发
 
