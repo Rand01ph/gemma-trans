@@ -1,0 +1,38 @@
+popclip/GemmaTrans.popclipext/Config.yaml
+  s_6f16eec4bb94c6::t_de826579d70270 3
+CHANGELOG.md
+  s_6f16eec4bb94c6::t_de826579d70270 18-23
+  s_6f16eec4bb94c6::t_a3cf748c467fa2 29
+Tests/GemmaTransServerTests/TranslateRouteTests.swift
+  s_6f16eec4bb94c6::t_de826579d70270 8-11
+docs/store-listing.md
+  s_6f16eec4bb94c6::t_a3cf748c467fa2 90,128
+  s_6f16eec4bb94c6::t_de826579d70270 42-44,48-50,65,81,96,130
+App/GemmaTrans/Info.plist
+  s_6f16eec4bb94c6::t_a3cf748c467fa2 24
+README.md
+  s_6f16eec4bb94c6::t_de826579d70270 33-43,45,92-94,96
+  s_6f16eec4bb94c6::t_a3cf748c467fa2 44
+App/project.yml
+  s_6f16eec4bb94c6::t_a3cf748c467fa2 25,56,78,113
+Sources/GemmaTransServer/APIServer.swift
+  s_6f16eec4bb94c6::t_de826579d70270 6-10,18-21
+docs/release-notes-2.1.md
+  s_6f16eec4bb94c6::t_de826579d70270 12-13,23-24,33-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "96baa0cfb7bca04f68bedebfbd34b3b4042eb578",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
