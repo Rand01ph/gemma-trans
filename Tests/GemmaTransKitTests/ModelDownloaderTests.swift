@@ -70,6 +70,23 @@ import Foundation
             == "https://modelscope.cn/models/mlx-community/gemma-4-e2b-it-4bit/resolve/master/model.safetensors")
     }
 
+    @Test func curatedSingleFileURLsPinBothRevisions() throws {
+        let entry = try #require(ModelCatalog.entry(id: "hymt2-1.25bit"))
+        let file: SingleFileDistribution
+        if case .singleFile(let value) = entry.distribution {
+            file = value
+        } else {
+            Issue.record("expected single-file distribution")
+            return
+        }
+        #expect(ModelDownloader.singleFileURL(
+            repo: entry.repo, file: file, source: .huggingFace).absoluteString ==
+            "https://huggingface.co/AngelSlim/Hy-MT2-1.8B-1.25Bit-GGUF/resolve/0989912c0cc2d3edeeecd76171d1c7d94ee17255/Hy-MT2-1.8B-1.25bit-v2.gguf")
+        #expect(ModelDownloader.singleFileURL(
+            repo: entry.repo, file: file, source: .modelScope).absoluteString ==
+            "https://modelscope.cn/models/AngelSlim/Hy-MT2-1.8B-1.25Bit-GGUF/resolve/2d3896c601bb165415669c31e8cf43c2554e7900/Hy-MT2-1.8B-1.25bit-v2.gguf")
+    }
+
     @Test func automaticSourceFallbackOnlyHandlesRemoteFailures() {
         let networkError = NSError(
             domain: NSURLErrorDomain,
@@ -154,5 +171,42 @@ import Foundation
         defer { try? FileManager.default.removeItem(at: dir) }
         try writeMarker([:], in: dir)
         #expect(!ModelDownloader.isComplete(dir))
+    }
+
+    @Test func structuredMarkerBindsCuratedFileMetadata() throws {
+        let base = try makeTempDir()
+        defer { try? FileManager.default.removeItem(at: base) }
+        let entry = try #require(ModelCatalog.entry(id: "hymt2-1.25bit"))
+        let dir = ModelDownloader.snapshotDirectory(in: base, repo: entry.repo)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let file: SingleFileDistribution
+        if case .singleFile(let value) = entry.distribution {
+            file = value
+        } else {
+            Issue.record("expected single-file distribution")
+            return
+        }
+        _ = FileManager.default.createFile(
+            atPath: dir.appendingPathComponent(file.fileName).path,
+            contents: nil
+        )
+        // 使用 0 字节 fixture 验证 marker 绑定逻辑，避免单测创建 440 MiB 文件。
+        let marker = ModelDownloader.CompletionMarker(
+            version: 2,
+            files: [.init(path: file.fileName, size: 0, sha256: file.sha256)]
+        )
+        try JSONEncoder().encode(marker).write(
+            to: dir.appendingPathComponent(ModelDownloader.completionMarkerName))
+        #expect(ModelDownloader.isComplete(dir))
+        #expect(!ModelDownloader.isComplete(dir, for: entry))
+    }
+
+    @Test func cryptoKitSHA256IsIncrementalAndStable() throws {
+        let dir = try makeTempDir()
+        defer { try? FileManager.default.removeItem(at: dir) }
+        let file = dir.appendingPathComponent("digest.bin")
+        try Data("abc".utf8).write(to: file)
+        #expect(try ModelDownloader.sha256(of: file) ==
+            "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad")
     }
 }

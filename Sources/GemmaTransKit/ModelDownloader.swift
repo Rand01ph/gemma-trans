@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// 下载进度。HF 宏路径只有 fraction（字节数未知）；自研下载器两者都有。
 public struct DownloadProgress: Sendable, Equatable {
@@ -25,6 +26,7 @@ public enum ModelDownloadError: Error, LocalizedError, Equatable {
     case modelScopeError(code: Int)
     case emptyFileList(repo: String)
     case sizeMismatch(path: String, expected: Int64, actual: Int64)
+    case checksumMismatch(path: String, expected: String, actual: String)
 
     public var errorDescription: String? {
         switch self {
@@ -34,6 +36,8 @@ public enum ModelDownloadError: Error, LocalizedError, Equatable {
         case .emptyFileList(let repo): "文件列表为空：\(repo)"
         case .sizeMismatch(let path, let expected, let actual):
             "字节数不符 \(path)：期望 \(expected)，实得 \(actual)"
+        case .checksumMismatch(let path, let expected, let actual):
+            "模型文件校验失败，请重试（\(path)：期望 \(expected)，实得 \(actual)）"
         }
     }
 }
@@ -49,6 +53,17 @@ public enum ModelDownloadError: Error, LocalizedError, Equatable {
 /// （`URLSession.bytes` 流式读 + `FileHandle` 写），无共享可变状态；
 /// progress 闭包标 @Sendable，跨线程安全由调用方保证（与引擎既有约定一致）。
 public enum ModelDownloader {
+
+    struct CompletionMarker: Codable, Sendable, Equatable {
+        struct File: Codable, Sendable, Equatable {
+            let path: String
+            let size: Int64
+            let sha256: String?
+        }
+
+        let version: Int
+        let files: [File]
+    }
 
     /// 远端文件描述（两源的列表解析归一到此结构）
     struct RemoteFile: Sendable, Equatable {
@@ -75,17 +90,41 @@ public enum ModelDownloader {
             repo.replacingOccurrences(of: "/", with: "--"), isDirectory: true)
     }
 
-    /// 是否下载完整：完成标记 `.download-complete` 存在，且标记内记录的
-    /// 文件名→字节数 逐一与磁盘相符。
+    /// 是否下载完整：兼容 2.0 的字典标记和 2.1 的结构化标记。
     /// 目录存在 ≠ 完整——下载中途被杀的半成品没有标记；文件被外力删改则字节数对不上。
     public static func isComplete(_ dir: URL) -> Bool {
         let marker = dir.appendingPathComponent(completionMarkerName)
-        guard let data = try? Data(contentsOf: marker),
-              let manifest = try? JSONDecoder().decode([String: Int64].self, from: data),
-              !manifest.isEmpty else { return false }
-        return manifest.allSatisfy { path, size in
+        guard let data = try? Data(contentsOf: marker) else { return false }
+        if let manifest = try? JSONDecoder().decode(CompletionMarker.self, from: data),
+           manifest.version == 2,
+           !manifest.files.isEmpty {
+            return manifest.files.allSatisfy { file in
+                fileSize(at: dir.appendingPathComponent(file.path)) == file.size
+            }
+        }
+        guard let legacy = try? JSONDecoder().decode([String: Int64].self, from: data),
+              !legacy.isEmpty else { return false }
+        return legacy.allSatisfy { path, size in
             fileSize(at: dir.appendingPathComponent(path)) == size
         }
+    }
+
+    /// 对固定单文件模型还要验证完成标记中的文件名、大小和摘要，防止同目录旧文件被误认。
+    static func isComplete(_ dir: URL, for entry: ModelCatalogEntry) -> Bool {
+        guard case .singleFile(let file) = entry.distribution else { return isComplete(dir) }
+        let markerURL = dir.appendingPathComponent(completionMarkerName)
+        guard let data = try? Data(contentsOf: markerURL),
+              let marker = try? JSONDecoder().decode(CompletionMarker.self, from: data),
+              marker.version == 2,
+              marker.files == [CompletionMarker.File(
+                path: file.fileName, size: file.bytes, sha256: file.sha256
+              )] else { return false }
+        return fileSize(at: dir.appendingPathComponent(file.fileName)) == file.bytes
+    }
+
+    static func modelFileURL(in dir: URL, for entry: ModelCatalogEntry) -> URL? {
+        guard case .singleFile(let file) = entry.distribution else { return nil }
+        return dir.appendingPathComponent(file.fileName)
     }
 
     /// 下载整仓库到快照目录并返回该目录。
@@ -135,6 +174,39 @@ public enum ModelDownloader {
         }
     }
 
+    /// 按目录条目的分发约定下载。旧四款仍走整仓快照；策展 GGUF 只请求固定 revision 的
+    /// 唯一文件，不先读仓库清单，也不会把同仓库内的旧 GGUF、报告或图片下载下来。
+    public static func download(
+        entry: ModelCatalogEntry,
+        from source: ModelSource? = nil,
+        into base: URL,
+        progress: @Sendable @escaping (DownloadProgress) -> Void
+    ) async throws -> URL {
+        switch entry.distribution {
+        case .repositorySnapshot:
+            return try await download(
+                repo: entry.repo, from: source, into: base, progress: progress)
+        case .singleFile(let file):
+            if let source {
+                return try await downloadSingleFile(
+                    repo: entry.repo, file: file, from: source, into: base,
+                    reportInitialProgress: true, progress: progress)
+            }
+            do {
+                return try await downloadSingleFile(
+                    repo: entry.repo, file: file, from: .huggingFace, into: base,
+                    reportInitialProgress: true, progress: progress)
+            } catch {
+                guard shouldFallbackToModelScope(after: error) else { throw error }
+                GTLog.info("Hugging Face unavailable for \(entry.repo)/\(file.fileName); " +
+                           "falling back to ModelScope: \(error)")
+                return try await downloadSingleFile(
+                    repo: entry.repo, file: file, from: .modelScope, into: base,
+                    reportInitialProgress: false, progress: progress)
+            }
+        }
+    }
+
     /// 自动换源只处理“远端不可用或内容异常”，不处理取消和本地文件系统错误。
     static func shouldFallbackToModelScope(after error: Error) -> Bool {
         if error is CancellationError { return false }
@@ -147,7 +219,7 @@ public enum ModelDownloader {
 
         guard let downloadError = error as? ModelDownloadError else { return false }
         switch downloadError {
-        case .notHTTPResponse, .httpStatus, .emptyFileList, .sizeMismatch:
+        case .notHTTPResponse, .httpStatus, .emptyFileList, .sizeMismatch, .checksumMismatch:
             return true
         case .modelScopeError:
             return false
@@ -249,7 +321,10 @@ public enum ModelDownloader {
             report(doneBytes)
         }
 
-        let manifest = Dictionary(uniqueKeysWithValues: ordered.map { ($0.path, $0.size) })
+        let manifest = CompletionMarker(
+            version: 2,
+            files: ordered.map { CompletionMarker.File(path: $0.path, size: $0.size, sha256: nil) }
+        )
         let markerData = try JSONEncoder().encode(manifest)
         try markerData.write(to: dir.appendingPathComponent(completionMarkerName), options: .atomic)
         GTLog.info("model downloaded: \(repo) via \(source.rawValue), \(ordered.count) files, \(totalBytes) bytes")
@@ -316,6 +391,22 @@ public enum ModelDownloader {
         }
     }
 
+    /// 策展单文件的不可变下载端点。revision 必须是完整提交 ID，不能使用 main/master。
+    static func singleFileURL(
+        repo: String,
+        file: SingleFileDistribution,
+        source: ModelSource
+    ) -> URL {
+        let escaped = file.fileName.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed)
+            ?? file.fileName
+        return switch source {
+        case .huggingFace:
+            URL(string: "https://huggingface.co/\(repo)/resolve/\(file.huggingFaceRevision)/\(escaped)")!
+        case .modelScope:
+            URL(string: "https://modelscope.cn/models/\(repo)/resolve/\(file.modelScopeRevision)/\(escaped)")!
+        }
+    }
+
     /// 用最大文件探测实际权重分发路径，避免只测小型 JSON 后在权重 CDN 上卡住。
     static func probeFile(in files: [RemoteFile]) -> RemoteFile? {
         files.max { lhs, rhs in lhs.size < rhs.size }
@@ -327,6 +418,173 @@ public enum ModelDownloader {
 
     // MARK: - 单文件下载
 
+    private static func downloadSingleFile(
+        repo: String,
+        file: SingleFileDistribution,
+        from source: ModelSource,
+        into base: URL,
+        reportInitialProgress: Bool,
+        progress: @Sendable @escaping (DownloadProgress) -> Void
+    ) async throws -> URL {
+        let fm = FileManager.default
+        let dir = snapshotDirectory(in: base, repo: repo)
+        try fm.createDirectory(at: dir, withIntermediateDirectories: true)
+        let dest = dir.appendingPathComponent(file.fileName)
+
+        if reportInitialProgress {
+            progress(DownloadProgress(fraction: 0, completedBytes: 0, totalBytes: file.bytes))
+        }
+
+        // 没有标记但完整文件还在时（例如写标记前进程退出），只需重新校验并收口。
+        if fileSize(at: dest) == file.bytes {
+            let actual = try sha256(of: dest)
+            if actual == file.sha256 {
+                try writeCompletionMarker(file: file, in: dir)
+                progress(DownloadProgress(
+                    fraction: 1, completedBytes: file.bytes, totalBytes: file.bytes))
+                return dir
+            }
+            try? fm.removeItem(at: dest)
+            GTLog.error("GGUF checksum mismatch source=local revision=existing " +
+                        "expected=\(file.sha256) actual=\(actual)")
+        } else if fm.fileExists(atPath: dest.path) {
+            try? fm.removeItem(at: dest)
+        }
+
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = 60
+        configuration.timeoutIntervalForResource = 6 * 60 * 60
+        let session = URLSession(configuration: configuration)
+        defer { session.finishTasksAndInvalidate() }
+
+        let url = singleFileURL(repo: repo, file: file, source: source)
+        let remote = RemoteFile(path: file.fileName, size: file.bytes)
+        try await fetchVerifiedSingleWithRetry(
+            remote, expectedSHA256: file.sha256, from: url, to: dest, session: session
+        ) { completed in
+            progress(DownloadProgress(
+                fraction: fraction(completed, of: file.bytes),
+                completedBytes: completed,
+                totalBytes: file.bytes
+            ))
+        }
+        try writeCompletionMarker(file: file, in: dir)
+        progress(DownloadProgress(fraction: 1, completedBytes: file.bytes, totalBytes: file.bytes))
+        GTLog.info("model downloaded: \(repo)/\(file.fileName) via \(source.rawValue), " +
+                   "revision=\(source == .huggingFace ? file.huggingFaceRevision : file.modelScopeRevision), " +
+                   "\(file.bytes) bytes sha256=\(file.sha256)")
+        return dir
+    }
+
+    private static func fetchVerifiedSingleWithRetry(
+        _ file: RemoteFile,
+        expectedSHA256: String,
+        from url: URL,
+        to dest: URL,
+        session: URLSession,
+        fileProgress: @Sendable (Int64) -> Void
+    ) async throws {
+        var attempt = 0
+        while true {
+            try Task.checkCancellation()
+            do {
+                try await fetchVerifiedSingleOnce(
+                    file, expectedSHA256: expectedSHA256, from: url, to: dest,
+                    session: session, fileProgress: fileProgress)
+                return
+            } catch {
+                if isCancellation(error) { throw error }
+                attempt += 1
+                guard attempt <= 2 else { throw error }
+                GTLog.info("download retry \(attempt)/2 for \(file.path): \(error)")
+            }
+        }
+    }
+
+    private static func fetchVerifiedSingleOnce(
+        _ file: RemoteFile,
+        expectedSHA256: String,
+        from url: URL,
+        to dest: URL,
+        session: URLSession,
+        fileProgress: @Sendable (Int64) -> Void
+    ) async throws {
+        let fm = FileManager.default
+        let part = dest.appendingPathExtension("part")
+        var existing = fileSize(at: part) ?? 0
+        if existing > file.size {
+            try fm.removeItem(at: part)
+            existing = 0
+        }
+
+        if existing < file.size {
+            var request = URLRequest(url: url)
+            if existing > 0 {
+                request.setValue("bytes=\(existing)-", forHTTPHeaderField: "Range")
+            }
+            let (bytes, response) = try await session.bytes(for: request)
+            guard let http = response as? HTTPURLResponse else {
+                throw ModelDownloadError.notHTTPResponse(url)
+            }
+            switch (http.statusCode, existing > 0) {
+            case (200, false), (206, true):
+                break
+            case (200, true):
+                try fm.removeItem(at: part)
+                existing = 0
+            default:
+                throw ModelDownloadError.httpStatus(http.statusCode, url)
+            }
+            fileProgress(existing)
+            try await writeStream(
+                bytes, to: part, resumingAt: existing, fileProgress: fileProgress)
+        }
+
+        let actualBytes = fileSize(at: part) ?? 0
+        guard actualBytes == file.size else {
+            // 短文件可安全续传；超长文件不能，需丢弃。
+            if actualBytes > file.size { try? fm.removeItem(at: part) }
+            throw ModelDownloadError.sizeMismatch(
+                path: file.path, expected: file.size, actual: actualBytes)
+        }
+        let actualSHA256 = try sha256(of: part)
+        guard actualSHA256 == expectedSHA256 else {
+            // 摘要错误的完整 .part 不是安全断点，不能继续续传。
+            try? fm.removeItem(at: part)
+            GTLog.error("GGUF checksum mismatch source=\(url.host ?? "unknown") " +
+                        "revision=\(url.pathComponents.dropLast().last ?? "unknown") " +
+                        "expected=\(expectedSHA256) actual=\(actualSHA256)")
+            throw ModelDownloadError.checksumMismatch(
+                path: file.path, expected: expectedSHA256, actual: actualSHA256)
+        }
+        try? fm.removeItem(at: dest)
+        try fm.moveItem(at: part, to: dest)
+    }
+
+    private static func writeCompletionMarker(file: SingleFileDistribution, in dir: URL) throws {
+        let marker = CompletionMarker(
+            version: 2,
+            files: [CompletionMarker.File(
+                path: file.fileName, size: file.bytes, sha256: file.sha256
+            )]
+        )
+        let data = try JSONEncoder().encode(marker)
+        try data.write(to: dir.appendingPathComponent(completionMarkerName), options: .atomic)
+    }
+
+    /// CryptoKit 的流式摘要，避免把 440–573 MiB GGUF 一次性读入内存。
+    static func sha256(of url: URL) throws -> String {
+        let handle = try FileHandle(forReadingFrom: url)
+        defer { try? handle.close() }
+        var hasher = SHA256()
+        while true {
+            let data = try handle.read(upToCount: chunkSize) ?? Data()
+            if data.isEmpty { break }
+            hasher.update(data: data)
+        }
+        return hasher.finalize().map { String(format: "%02x", $0) }.joined()
+    }
+
     private static func fetchWithRetry(
         _ file: RemoteFile,
         from url: URL,
@@ -336,10 +594,12 @@ public enum ModelDownloader {
     ) async throws {
         var attempt = 0
         while true {
+            try Task.checkCancellation()
             do {
                 try await fetchOnce(file, from: url, to: dest, session: session, fileProgress: fileProgress)
                 return
             } catch {
+                if isCancellation(error) { throw error }
                 attempt += 1
                 guard attempt <= 2 else { throw error }
                 GTLog.info("download retry \(attempt)/2 for \(file.path): \(error)")
@@ -444,6 +704,12 @@ public enum ModelDownloader {
         guard http.statusCode == 200 else {
             throw ModelDownloadError.httpStatus(http.statusCode, url)
         }
+    }
+
+    private static func isCancellation(_ error: Error) -> Bool {
+        if error is CancellationError { return true }
+        let nsError = error as NSError
+        return nsError.domain == NSURLErrorDomain && nsError.code == NSURLErrorCancelled
     }
 
     private static func fraction(_ done: Int64, of total: Int64) -> Double {

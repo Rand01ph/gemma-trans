@@ -364,7 +364,7 @@ struct SettingsView: View {
         let ec = EngineController.shared
         let installed = installedIDs.contains(entry.id)
         return modelRow(title: entry.displayName,
-                        subtitle: formatGB(entry.estimatedBytes),
+                        subtitle: ec.modelDownloadErrors[entry.id] ?? formatBytes(entry.estimatedBytes),
                         active: installed && ec.selectedModelID == entry.id,
                         installed: installed,
                         downloading: ec.downloadingModelID == entry.id,
@@ -550,12 +550,18 @@ struct SettingsView: View {
             .frame(width: GTSettingsControlMetrics.compactFieldWidth)
     }
 
-    private func formatGB(_ bytes: UInt64) -> String {
-        String(format: "%.1f GB", Double(bytes) / 1_000_000_000)
+    private func formatBytes(_ bytes: UInt64) -> String {
+        if bytes < 1_073_741_824 {
+            return "约 \(Int((Double(bytes) / 1_048_576).rounded())) MB"
+        }
+        return String(format: "%.1f GB", Double(bytes) / 1_000_000_000)
     }
 
-    private func formatGB(_ bytes: Int64) -> String {
-        String(format: "%.1f GB", Double(bytes) / 1_000_000_000)
+    private func formatBytes(_ bytes: Int64) -> String {
+        if bytes < 1_073_741_824 {
+            return String(format: "%.1f MB", Double(bytes) / 1_048_576)
+        }
+        return String(format: "%.1f GB", Double(bytes) / 1_000_000_000)
     }
 
     private func downloadText(_ progress: DownloadProgress) -> String {
@@ -563,7 +569,7 @@ struct SettingsView: View {
         guard let total = progress.totalBytes, let done = progress.completedBytes else {
             return "下载中 \(pct)%"
         }
-        return "下载中 \(pct)% · \(formatGB(done)) / \(formatGB(total))"
+        return "下载中 \(pct)% · \(formatBytes(done)) / \(formatBytes(total))"
     }
 
     static var serviceShortcutGlyphs: String {

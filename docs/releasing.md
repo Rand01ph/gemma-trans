@@ -4,7 +4,7 @@ GemmaTrans 提供两条独立分发链：Developer ID 签名、公证后的 GitH
 
 ## 版本规则
 
-- `MARKETING_VERSION`、`CFBundleShortVersionString` 与 Git tag 必须一致，例如 `2.0.0` / `v2.0.0`。
+- `MARKETING_VERSION`、`CFBundleShortVersionString` 与 Git tag 必须一致，例如 `2.1.0` / `v2.1.0`。
 - `CURRENT_PROJECT_VERSION` 与 `CFBundleVersion` 必须一致。
 - MAS 上传前先在 App Store Connect 确认最大 build 号，并输入更大的正整数。
 - 不要在签名验收前创建 `v*` 标签；tag 会直接创建公开 GitHub Release。
@@ -43,16 +43,16 @@ PR 的 `CI` workflow 必须通过：
 1. 在 Actions 手动运行 `Release macOS`。
 2. 工作流会生成 Developer ID 签名、Apple 公证并完成 staple 的 ZIP/DMG，但不会创建公开 Release。
 3. 下载 Actions artifact，验证安装、首次启动、模型管理、快捷键、浮窗和本地 API。
-4. 验收通过并合并到 `main` 后，创建 `v2.0.0` tag。
+4. 验收通过并合并到 `main` 后，创建 `v2.1.0` tag。
 5. 相同 workflow 会再次构建并把 ZIP/DMG 附加到 GitHub Release。
 
 ## 3. Mac App Store
 
-1. 在 App Store Connect 创建或确认 `2.0.0` 版本，并查看当前最大 build 号。
+1. 在 App Store Connect 创建或确认 `2.1.0` 版本，并查看当前最大 build 号；若最大值仍为 14，使用 15。
 2. 将 `App/project.yml` 与 `App/GemmaTrans/Info.plist` 中的 build 号同步提高并提交到目标分支。
 3. 在 App Store Connect › Xcode Cloud › 构建版本中启动“发布流水线”，正式发布始终选择 `main`。
 4. 工作流以 `GemmaTrans-MAS` scheme 执行 macOS Archive，并采用 App Store 分发准备。成功后等待 Apple 处理并在 TestFlight 中确认新 build。
-5. 在 TestFlight 验证后，把该 build 关联到 2.0.0，更新截图、描述、What's New 和审核备注，再提交审核。
+5. 在 TestFlight 验证六款模型、下载续传、两款新模型断网翻译与本地 API 后，把该 build 关联到 2.1.0，更新截图、描述、What's New 和审核备注，再提交审核。
 
 `Scripts/release-mas.sh` 与 GitHub `Release MAS (App Store)` 仅保留为故障时的备用上传路径；当前正式路径是 Xcode Cloud。
 

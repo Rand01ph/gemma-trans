@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "gemma-trans",
-    platforms: [.macOS(.v14), .iOS(.v18)],
+    platforms: [.macOS("26.0"), .iOS(.v18)],
     products: [
         .library(name: "GemmaTransKit", targets: ["GemmaTransKit"]),
         .library(name: "GemmaTransServer", targets: ["GemmaTransServer"]),
@@ -16,6 +16,11 @@ let package = Package(
         .package(url: "https://github.com/huggingface/swift-transformers", from: "1.3.0"),
     ],
     targets: [
+        .binaryTarget(
+            name: "LlamaRuntime",
+            url: "https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r1/LlamaRuntime-2.1.0-r1.zip",
+            checksum: "48dc5d4f58a7f316133dc0204ec62cd152528c581fe1a0e459428df77217ffe8"
+        ),
         .target(
             name: "GemmaTransKit",
             dependencies: [
@@ -24,6 +29,7 @@ let package = Package(
                 .product(name: "MLXHuggingFace", package: "mlx-swift-lm"),
                 .product(name: "HuggingFace", package: "swift-huggingface"),
                 .product(name: "Tokenizers", package: "swift-transformers"),
+                .target(name: "LlamaRuntime", condition: .when(platforms: [.macOS])),
             ]
         ),
         .target(
@@ -38,7 +44,11 @@ let package = Package(
             name: "gemma-trans-cli",
             dependencies: ["GemmaTransKit", "GemmaTransServer"]
         ),
-        .testTarget(name: "GemmaTransKitTests", dependencies: ["GemmaTransKit"]),
+        .testTarget(
+            name: "GemmaTransKitTests",
+            dependencies: ["GemmaTransKit"],
+            resources: [.process("Fixtures")]
+        ),
         .testTarget(name: "GemmaTransServerTests", dependencies: ["GemmaTransServer"]),
     ]
 )

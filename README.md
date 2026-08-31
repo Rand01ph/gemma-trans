@@ -1,19 +1,20 @@
 # GemmaTrans
 
-macOS 本地大模型划词翻译。基于 **MLX-Swift** 在 Apple Silicon 上运行 Google **Gemma 4** 与腾讯混元 **Hy-MT2**；模型下载完成后，翻译文本不会离开你的 Mac。
+macOS 本地大模型划词翻译。基于 **MLX-Swift** 与策展的静态 CPU 运行时，在 Apple Silicon 上运行 Google **Gemma 4** 与腾讯混元 **Hy-MT2**；模型下载完成后，翻译文本不会离开你的 Mac。
 
-[下载正式版](https://github.com/Rand01ph/gemma-trans/releases/latest) · [App Store](https://apps.apple.com/app/id6778876828) · [2.0 更新说明](docs/release-notes-2.0.md) · [设计系统](DESIGN.md) · [隐私政策](PRIVACY.md)
+[下载正式版](https://github.com/Rand01ph/gemma-trans/releases/latest) · [App Store](https://apps.apple.com/app/id6778876828) · [2.1 更新说明](docs/release-notes-2.1.md) · [设计系统](DESIGN.md) · [隐私政策](PRIVACY.md)
 
-> GemmaTrans 2.0 要求 **Apple Silicon Mac** 与 **macOS 26 或更高版本**。
+> GemmaTrans 2.1 要求 **Apple Silicon Mac** 与 **macOS 26 或更高版本**。
 
-## 2.0 亮点
+## 2.1 亮点
 
 - **本地 HTTP API**（`127.0.0.1:8765`）：极简 `/translate` 接口 + 兼容 `/v1/chat/completions` 请求格式，PopClip、Bob、Raycast 等工具直连
 - **Liquid Glass 新界面**：以克制的原生玻璃层级重构主窗口、三标签设置页和紧凑的结果优先翻译浮窗，完整适配浅色、深色与系统外观
 - **划词与剪贴板快捷翻译**：macOS Service 处理当前选中文本，`⌥D` 翻译剪贴板；快捷键浮窗不会抢占主窗口
 - **可固定的翻译浮窗**：逐段翻译长文时锁定浮窗位置，连续结果在同一位置更新；译文字号可在设置中调节
 - **智能双向**：自动检测语言——中文 → 英文，其他语言 → 中文（目标语言可配置）
-- **明确的模型选择**：首次启动不再自动下载；从 Gemma 4 E4B/E2B 和 Hy-MT2 4/8-bit 中按需下载、使用或删除
+- **六款明确可选模型**：首次启动不自动下载；在原有 Gemma 4 E4B/E2B、Hy-MT2 4/8-bit 之外，新增约 440 MB 的 Hy-MT2 1.25-bit 轻量版与约 573 MB 的 2-bit 均衡版
+- **固定文件完整性校验**：两款低比特模型直接下载固定 revision 的单个文件，并校验字节数与 SHA-256；Hugging Face 不可用时自动回退 ModelScope
 - **自动下载源回退**：优先 Hugging Face，不可用时自动切换 ModelScope，无需手动选择国内源
 - **稳定的模型管理**：新模型可以后台下载，不影响当前模型继续翻译；针对新版 Gemma 4 checkpoint 提供兼容错误提示
 - **性能可视**：翻译后显示每秒 token 速率（按模型分别记录），随时观察各模型快慢
@@ -28,7 +29,7 @@ macOS 本地大模型划词翻译。基于 **MLX-Swift** 在 Apple Silicon 上�
    - 复制文本后按 `⌥D` 翻译剪贴板；
    - 固定翻译浮窗后，可逐段触发翻译而不改变阅读位置。
 
-模型体积约为：Hy-MT2 4-bit 1.1GB、Hy-MT2 8-bit 1.9GB、Gemma 4 E2B 3.6GB、Gemma 4 E4B 4.9GB。下载属于用户主动操作；下载完成后翻译可完全离线进行。
+模型体积约为：Hy-MT2 1.25-bit 440 MB、Hy-MT2 2-bit 573 MB、Hy-MT2 4-bit 1.1GB、Hy-MT2 8-bit 1.9GB、Gemma 4 E2B 3.6GB、Gemma 4 E4B 4.9GB。下载属于用户主动操作；下载完成后翻译可完全离线进行。
 
 ## 从源码构建 macOS App
 
@@ -127,12 +128,15 @@ API 可在菜单栏/设置中即时开关，无需重启。关闭后划词翻译
 GemmaTransKit     核心库：MLX-Swift 引擎封装、语言检测（NaturalLanguage）、提示词、按内存自动调优
 GemmaTransServer  HTTP 层：FlyingFox，/translate + /v1/chat/completions + SSE
 gemma-trans-cli   命令行：spike / serve
+LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放任意 GGUF 加载
 ```
 
 ## 发布
 
 - [CHANGELOG.md](CHANGELOG.md)：版本变更记录
 - [docs/release-notes-2.0.md](docs/release-notes-2.0.md)：GemmaTrans 2.0 发布文案与升级说明
+- [docs/release-notes-2.1.md](docs/release-notes-2.1.md)：GemmaTrans 2.1 发布文案、测试重点与升级说明
+- [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)：定制运行时来源与第三方许可证索引
 - [docs/social-launch-2.0.md](docs/social-launch-2.0.md)：小红书首发、连续宣传选题与 V2EX 技术复盘稿
 - [docs/store-listing.md](docs/store-listing.md)：Mac App Store 描述、审核备注与提审清单
 - [docs/releasing.md](docs/releasing.md)：版本、Actions Secrets、签名、公证与 MAS 发布步骤

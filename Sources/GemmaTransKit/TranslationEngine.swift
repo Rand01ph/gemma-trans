@@ -9,8 +9,10 @@ import Tokenizers
 public actor TranslationEngine: TranslationService {
     private let settings: AppSettings
     private var model: ModelContainer?
+    private var llamaRuntime: LlamaRuntime?
     private var lastGeneration: Task<Void, Never>?
     private var generationTasks: [UUID: Task<Void, Never>] = [:]
+    private var acceptingGeneration = true
     private let detector = LanguageDetector()
     private var resolvedTuning: EngineTuning?
     /// 当前活跃模型的 family，决定 prompt 策略：Gemma 用 systemPrompt；Hy-MT2（混元）按其
@@ -30,7 +32,7 @@ public actor TranslationEngine: TranslationService {
         self.settings = settings
     }
 
-    public var isReady: Bool { model != nil }
+    public var isReady: Bool { model != nil || llamaRuntime != nil }
 
     /// 加载模型（首次自动下载，progress 回调驱动 UI 显示百分比 + 已下/总字节量）
     /// - Parameter cacheDirectory: 模型缓存目录。非 nil（iOS/CLI）走自研 ModelDownloader
@@ -157,21 +159,45 @@ public actor TranslationEngine: TranslationService {
         let repo = resolved.entry.repo
         let base = cacheDirectory ?? Self.defaultModelDirectory()
         let snapshotDir = ModelDownloader.snapshotDirectory(in: base, repo: repo)
+
+        if case .llamaGGUF(let quantization) = resolved.entry.backend {
+            if !ModelDownloader.isComplete(snapshotDir, for: resolved.entry) {
+                _ = try await ModelDownloader.download(
+                    entry: resolved.entry,
+                    from: modelSource,
+                    into: base,
+                    progress: progress
+                )
+            }
+            guard let fileURL = ModelDownloader.modelFileURL(
+                in: snapshotDir, for: resolved.entry) else {
+                throw TranslationError.modelNotSupported("模型目录缺少固定 GGUF 文件信息")
+            }
+            let runtime = LlamaRuntime()
+            try await runtime.load(fileURL: fileURL, quantization: quantization)
+            try await runtime.warmup()
+            model = nil
+            llamaRuntime = runtime
+            acceptingGeneration = true
+            GTLog.info("llama model loaded+warmed: \(resolved.entry.id)")
+            return
+        }
+
         let canLoadLegacyGemma = cacheDirectory == nil
             && resolved.entry.family == .gemma
             && InstalledModels.legacyCacheHasModel(
                 repo: repo,
                 hub: InstalledModels.defaultLegacyHuggingFaceHub
             )
-        if !ModelDownloader.isComplete(snapshotDir) && !canLoadLegacyGemma {
+        if !ModelDownloader.isComplete(snapshotDir, for: resolved.entry) && !canLoadLegacyGemma {
             _ = try await ModelDownloader.download(
-                repo: repo, from: modelSource, into: base, progress: progress)
+                entry: resolved.entry, from: modelSource, into: base, progress: progress)
         }
 
         let loaded: ModelContainer
         switch resolved.entry.family {
         case .gemma:
-            if canLoadLegacyGemma && !ModelDownloader.isComplete(snapshotDir) {
+            if canLoadLegacyGemma && !ModelDownloader.isComplete(snapshotDir, for: resolved.entry) {
                 let configuration = switch resolved.tuning.variant {
                 case .gemma4E4B4bit: LLMRegistry.gemma4_e4b_it_4bit
                 case .gemma4E2B4bit: LLMRegistry.gemma4_e2b_it_4bit
@@ -201,6 +227,8 @@ public actor TranslationEngine: TranslationService {
         let warmup = ChatSession(container, generateParameters: GenerateParameters(maxTokens: 1))
         _ = try? await warmup.respond(to: "hi")
         model = container
+        llamaRuntime = nil
+        acceptingGeneration = true
         // 预热（1-token 生成）留下的临时缓冲在置 ready 后立即回收，让初始空闲态就精简；
         // 权重已在 model 中常驻，clearCache 不动它。
         MLX.Memory.clearCache()
@@ -209,7 +237,9 @@ public actor TranslationEngine: TranslationService {
     }
 
     public func translate(_ text: String, target: String?) async throws -> TranslationStreamResult {
-        guard let model else { throw TranslationError.modelNotLoaded }
+        guard acceptingGeneration, model != nil || llamaRuntime != nil else {
+            throw TranslationError.modelNotLoaded
+        }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw TranslationError.emptyInput }
 
@@ -219,6 +249,17 @@ public actor TranslationEngine: TranslationService {
         let plan = detector.plan(for: input, target: target, settings: settings)
         let prompt = PromptBuilder.userPrompt(text: input, target: plan.target)
         let maxTokens = resolvedTuning?.maxTokens ?? 2048
+        if let llamaRuntime {
+            return makeLlamaTranslation(
+                runtime: llamaRuntime,
+                prompt: prompt,
+                detected: plan.detected,
+                target: plan.target,
+                truncated: truncated,
+                maxTokens: maxTokens
+            )
+        }
+        guard let model else { throw TranslationError.modelNotLoaded }
         // Gemma 用固定系统指令；Hy-MT2 按推荐只发 user 指令（无 system）。
         // 先 capture 到局部，避免下面的 Task 闭包访问 actor 隔离的 activeFamily。
         let instructions = activeFamily == .gemma ? PromptBuilder.systemPrompt : nil
@@ -272,16 +313,70 @@ public actor TranslationEngine: TranslationService {
         )
     }
 
+    private func makeLlamaTranslation(
+        runtime: LlamaRuntime,
+        prompt: String,
+        detected: String,
+        target: String,
+        truncated: Bool,
+        maxTokens: Int
+    ) -> TranslationStreamResult {
+        let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
+        let generationID = UUID()
+        let previous = lastGeneration
+        let generationTask = Task {
+            await previous?.value
+            defer { self.generationFinished(id: generationID) }
+            do {
+                try Task.checkCancellation()
+                let metrics = try await runtime.generate(
+                    userPrompt: prompt,
+                    maxTokens: maxTokens,
+                    onChunk: { continuation.yield($0) }
+                )
+                lastTokensPerSecond = metrics.tokensPerSecond
+                GTLog.info("llama gen: \(metrics.generatedTokens) tok, " +
+                    String(
+                        format: "first %.2fs total %.2fs %.1f tok/s",
+                        metrics.firstTokenSeconds,
+                        metrics.totalSeconds,
+                        metrics.tokensPerSecond
+                    ))
+                continuation.finish()
+            } catch is CancellationError {
+                continuation.finish(throwing: CancellationError())
+            } catch {
+                GTLog.error("llama generation failed: \(error)")
+                continuation.finish(throwing: error)
+            }
+        }
+        generationTasks[generationID] = generationTask
+        lastGeneration = generationTask
+        continuation.onTermination = { @Sendable [weak self] termination in
+            guard case .cancelled = termination else { return }
+            Task { await self?.cancelGeneration(id: generationID) }
+        }
+        return TranslationStreamResult(
+            detected: detected,
+            target: target,
+            truncated: truncated,
+            chunks: stream
+        )
+    }
+
     /// 一次性 process 会话：按 instruction 处理 text，返回聚合结果。
     /// 复用串行队列、maxTokens 与翻译相同的 temperature/repetitionPenalty。
     /// 输入按 resolvedTuning.maxInputChars 截断；不走 LanguageDetector。
     public func process(_ text: String, instruction: String) async throws -> String {
-        guard let model else { throw TranslationError.modelNotLoaded }
+        guard acceptingGeneration, model != nil || llamaRuntime != nil else {
+            throw TranslationError.modelNotLoaded
+        }
         // 通用文本处理只在通用模型（Gemma）上可靠；Hy-MT2 是翻译专用，喂任意指令易出烂结果，
         // 直接拒绝而非静默跑偏（采纳 Codex 审查）。
         guard activeFamily == .gemma else {
             throw TranslationError.modelNotSupported("当前为翻译专用模型，不支持通用文本处理，请切换到 Gemma")
         }
+        guard let model else { throw TranslationError.modelNotLoaded }
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw TranslationError.emptyInput }
 
@@ -347,7 +442,7 @@ public actor TranslationEngine: TranslationService {
         // 队列真正排空才回收：连续/排队生成（含 API 串行链）中途任务表不为空，
         // 故不会清掉马上要复用的缓冲、不抖动。clearCache 只把没人引用的空闲缓冲池
         // （上一轮 KV cache/激活那部分工作余量）还给系统，不碰被 model 强引用的权重。
-        if generationTasks.isEmpty {
+        if generationTasks.isEmpty, model != nil {
             let beforeMB = MLX.Memory.cacheMemory >> 20
             MLX.Memory.clearCache()
             GTLog.info("mlx idle reclaim: cache \(beforeMB)MB→\(MLX.Memory.cacheMemory >> 20)MB, " +
@@ -395,10 +490,25 @@ public actor TranslationEngine: TranslationService {
 
     /// 卸载当前模型并回收工作余量缓冲（切换模型前调用）。
     /// 权重被 model 强引用；置 nil 后 ARC 释放，clearCache 再回收空闲缓冲池余量。
-    public func unload() {
+    public func unload() async {
+        acceptingGeneration = false
+        let hadMLXModel = model != nil
+        let tasks = Array(generationTasks.values)
+        tasks.forEach { $0.cancel() }
+        for task in tasks {
+            await task.value
+        }
+        generationTasks.removeAll()
+        lastGeneration = nil
         model = nil
-        MLX.Memory.clearCache()
-        GTLog.info("mlx model unloaded (switch)")
+        if let llamaRuntime {
+            await llamaRuntime.unload()
+            self.llamaRuntime = nil
+        }
+        if hadMLXModel {
+            MLX.Memory.clearCache()
+        }
+        GTLog.info("translation model unloaded (switch)")
     }
 
     /// macOS 默认模型目录：~/Library/Application Support/GemmaTrans/models（自动建目录）

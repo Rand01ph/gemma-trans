@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <memory>
 #include <string>
+#include <mach/mach.h>
 
 namespace {
 
@@ -19,6 +20,16 @@ struct generation_deleter {
 
 using model_ptr = std::unique_ptr<gt_llama_model, model_deleter>;
 using generation_ptr = std::unique_ptr<gt_llama_generation, generation_deleter>;
+
+uint64_t resident_bytes() {
+    mach_task_basic_info_data_t info{};
+    mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                  reinterpret_cast<task_info_t>(&info), &count) != KERN_SUCCESS) {
+        return 0;
+    }
+    return info.resident_size;
+}
 
 std::string translate(gt_llama_model * model, const std::string & prompt, gt_llama_metrics * metrics) {
     char error[512]{};
@@ -69,7 +80,8 @@ void cancel_generation(gt_llama_model * model) {
     };
     generation_ptr generation(gt_llama_generation_begin(
         model,
-        "Translate the following text into English. Output only the translation.\n\n"
+        "Translate the following text into English. Note that you should only output the "
+        "translated result without any additional explanation:\n\n"
         "这是一次生成取消测试。",
         sampling,
         error,
@@ -107,15 +119,22 @@ void run_model(const char * path, gt_llama_quantization quantization, int repeti
         std::fprintf(stderr, "model load failed: %s\n", error);
         std::exit(1);
     }
+    if (load_seconds > 10.0) {
+        std::fprintf(stderr, "model load exceeded 10s: %.3fs\n", load_seconds);
+        std::exit(7);
+    }
 
     cancel_generation(model.get());
+    uint64_t fifth_rss = 0;
 
     for (int index = 0; index < repetitions; ++index) {
         const bool to_chinese = index % 2 == 0;
         const std::string prompt = to_chinese
-            ? "Translate the following text into Simplified Chinese. Output only the translation.\n\n"
+            ? "Translate the following text into Chinese. Note that you should only output the "
+              "translated result without any additional explanation:\n\n"
               "Hello, welcome to GemmaTrans. Your text stays private and is translated entirely on this Mac."
-            : "Translate the following text into English. Output only the translation.\n\n"
+            : "Translate the following text into English. Note that you should only output the "
+              "translated result without any additional explanation:\n\n"
               "你好，欢迎使用 GemmaTrans。你的文本不会离开这台 Mac。";
         gt_llama_metrics metrics{};
         const std::string output = translate(model.get(), prompt, &metrics);
@@ -124,13 +143,34 @@ void run_model(const char * path, gt_llama_quantization quantization, int repeti
             std::fprintf(stderr, "invalid output at iteration %d: %s\n", index + 1, output.c_str());
             std::exit(4);
         }
+        if (metrics.first_token_seconds > 3.0 || metrics.tokens_per_second < 8.0) {
+            std::fprintf(stderr, "performance gate failed at iteration %d: first=%.3fs speed=%.2ft/s\n",
+                         index + 1, metrics.first_token_seconds, metrics.tokens_per_second);
+            std::exit(8);
+        }
+        const uint64_t rss = resident_bytes();
+        if (rss > (uint64_t{1536} << 20)) {
+            std::fprintf(stderr, "RSS gate failed at iteration %d: %llu bytes\n",
+                         index + 1, static_cast<unsigned long long>(rss));
+            std::exit(9);
+        }
+        if (index == 4) {
+            fifth_rss = rss;
+        }
+        if (index == 19 && fifth_rss > 0 && rss > fifth_rss + (uint64_t{200} << 20)) {
+            std::fprintf(stderr, "RSS growth gate failed: fifth=%llu twentieth=%llu\n",
+                         static_cast<unsigned long long>(fifth_rss),
+                         static_cast<unsigned long long>(rss));
+            std::exit(10);
+        }
         std::printf(
-            "iteration=%d load=%.3fs first=%.3fs speed=%.2ft/s tokens=%d output=%s\n",
+            "iteration=%d load=%.3fs first=%.3fs speed=%.2ft/s tokens=%d rss=%llu output=%s\n",
             index + 1,
             load_seconds,
             metrics.first_token_seconds,
             metrics.tokens_per_second,
             metrics.generated_tokens,
+            static_cast<unsigned long long>(rss),
             output.c_str());
     }
 }

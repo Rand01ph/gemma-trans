@@ -18,7 +18,7 @@ public enum InstalledModels {
     ) -> Bool {
         guard let entry = ModelCatalog.entry(id: id) else { return false }
         let dir = ModelDownloader.snapshotDirectory(in: base, repo: entry.repo)
-        return ModelDownloader.isComplete(dir)
+        return ModelDownloader.isComplete(dir, for: entry)
             || legacyDirectoryIfInstalled(for: entry, hub: legacyHuggingFaceHub) != nil
     }
 
@@ -30,7 +30,7 @@ public enum InstalledModels {
         ModelCatalog.entries.compactMap { entry in
             let snapshot = ModelDownloader.snapshotDirectory(in: base, repo: entry.repo)
             let dir: URL
-            if ModelDownloader.isComplete(snapshot) {
+            if ModelDownloader.isComplete(snapshot, for: entry) {
                 dir = snapshot
             } else if let legacy = legacyDirectoryIfInstalled(
                 for: entry,

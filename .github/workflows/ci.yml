@@ -15,6 +15,15 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      - name: 校验低比特 Runtime checksum
+        run: |
+          set -euo pipefail
+          PACKAGE_CHECKSUM="$(sed -n 's/.*checksum: "\([0-9a-f]*\)".*/\1/p' Package.swift)"
+          RECORDED_CHECKSUM="$(sed -n 's/^SHA-256 \/ SwiftPM checksum: //p' Runtime/LlamaRuntime/CHECKSUMS.txt)"
+          test -n "$PACKAGE_CHECKSUM"
+          test "$PACKAGE_CHECKSUM" = "$RECORDED_CHECKSUM"
+          echo "Runtime checksum: $PACKAGE_CHECKSUM"
+
       - name: 选择包含 macOS 26 SDK 的正式 Xcode
         run: |
           set -euo pipefail

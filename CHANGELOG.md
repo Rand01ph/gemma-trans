@@ -2,6 +2,26 @@
 
 GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS App 的正式构建号由 App Store Connect 发布流程单独递增。
 
+## [2.1.0] - 2026-08-31
+
+### Added
+
+- 新增 Hy-MT2 1.8B（1.25-bit · 轻量版，约 440 MB）与 Hy-MT2 1.8B（2-bit · 均衡版，约 573 MB）。
+- 新增面向两款策展 GGUF 的 CPU/NEON 静态运行时；运行时来源、补丁、许可证和确定性构建脚本均随仓库提供。
+- 新增固定 revision 单文件下载，下载完成后校验精确字节数和 SHA-256。
+
+### Changed
+
+- 模型页由四款增加为六款；旧模型顺序、标识、目录和行为保持不变。
+- Hy-MT2 提示词与官方 1.8B 推荐对齐：完整语言名、仅 user 消息、无 system prompt。
+- 小于 1 GiB 的模型使用 MB 显示体积；下载完成后仍由用户主动切换，不自动改变当前模型。
+
+### Compatibility
+
+- 仅支持 Apple Silicon Mac 与 macOS 26.0 或更高版本；本版本不新增 iOS App。
+- HTTP API、SSE 格式、UserDefaults key 和旧四款模型目录保持兼容。
+- 构建号 15 先通过 TestFlight 验收；正式 `v2.1.0` 标签仅在验收通过后创建。
+
 ## [2.0.0] - 2026-07-23
 
 ### Added
@@ -35,3 +55,4 @@ GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS 
 - 不修改 HTTP API、UserDefaults key、模型目录或对外数据格式。
 
 [2.0.0]: https://github.com/Rand01ph/gemma-trans/compare/v1.1.0...v2.0.0
+[2.1.0]: https://github.com/Rand01ph/gemma-trans/compare/v2.0.0...v2.1.0
