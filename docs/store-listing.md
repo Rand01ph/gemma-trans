@@ -39,19 +39,15 @@ GemmaTrans 2.0 is a complete macOS experience refresh:
 
 #### 简体中文
 
-- 新增 Hy-MT2 1.8B 1.25-bit 轻量版（约 440 MB）
-- 新增 Hy-MT2 1.8B 2-bit 均衡版（约 573 MB）
-- 固定模型文件版本，并在下载完成后校验大小和 SHA-256
-- 两款新模型完全本地运行，支持主窗口、划词服务、剪贴板浮窗和本地 API
-- 升级后不自动下载，也不改变当前模型
+GemmaTrans 2.1 新增两款更小的本地翻译模型：Hy-MT2 1.8B 1.25-bit 轻量版（约 440 MB）与 2-bit 均衡版（约 573 MB）。两款模型均在 Apple Silicon Mac 上完全离线运行，并支持主窗口、划词服务、剪贴板浮窗和本地 API。
+
+本次更新还改进了长文本体验：PopClip 插件会在 GemmaTrans 可滚动的多行浮窗中显示完整译文，本地 API 的慢请求也不再于 15 秒提前中断。模型下载会校验固定版本、文件大小和 SHA-256；升级不会自动下载或改变当前模型。
 
 #### English
 
-- Adds Hy-MT2 1.8B 1.25-bit Lightweight (about 440 MB)
-- Adds Hy-MT2 1.8B 2-bit Balanced (about 573 MB)
-- Pins model file revisions and verifies file size and SHA-256 after download
-- Both models run fully on-device across the main window, macOS Service, clipboard panel, and local API
-- Updating never downloads a model or changes the active model automatically
+GemmaTrans 2.1 adds two smaller on-device translation models: Hy-MT2 1.8B 1.25-bit Lightweight (about 440 MB) and 2-bit Balanced (about 573 MB). Both run fully offline on Apple silicon across the main window, macOS Service, clipboard panel, and local API.
+
+Long-text workflows are improved too: the bundled PopClip action now shows complete translations in GemmaTrans's scrollable multiline panel, and slower local API requests no longer end prematurely after 15 seconds. Downloads verify pinned revisions, file size, and SHA-256. Updating never downloads or switches models automatically.
 
 ## 1. 商店描述
 
@@ -66,7 +62,7 @@ GemmaTrans 2.0 is a complete macOS experience refresh:
 - **智能双向**：自动识别语言——外文译中文，中文译英文，目标语言可自定义
 - **完全离线**：翻译过程零网络请求，断网照用；你的文字永远不离开这台 Mac
 - **六个本地模型**：按需选择 Gemma 4 E4B/E2B、Hy-MT2 4/8-bit，或约 440 MB / 573 MB 的 Hy-MT2 轻量模型；不会在首次启动时自动下载
-- **开发者友好**：可选开启本地 HTTP API（仅监听 127.0.0.1），PopClip、Bob、Raycast 等工具直连
+- **开发者友好**：内置 PopClip 插件调用原生多行浮窗；可选本地 HTTP API 仅监听 127.0.0.1，供 Bob、Raycast 等工具连接
 - **按机器自动调优**：根据内存自动配置引擎参数，16GB 起步流畅运行
 
 三种译法：① 在主窗口粘贴或输入文字；② 任意 app 选中文字后按 ⌥⌘T，无需先复制；③ 复制文字后按 ⌥D 翻译剪贴板。首次启动请在“设置 › 模型”选择并下载模型；下载优先 Hugging Face，不可用时自动回退 ModelScope。需要 Apple Silicon Mac 与 macOS 26 或更高版本。
@@ -82,7 +78,7 @@ Select text anywhere, press a hotkey, and the translation streams into a floatin
 - **Smart bidirectional**: auto-detects language — foreign → Chinese, Chinese → English (both configurable)
 - **Truly offline**: zero network requests during translation; your text never leaves your Mac
 - **Six local models**: choose Gemma 4 E4B/E2B, Hy-MT2 4/8-bit, or the lightweight 440 MB / 573 MB Hy-MT2 models; the app never downloads a model without your action
-- **Developer friendly**: optional local HTTP API (binds to 127.0.0.1 only) for PopClip, Bob, Raycast and more
+- **Developer friendly**: the bundled PopClip action opens the native multiline panel; the optional local API binds only to 127.0.0.1 for Bob, Raycast, and other tools
 - **Auto-tuned**: engine parameters adapt to your machine's memory; runs smoothly from 16GB
 
 Three ways to translate: (1) paste or type text in the main window; (2) select text in any app and press ⌥⌘T (a macOS Services shortcut, rebindable in System Settings), no copying needed; (3) copy text and press ⌥D to translate the clipboard. On first launch, choose and download a model under Settings › Models. Downloads use Hugging Face first and automatically fall back to ModelScope when unavailable. Requires Apple Silicon and macOS 26 or later. No Accessibility permission required.
@@ -91,13 +87,13 @@ Three ways to translate: (1) paste or type text in the main window; (2) select t
 
 > GemmaTrans is a local-only translation utility that runs user-selected Google Gemma or Tencent Hy-MT2 models fully on-device. There is no ChatGPT/OpenAI integration and no third-party AI inference service of any kind. The app never sends translation text to OpenAI or any generative-AI server.
 >
-> **Re: Guideline 5 / "OpenAI"**: a previous build's marketing text described the optional local HTTP endpoint as "OpenAI-compatible" only to tell developers it accepts the common `/v1/chat/completions` request shape used by tools like PopClip. The app does NOT call OpenAI and contains no OpenAI/ChatGPT functionality. We have removed the word "OpenAI" from all metadata. The optional local server binds to 127.0.0.1 (loopback) only and simply forwards requests to the on-device Gemma model; it can be turned off.
+> **Re: Guideline 5 / "OpenAI"**: a previous build's marketing text described the optional local HTTP endpoint as "OpenAI-compatible" only to tell developers it accepts the common `/v1/chat/completions` request shape used by tools like PopClip. The app does NOT call OpenAI and contains no OpenAI/ChatGPT functionality. We have removed the word "OpenAI" from all metadata. The optional local server binds to 127.0.0.1 (loopback) only and simply forwards requests to the user-selected on-device model; it can be turned off.
 >
 > **Re: Guideline 2.4.5 / Accessibility**: this version does NOT request or use the Accessibility API at all. Text reaches the translator three ways, each user-initiated: (1) the user pastes or types text into the app's main window; (2) the user selects text in any app and invokes our macOS Services item "Translate with GemmaTrans" — it has a default shortcut ⌥⌘T, rebindable in System Settings › Keyboard › Keyboard Shortcuts › Services; (3) the user copies text and presses the in-app hotkey to translate the clipboard. No Accessibility permission, no keylogging, no background monitoring.
 >
 > **Network usage**: the only external network operation is a model download explicitly started by the user under Settings › Models. The app tries Hugging Face first and may automatically fall back to ModelScope when that source is unavailable. Translation itself performs zero network requests; the app works fully offline once a model is downloaded.
 >
-> **To test (Re: Guideline 2.1a / download)**: GemmaTrans is a menu-bar app (no Dock icon). On launch its main window opens automatically; it never downloads a model without an explicit click. Open Settings › Models and download “Hy-MT2 1.8B (1.25-bit Lightweight)” (about 440 MB) or “Hy-MT2 1.8B (2-bit Balanced)” (about 573 MB). Wait for the visible progress and integrity check, then click Use. Paste Chinese or English text into the main window and click Translate. Disconnect the network after download to confirm inference is fully offline. You can also select text in any app and choose Services › “Translate with GemmaTrans” (⌥⌘T), press ⌥D after copying text, or call the loopback-only local API. Switch between both new models and an existing model to test unload/reload. No Accessibility permission is requested.
+> **To test (Re: Guideline 2.1a / download)**: GemmaTrans is a menu-bar app (no Dock icon). On launch its main window opens automatically; it never downloads a model without an explicit click. Open Settings › Models and download “Hy-MT2 1.8B (1.25-bit Lightweight)” (about 440 MB) or “Hy-MT2 1.8B (2-bit Balanced)” (about 573 MB). Wait for the visible progress and integrity check, then click Use. Paste Chinese or English text into the main window and click Translate. Disconnect the network after download to confirm inference is fully offline. You can also select text in any app and choose Services › “Translate with GemmaTrans” (⌥⌘T), press ⌥D after copying text, or call the loopback-only local API. The bundled PopClip action invokes the same macOS Service and opens GemmaTrans's multiline panel; PopClip is not required for review. Switch between both new models and an existing model to test unload/reload. No Accessibility permission is requested.
 
 ## 3. 隐私政策（全文，可挂任意静态页面）
 
@@ -129,7 +125,7 @@ GemmaTrans does not collect, store, or transmit any user data.
 - [ ] 逐张核对「截图」里没有 "OpenAI"/"ChatGPT" 字样（Apple 把截图也算 metadata）；如有则重截。注意 app 现在是纯菜单栏 app、无 Dock 图标，截图别再出现 Dock 图标。
 - [ ] 「App 审核信息 / Review Notes」粘贴本文件第 2 节全文（已说明无 OpenAI、无辅助功能、下载可见、如何测试）。
 - [ ] 中国大陆区保持上架（已确认保留）。
-- [ ] 在 App Store Connect 创建 **2.1.0** 版本，并确认当前最大 build 号；仓库候选 build 为 **15**。
+- [ ] 在 App Store Connect 创建 **2.1.0** 版本；上传本次源码对应的候选 build **18** 后再关联（build 17 仅用于前一轮 TestFlight 初测）。
 - [ ] 使用正式版、包含 macOS 26 SDK 的 Xcode 构建 **GemmaTrans-MAS**；build 号必须高于 ASC 已有值。
-- [ ] 上传后先验证 TestFlight 安装、首次无自动下载、六模型下载/切换、两款新模型断网翻译、⌥⌘T、⌥D 和本地 API。
+- [ ] 上传后先验证 TestFlight 安装、首次无自动下载、六模型下载/切换、两款新模型断网翻译、⌥⌘T、⌥D、本地 API 和 PopClip 多行浮窗。
 - [ ] 两款新模型同时通过 TestFlight 验收后，再关联 2.1.0 build，完成出口合规、年龄分级和隐私信息后 Submit for Review。

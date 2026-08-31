@@ -18,7 +18,6 @@ macOS 本地大模型划词翻译。基于 **MLX-Swift** 与策展的静态 CPU 
 - **自动下载源回退**：优先 Hugging Face，不可用时自动切换 ModelScope，无需手动选择国内源
 - **稳定的模型管理**：新模型可以后台下载，不影响当前模型继续翻译；针对新版 Gemma 4 checkpoint 提供兼容错误提示
 - **性能可视**：翻译后显示每秒 token 速率（按模型分别记录），随时观察各模型快慢
-- **本地 HTTP API**（`127.0.0.1:8765`）：提供 `/translate` 与兼容 `/v1/chat/completions` 的请求格式，供 PopClip、Bob、Raycast 等工具连接
 
 ## 使用 App
 
@@ -30,6 +29,19 @@ macOS 本地大模型划词翻译。基于 **MLX-Swift** 与策展的静态 CPU 
    - 固定翻译浮窗后，可逐段触发翻译而不改变阅读位置。
 
 模型体积约为：Hy-MT2 1.25-bit 440 MB、Hy-MT2 2-bit 573 MB、Hy-MT2 4-bit 1.1GB、Hy-MT2 8-bit 1.9GB、Gemma 4 E2B 3.6GB、Gemma 4 E4B 4.9GB。下载属于用户主动操作；下载完成后翻译可完全离线进行。
+
+### Hy-MT2 低比特模型本地测试参考
+
+以下数据来自发布前使用与 App 完全相同的静态 XCFramework 运行时进行的本地门禁测试，仅用于帮助选择模型，不代表所有文本和设备的固定性能。
+
+测试环境与参数：Apple M2、16GB 内存、macOS 26；CPU/NEON 推理，关闭 Metal，`n_gpu_layers = 0`；`n_ctx = 4096`、`n_batch = 512`、6 个 CPU 线程；输入上限 1500 字符、App 最大输出 1024 tokens；`temperature = 0.7`、`top_p = 0.6`、`top_k = 20`、`repetition_penalty = 1.05`、固定 seed 42。每款模型连续执行 20 次中英双向翻译，并完成 1.25-bit → 2-bit → 1.25-bit 卸载切换。
+
+| 模型 | 文件体积 | 加载 | 首 token | 持续生成 | 进程 RSS |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Hy-MT2 1.8B 1.25-bit 轻量版 | 约 440 MB | 0.264 秒 | 0.60–1.02 秒 | 32–61 tokens/s | 824–859 MB |
+| Hy-MT2 1.8B 2-bit 均衡版 | 约 573 MB | 0.976 秒 | 0.25–0.50 秒 | 11.85–25 tokens/s | 1.20–1.29 GB |
+
+20 轮后没有观察到逐轮持续内存增长，峰值低于 1.5 GiB；加载、生成、取消和卸载流程另通过 Address Sanitizer。42 条多语言与格式保持样例在两款模型上共执行 84 次结构检查，均得到非空且无特殊 token/提示词泄漏的输出；这项结构检查不等同于人工语义质量评估。翻译质量仍与语言、文本类型和量化精度相关，2-bit 并不保证在每个输入上都优于 1.25-bit；正式选择建议以自己的常用文本实测为准。可审计门禁代码见 [`Runtime/LlamaRuntime/Tests/RuntimeGate.cpp`](Runtime/LlamaRuntime/Tests/RuntimeGate.cpp)。
 
 ## 从源码构建 macOS App
 
@@ -77,11 +89,11 @@ curl -s -X POST http://127.0.0.1:8765/v1/chat/completions -H 'Content-Type: appl
 
 ## PopClip 集成
 
-1. 保持 `gemma-trans-cli serve`（或 app）运行；用 app 时在菜单栏确认"本地 API"开启（默认已开）
-2. 在 Finder 中双击 `popclip/GemmaTrans.popclipext` 目录，PopClip 会提示安装
-3. 任意 app 选中文字 → 点击 PopClip 弹条中的 GemmaTrans 图标 → 顶部显示译文
+1. 安装并运行 GemmaTrans App，确保已经下载并启用一个模型。
+2. 在 Finder 中双击 `popclip/GemmaTrans.popclipext` 目录，PopClip 会提示安装。
+3. 任意 App 中选中文字，点击 PopClip 弹条中的 GemmaTrans 图标；插件会调用系统服务，在 GemmaTrans 可滚动的多行浮窗中流式显示译文。
 
-PopClip 也可以用任何接受 `/v1/chat/completions` 的扩展指向 `http://127.0.0.1:8765/v1`（API key 随意填）。
+内置 PopClip 插件不再使用单行且最多预览 160 字符的 `show-result`，也不依赖本地 API 开关。若要通过 PopClip 的其他扩展测试 API，仍可将任何接受 `/v1/chat/completions` 请求格式的扩展指向 `http://127.0.0.1:8765/v1`（API key 随意填）。
 
 ## API 文档
 

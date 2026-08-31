@@ -15,12 +15,18 @@ GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS 
 - 模型页由四款增加为六款；旧模型顺序、标识、目录和行为保持不变。
 - Hy-MT2 提示词与官方 1.8B 推荐对齐：完整语言名、仅 user 消息、无 system prompt。
 - 小于 1 GiB 的模型使用 MB 显示体积；下载完成后仍由用户主动切换，不自动改变当前模型。
+- PopClip 插件改为调用 GemmaTrans 的 macOS Service，在原生可滚动多行浮窗中展示完整译文。
+
+### Fixed
+
+- 修复 PopClip `show-result` 将长译文限制为单行、最多预览 160 字符的问题。
+- 修复本地 API 沿用 FlyingFox 15 秒默认 handler 超时、较慢请求提前返回 HTTP 500 的问题。
 
 ### Compatibility
 
 - 仅支持 Apple Silicon Mac 与 macOS 26.0 或更高版本；本版本不新增 iOS App。
 - HTTP API、SSE 格式、UserDefaults key 和旧四款模型目录保持兼容。
-- 构建号 15 先通过 TestFlight 验收；正式 `v2.1.0` 标签仅在验收通过后创建。
+- 构建号 17 已上传 TestFlight 用于前一轮初测；本次源码候选构建号为 18，需重新上传验收。正式 `v2.1.0` 标签仅在验收通过后创建。
 
 ## [2.0.0] - 2026-07-23
 
