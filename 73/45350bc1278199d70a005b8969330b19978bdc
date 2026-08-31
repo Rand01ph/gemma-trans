@@ -1,0 +1,53 @@
+Runtime/LlamaRuntime/Tests/RuntimeGate.cpp
+  s_6f16eec4bb94c6::t_9abb9348c6e24c 1-2,4-6,8-59,94-98,100-109,112-144,149,152-154
+  s_6f16eec4bb94c6::t_44b2f3e04b651e 3
+  s_6f16eec4bb94c6::t_084c8e88188da1 60-93,110-111
+  s_6f16eec4bb94c6::t_13a103947d6325 145-148,150-151
+  s_6f16eec4bb94c6::t_ceda287cff03d4 7
+  s_6f16eec4bb94c6::t_0de862cb5bd0d4 99
+Runtime/LlamaRuntime/README.md
+  s_6f16eec4bb94c6::t_661dfd3e22d71d 1-6,9-16,25
+  s_6f16eec4bb94c6::t_b8fc50bd809019 7-8
+  s_6f16eec4bb94c6::t_bb68571584fc9c 17-24
+Runtime/LlamaRuntime/LICENSES/KleidiAI-Apache-2.0.txt
+  s_6f16eec4bb94c6::t_a7f03b82fa1558 1-73
+.gitignore
+  s_6f16eec4bb94c6::t_4ef2fa274eeb64 14
+Runtime/LlamaRuntime/build-xcframework.sh
+  s_6f16eec4bb94c6::t_661dfd3e22d71d 1-57,101-102,104-109,116-136
+  s_6f16eec4bb94c6::t_b8fc50bd809019 58-100,103,110-115
+Runtime/LlamaRuntime/CHECKSUMS.txt
+  s_6f16eec4bb94c6::t_bb68571584fc9c 1-7
+Runtime/LlamaRuntime/Sources/include/GemmaLlamaRuntime.h
+  s_6f16eec4bb94c6::t_dcb69d97ef7e85 1-88
+Runtime/LlamaRuntime/upstream.json
+  s_6f16eec4bb94c6::t_661dfd3e22d71d 1-43
+Runtime/LlamaRuntime/LICENSES/llama.cpp-MIT.txt
+  s_6f16eec4bb94c6::t_a7f03b82fa1558 1-21
+Runtime/LlamaRuntime/Sources/include/module.modulemap
+  s_6f16eec4bb94c6::t_661dfd3e22d71d 1-6
+Runtime/LlamaRuntime/Sources/GemmaLlamaRuntime.cpp
+  s_6f16eec4bb94c6::t_dcb69d97ef7e85 1-7,9-34,41-121,123-256,258-344
+  s_6f16eec4bb94c6::t_96be322c4c5b09 8,35-40,122
+  s_6f16eec4bb94c6::t_13a103947d6325 257
+Runtime/LlamaRuntime/LICENSES/KleidiAI-BSD-3-Clause.txt
+  s_6f16eec4bb94c6::t_a7f03b82fa1558 1-11
+Runtime/LlamaRuntime/patches/combined.patch
+  s_6f16eec4bb94c6::t_7977398a2a24c4 1-3024
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7345350bc1278199d70a005b8969330b19978bdc",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
