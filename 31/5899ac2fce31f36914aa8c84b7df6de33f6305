@@ -1,0 +1,93 @@
+Runtime/LlamaRuntime/Tests/RuntimeGate.cpp
+  s_6f16eec4bb94c6::t_14e3ffaf81bffd 9,24-33,83-84,122-125,128,133-134,136-137,146-165,167,173
+Tests/GemmaTransKitTests/Fixtures/hymt2-quality.json
+  s_6f16eec4bb94c6::t_05180f9079119b 1-43,45-47
+  s_6f16eec4bb94c6::t_c1fc8b5e1a2af4 44
+Sources/GemmaTransKit/LlamaRuntime.swift
+  s_6f16eec4bb94c6::t_abf6e306f12b5e 38-52,156,179,184
+  s_6f16eec4bb94c6::t_472b9752ae91b1 1-37,53-56,66-105,107-116,118-146,148-155,157-178,180-183,185-203,206-225
+  s_6f16eec4bb94c6::t_1c43944b026566 57-65,106,147,204-205
+  s_6f16eec4bb94c6::t_094fd164bffeb4 117
+Sources/GemmaTransKit/TranslationEngine.swift
+  s_6f16eec4bb94c6::t_ac069dcb89ff64 162-185,192,194,200,230-231
+  s_6f16eec4bb94c6::t_85f7955de8d5e7 12,15,35
+  s_6f16eec4bb94c6::t_a2f474fdcca68b 445,493-494,496-502,504-507,511
+  s_6f16eec4bb94c6::t_5a06c79574f9cb 495,508-510
+  s_6f16eec4bb94c6::t_994e770e64b26a 240-242,252-262,316-366,371-373,379
+Sources/GemmaTransKit/InstalledModels.swift
+  s_6f16eec4bb94c6::t_65196bbc198675 21,33
+docs/releasing.md
+  s_6f16eec4bb94c6::t_589529bf4e25b5 7,46,51,55
+App/GemmaTrans/Info.plist
+  s_6f16eec4bb94c6::t_094fd164bffeb4 22,24
+Sources/GemmaTransKit/PromptBuilder.swift
+  s_6f16eec4bb94c6::t_0782a548d434b5 23-28,30-32
+  s_6f16eec4bb94c6::t_094fd164bffeb4 11,13,34-35
+Package.resolved
+  s_6f16eec4bb94c6::t_66a3f0ac283cba 2
+Sources/GemmaTransKit/ModelCatalog.swift
+  s_6f16eec4bb94c6::t_4285dd67fb0b9a 5-27,36-59,76-109
+CHANGELOG.md
+  s_6f16eec4bb94c6::t_2783c2284760c1 5-24,58
+README.md
+  s_6f16eec4bb94c6::t_2783c2284760c1 3,5,7,9,16-17,32,131,138-139
+App/GemmaTrans/SettingsView.swift
+  s_6f16eec4bb94c6::t_ede7ad52552e68 553-557,560-564,572
+  s_6f16eec4bb94c6::t_f7bf4809a0b5f0 367
+Tests/GemmaTransKitTests/ModelCatalogTests.swift
+  s_6f16eec4bb94c6::t_9964dc688158c7 8-15,28-56
+Tests/GemmaTransKitTests/ModelDownloaderTests.swift
+  s_6f16eec4bb94c6::t_017f42e1cdbc85 189
+  s_6f16eec4bb94c6::t_9964dc688158c7 73-89,175-188,190-211
+App/GemmaTrans/EngineController.swift
+  s_6f16eec4bb94c6::t_30c5fc6d10ec97 151,153
+  s_6f16eec4bb94c6::t_15b903cdaf85f6 224-230
+  s_6f16eec4bb94c6::t_f7bf4809a0b5f0 201,208,231-233
+  s_6f16eec4bb94c6::t_65196bbc198675 215
+docs/release-notes-2.1.md
+  s_6f16eec4bb94c6::t_2783c2284760c1 1-35
+docs/store-listing.md
+  s_6f16eec4bb94c6::t_589529bf4e25b5 9,38-55,68,84,92,100,120,132,134-135
+Sources/GemmaTransKit/ModelDownloader.swift
+  s_6f16eec4bb94c6::t_e70e4233bfcf1b 489,496,597,602,709-712
+  s_6f16eec4bb94c6::t_387881237b9f4f 2,29,39-40,57-67,93,97-107,112-129,177-209,222,324-327,394-409,421-488,490-495,497-586,713
+  s_6f16eec4bb94c6::t_6737fe2d075368 587
+  s_6f16eec4bb94c6::t_9dc099c9f6551b 714
+Tests/GemmaTransKitTests/PromptBuilderTests.swift
+  s_6f16eec4bb94c6::t_0782a548d434b5 8-14
+  s_6f16eec4bb94c6::t_094fd164bffeb4 15
+App/project.yml
+  s_6f16eec4bb94c6::t_094fd164bffeb4 24-25,54-55,76-77,110-111
+Package.swift
+  s_6f16eec4bb94c6::t_8b94e9e189393a 6
+  s_6f16eec4bb94c6::t_4285dd67fb0b9a 19-20,23,32
+  s_6f16eec4bb94c6::t_398955dcd0dc12 21-22
+  s_6f16eec4bb94c6::t_05180f9079119b 47-51
+Tests/GemmaTransKitTests/LlamaRuntimeTests.swift
+  s_6f16eec4bb94c6::t_6f7582387fbbf9 48-94
+  s_6f16eec4bb94c6::t_abf6e306f12b5e 1-4,6-47,139-150,152-157,189-190
+  s_6f16eec4bb94c6::t_c1fc8b5e1a2af4 183,185
+  s_6f16eec4bb94c6::t_094fd164bffeb4 151
+  s_6f16eec4bb94c6::t_bcab2f03b8bb5e 171
+  s_6f16eec4bb94c6::t_05180f9079119b 5,95-138,158-170,172-182,184,186-188
+.github/workflows/ci.yml
+  s_6f16eec4bb94c6::t_2783c2284760c1 18-26
+THIRD_PARTY_NOTICES.md
+  s_6f16eec4bb94c6::t_2783c2284760c1 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "315899ac2fce31f36914aa8c84b7df6de33f6305",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
