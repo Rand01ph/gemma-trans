@@ -1,0 +1,7 @@
+# LlamaRuntime 2.1.0-r1
+
+Asset: LlamaRuntime-2.1.0-r1.zip
+SHA-256 / SwiftPM checksum: 48dc5d4f58a7f316133dc0204ec62cd152528c581fe1a0e459428df77217ffe8
+
+Source composition patch: patches/combined.patch
+SHA-256: d771c1cc8a5bd8a8add821ec5d6485fd382047652d71b7d63b0497412bb075b9

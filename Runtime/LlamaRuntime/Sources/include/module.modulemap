@@ -1,0 +1,6 @@
+module LlamaRuntime {
+    header "GemmaLlamaRuntime.h"
+    export *
+    link "c++"
+    link framework "Accelerate"
+}
