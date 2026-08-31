@@ -1,0 +1,21 @@
+App/project.yml
+  s_6f16eec4bb94c6::t_0af88454d9774d 25,56,78,113
+App/GemmaTrans/Info.plist
+  s_6f16eec4bb94c6::t_0af88454d9774d 24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "7b2259f6b55a9b68fc3db4b8be0dc42b95a2eab0",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
