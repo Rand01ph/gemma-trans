@@ -30,7 +30,16 @@ stop_running_apps() {
 }
 
 build_app() {
-  local signing_args=()
+  local xcodebuild_args=(
+    -project "$PROJECT"
+    -scheme "$APP_NAME"
+    -configuration Debug
+    -destination 'platform=macOS,arch=arm64'
+    -derivedDataPath "$DERIVED_DATA"
+    -skipPackageUpdates
+    -skipMacroValidation
+    -skipPackagePluginValidation
+  )
   [[ -d "$DEVELOPER_DIR" ]] || {
     echo "Xcode developer directory not found: $DEVELOPER_DIR" >&2
     exit 1
@@ -41,27 +50,17 @@ build_app() {
   }
 
   if [[ "${CODE_SIGNING_ALLOWED:-YES}" == "NO" ]]; then
-    signing_args+=("CODE_SIGNING_ALLOWED=NO")
+    xcodebuild_args+=("CODE_SIGNING_ALLOWED=NO")
   elif ! /usr/bin/security find-identity -v -p codesigning 2>/dev/null | grep -q "$DEVELOPMENT_TEAM"; then
     echo "warning: no Mac Development identity for $DEVELOPMENT_TEAM; building unsigned." >&2
     echo "         Global shortcut and macOS Service validation require a signed build." >&2
-    signing_args+=("CODE_SIGNING_ALLOWED=NO")
+    xcodebuild_args+=("CODE_SIGNING_ALLOWED=NO")
   fi
 
   (
     cd "$APP_DIR"
     xcodegen generate --use-cache
-    /usr/bin/xcodebuild \
-      -project "$PROJECT" \
-      -scheme "$APP_NAME" \
-      -configuration Debug \
-      -destination 'platform=macOS,arch=arm64' \
-      -derivedDataPath "$DERIVED_DATA" \
-      -skipPackageUpdates \
-      -skipMacroValidation \
-      -skipPackagePluginValidation \
-      "${signing_args[@]}" \
-      build
+    /usr/bin/xcodebuild "${xcodebuild_args[@]}" build
   )
 }
 
