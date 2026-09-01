@@ -10,7 +10,9 @@ permissions:
 
 jobs:
   test-and-build:
-    runs-on: macos-15
+    # 测试包的最低系统版本是 macOS 26；macOS 15 runner 虽能用 Xcode 26
+    # 编译，却无法加载并执行生成的 test bundle。
+    runs-on: macos-26
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v5
