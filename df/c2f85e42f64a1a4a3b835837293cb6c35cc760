@@ -1,0 +1,20 @@
+App/GemmaTrans/TranslationPanel.swift
+  s_6f16eec4bb94c6::t_c348526f8c3914 571-577
+  s_6f16eec4bb94c6::t_244444605e41a6 569-570
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "dfc2f85e42f64a1a4a3b835837293cb6c35cc760",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
