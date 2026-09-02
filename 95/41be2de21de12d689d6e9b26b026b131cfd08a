@@ -1,0 +1,19 @@
+Package.resolved
+  s_6f16eec4bb94c6::t_3029f667f4026f 2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "9541be2de21de12d689d6e9b26b026b131cfd08a",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
