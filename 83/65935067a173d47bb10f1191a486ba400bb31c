@@ -1,0 +1,61 @@
+App/GemmaTrans/SettingsView.swift
+  s_6f16eec4bb94c6::t_70a715e5687c9d 143
+App/GemmaTrans/DesignSystem/GTGlassSurface.swift
+  s_6f16eec4bb94c6::t_70a715e5687c9d 21,24-28,30-32,34-60,63-67,144-152
+Runtime/LlamaRuntime/README.md
+  s_6f16eec4bb94c6::t_a012a3c474a400 15,20
+CHANGELOG.md
+  s_6f16eec4bb94c6::t_302350d0007deb 15,28,30
+docs/store-listing.md
+  s_6f16eec4bb94c6::t_302350d0007deb 68,84,128-130
+App/GemmaTrans/TranslationWorkspace.swift
+  s_6f16eec4bb94c6::t_70a715e5687c9d 39
+.github/workflows/release-macos.yml
+  s_6f16eec4bb94c6::t_302350d0007deb 51
+App/project.yml
+  s_6f16eec4bb94c6::t_70a715e5687c9d 5
+  s_6f16eec4bb94c6::t_302350d0007deb 25,56,78,113
+Package.swift
+  s_6f16eec4bb94c6::t_70a715e5687c9d 6
+  s_6f16eec4bb94c6::t_4bec6b5b42cea5 21-22
+docs/release-notes-2.1.md
+  s_6f16eec4bb94c6::t_302350d0007deb 14-15,27-28,39,43
+script/prepare_social_screenshots.swift
+  s_6f16eec4bb94c6::t_302350d0007deb 541
+.github/workflows/ci.yml
+  s_6f16eec4bb94c6::t_302350d0007deb 13-15
+App/GemmaTrans/DesignSystem/GTGlassControls.swift
+  s_6f16eec4bb94c6::t_70a715e5687c9d 42-50,52-59,202,212-217,228-231,233-236
+  s_6f16eec4bb94c6::t_717081ce98a240 203-211,218-226
+README.md
+  s_6f16eec4bb94c6::t_302350d0007deb 7,48
+Runtime/LlamaRuntime/build-xcframework.sh
+  s_6f16eec4bb94c6::t_a012a3c474a400 30,48,117-131,142,146,150-151
+App/GemmaTrans/TranslationPanel.swift
+  s_6f16eec4bb94c6::t_70a715e5687c9d 483,502-510
+  s_6f16eec4bb94c6::t_d392d162b4bb9d 511-512
+App/GemmaTrans/Info.plist
+  s_6f16eec4bb94c6::t_302350d0007deb 24
+docs/releasing.md
+  s_6f16eec4bb94c6::t_302350d0007deb 39,51,55
+.github/workflows/release-mas.yml
+  s_6f16eec4bb94c6::t_302350d0007deb 77
+Runtime/LlamaRuntime/CHECKSUMS.txt
+  s_6f16eec4bb94c6::t_8acf4d0cc76a72 1,3-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "8365935067a173d47bb10f1191a486ba400bb31c",
+  "prompts": {},
+  "sessions": {
+    "s_6f16eec4bb94c6": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a0565e-ad75-7593-ab36-64c7515206b6",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Rand01ph <tanyawei1991@gmail.com>"
+    }
+  }
+}
