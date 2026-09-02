@@ -12,12 +12,12 @@ Build the static macOS arm64 XCFramework and deterministic ZIP with:
 Runtime/LlamaRuntime/build-xcframework.sh
 ```
 
-The script prints the ZIP SHA-256 and SwiftPM checksum. Release assets are immutable and use the tag `runtime-llama-2.1.0-r1`.
+The script targets macOS 15.0 or later, prints the ZIP SHA-256 and SwiftPM checksum, and rejects archive members with a newer minimum OS. Release assets are immutable and use the tag `runtime-llama-2.1.0-r2`.
 
 Published asset URL:
 
 ```text
-https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r1/LlamaRuntime-2.1.0-r1.zip
+https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r2/LlamaRuntime-2.1.0-r2.zip
 ```
 
 The expected asset and composition-patch digests are recorded in `CHECKSUMS.txt`.

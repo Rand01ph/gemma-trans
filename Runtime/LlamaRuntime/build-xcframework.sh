@@ -27,7 +27,7 @@ git -C "$SOURCE_DIR" apply "$SCRIPT_DIR/patches/combined.patch"
 cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_OSX_ARCHITECTURES=arm64 \
-    -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 \
+    -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0 \
     -DBUILD_SHARED_LIBS=OFF \
     -DGGML_METAL=OFF \
     -DGGML_CPU_KLEIDIAI=ON \
@@ -45,7 +45,7 @@ cmake -S "$SOURCE_DIR" -B "$BUILD_DIR" \
 
 cmake --build "$BUILD_DIR" --target llama llama-common -j "$(sysctl -n hw.ncpu)"
 
-xcrun clang++ -std=c++17 -O3 -DNDEBUG -arch arm64 -mmacosx-version-min=26.0 \
+xcrun clang++ -std=c++17 -O3 -DNDEBUG -arch arm64 -mmacosx-version-min=15.0 \
     -I"$SCRIPT_DIR/Sources/include" \
     -I"$SOURCE_DIR/include" \
     -I"$SOURCE_DIR/ggml/include" \
@@ -114,6 +114,21 @@ if nm -gU "$PRODUCT_DIR/libLlamaRuntime.a" | \
     exit 1
 fi
 
+MIN_OS_VALUES="$(xcrun otool -l "$PRODUCT_DIR/libLlamaRuntime.a" | \
+    awk '$1 == "minos" { print $2 }' | LC_ALL=C sort -u)"
+if [[ -z "$MIN_OS_VALUES" ]]; then
+    echo "runtime archive does not contain LC_BUILD_VERSION minos metadata" >&2
+    exit 1
+fi
+if ! printf '%s\n' "$MIN_OS_VALUES" | awk -F. '
+    { major = $1 + 0; minor = $2 + 0 }
+    major > 15 || (major == 15 && minor > 0) { exit 1 }
+'; then
+    echo "runtime archive contains an object newer than macOS 15.0: $MIN_OS_VALUES" >&2
+    exit 1
+fi
+echo "Runtime minimum macOS versions: $MIN_OS_VALUES"
+
 cp "$SCRIPT_DIR/Sources/include/GemmaLlamaRuntime.h" "$PRODUCT_DIR/Headers/"
 cp "$SCRIPT_DIR/Sources/include/module.modulemap" "$PRODUCT_DIR/Headers/"
 
@@ -124,13 +139,13 @@ xcodebuild -create-xcframework \
     -output "$OUTPUT_DIR/LlamaRuntime.xcframework"
 
 find "$OUTPUT_DIR/LlamaRuntime.xcframework" -exec touch -h -t 202001010000 {} +
-rm -f "$OUTPUT_DIR/LlamaRuntime-2.1.0-r1.zip"
+rm -f "$OUTPUT_DIR/LlamaRuntime-2.1.0-r2.zip"
 (
     cd "$OUTPUT_DIR"
     find LlamaRuntime.xcframework -print | LC_ALL=C sort | \
-        COPYFILE_DISABLE=1 zip -X -q "LlamaRuntime-2.1.0-r1.zip" -@
+        COPYFILE_DISABLE=1 zip -X -q "LlamaRuntime-2.1.0-r2.zip" -@
 )
 
 file "$PRODUCT_DIR/libLlamaRuntime.a"
-shasum -a 256 "$OUTPUT_DIR/LlamaRuntime-2.1.0-r1.zip"
-swift package compute-checksum "$OUTPUT_DIR/LlamaRuntime-2.1.0-r1.zip"
+shasum -a 256 "$OUTPUT_DIR/LlamaRuntime-2.1.0-r2.zip"
+swift package compute-checksum "$OUTPUT_DIR/LlamaRuntime-2.1.0-r2.zip"

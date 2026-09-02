@@ -39,13 +39,24 @@ struct GTGlassButton<Label: View>: View {
 
     @ViewBuilder
     var body: some View {
-        if emphasis.usesProminentStyle {
-            baseButton
-                .buttonStyle(.glassProminent)
-                .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
+        if #available(macOS 26.0, *) {
+            if emphasis.usesProminentStyle {
+                baseButton
+                    .buttonStyle(.glassProminent)
+                    .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
+            } else {
+                baseButton
+                    .buttonStyle(.glass)
+            }
         } else {
-            baseButton
-                .buttonStyle(.glass)
+            if emphasis.usesProminentStyle {
+                baseButton
+                    .buttonStyle(.borderedProminent)
+                    .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
+            } else {
+                baseButton
+                    .buttonStyle(.bordered)
+            }
         }
     }
 
@@ -188,20 +199,41 @@ struct GTGlassIconButton: View {
 
     @ViewBuilder
     var body: some View {
-        Group {
-            if emphasis.usesProminentStyle {
-                baseButton
-                    .buttonStyle(.glassProminent)
-                    .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
-            } else {
-                baseButton
-                    .buttonStyle(.glass)
+        if #available(macOS 26.0, *) {
+            Group {
+                if emphasis.usesProminentStyle {
+                    baseButton
+                        .buttonStyle(.glassProminent)
+                        .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
+                } else {
+                    baseButton
+                        .buttonStyle(.glass)
+                }
             }
+            .opacity(buttonOpacity)
+            .onHover { hovering = $0 }
+            .help(title)
+            .accessibilityLabel(title)
+        } else {
+            Group {
+                if emphasis.usesProminentStyle {
+                    baseButton
+                        .buttonStyle(.borderedProminent)
+                        .tint(GTGlassPalette.primaryControlTint(for: colorScheme))
+                } else {
+                    baseButton
+                        .buttonStyle(.bordered)
+                }
+            }
+            .opacity(buttonOpacity)
+            .onHover { hovering = $0 }
+            .help(title)
+            .accessibilityLabel(title)
         }
-        .opacity(isEnabled ? (quiet && !hovering ? 0.72 : 1) : 0.5)
-        .onHover { hovering = $0 }
-        .help(title)
-        .accessibilityLabel(title)
+    }
+
+    private var buttonOpacity: Double {
+        isEnabled ? (quiet && !hovering ? 0.72 : 1) : 0.5
     }
 
     private var baseButton: some View {

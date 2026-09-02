@@ -65,7 +65,7 @@ Long-text workflows are improved too: the bundled PopClip action now shows compl
 - **开发者友好**：内置 PopClip 插件调用原生多行浮窗；可选本地 HTTP API 仅监听 127.0.0.1，供 Bob、Raycast 等工具连接
 - **按机器自动调优**：根据内存自动配置引擎参数，16GB 起步流畅运行
 
-三种译法：① 在主窗口粘贴或输入文字；② 任意 app 选中文字后按 ⌥⌘T，无需先复制；③ 复制文字后按 ⌥D 翻译剪贴板。首次启动请在“设置 › 模型”选择并下载模型；下载优先 Hugging Face，不可用时自动回退 ModelScope。需要 Apple Silicon Mac 与 macOS 26 或更高版本。
+三种译法：① 在主窗口粘贴或输入文字；② 任意 app 选中文字后按 ⌥⌘T，无需先复制；③ 复制文字后按 ⌥D 翻译剪贴板。首次启动请在“设置 › 模型”选择并下载模型；下载优先 Hugging Face，不可用时自动回退 ModelScope。需要 Apple Silicon Mac 与 macOS 15 或更高版本。
 
 ### English
 
@@ -81,7 +81,7 @@ Select text anywhere, press a hotkey, and the translation streams into a floatin
 - **Developer friendly**: the bundled PopClip action opens the native multiline panel; the optional local API binds only to 127.0.0.1 for Bob, Raycast, and other tools
 - **Auto-tuned**: engine parameters adapt to your machine's memory; runs smoothly from 16GB
 
-Three ways to translate: (1) paste or type text in the main window; (2) select text in any app and press ⌥⌘T (a macOS Services shortcut, rebindable in System Settings), no copying needed; (3) copy text and press ⌥D to translate the clipboard. On first launch, choose and download a model under Settings › Models. Downloads use Hugging Face first and automatically fall back to ModelScope when unavailable. Requires Apple Silicon and macOS 26 or later. No Accessibility permission required.
+Three ways to translate: (1) paste or type text in the main window; (2) select text in any app and press ⌥⌘T (a macOS Services shortcut, rebindable in System Settings), no copying needed; (3) copy text and press ⌥D to translate the clipboard. On first launch, choose and download a model under Settings › Models. Downloads use Hugging Face first and automatically fall back to ModelScope when unavailable. Requires Apple Silicon and macOS 15 or later. No Accessibility permission required.
 
 ## 2. 审核备注（App Review Notes）
 
@@ -125,7 +125,7 @@ GemmaTrans does not collect, store, or transmit any user data.
 - [ ] 逐张核对「截图」里没有 "OpenAI"/"ChatGPT" 字样（Apple 把截图也算 metadata）；如有则重截。注意 app 现在是纯菜单栏 app、无 Dock 图标，截图别再出现 Dock 图标。
 - [ ] 「App 审核信息 / Review Notes」粘贴本文件第 2 节全文（已说明无 OpenAI、无辅助功能、下载可见、如何测试）。
 - [ ] 中国大陆区保持上架（已确认保留）。
-- [ ] 在 App Store Connect 创建 **2.1.0** 版本；上传本次源码对应的候选 build **18** 后再关联（build 17 仅用于前一轮 TestFlight 初测）。
-- [ ] 使用正式版、包含 macOS 26 SDK 的 Xcode 构建 **GemmaTrans-MAS**；build 号必须高于 ASC 已有值。
-- [ ] 上传后先验证 TestFlight 安装、首次无自动下载、六模型下载/切换、两款新模型断网翻译、⌥⌘T、⌥D、本地 API 和 PopClip 多行浮窗。
+- [ ] 在 App Store Connect 创建 **2.1.0** 版本；上传 macOS 15 兼容候选 build **25** 后再关联（build 24 仅用于 macOS 26 初测）。
+- [ ] 使用正式版、包含 macOS 26 SDK 的 Xcode 构建最低部署版本为 macOS 15 的 **GemmaTrans-MAS**；build 号必须高于 ASC 已有值。
+- [ ] 上传后分别在 macOS 15 与 macOS 26 验证 TestFlight 安装、首次无自动下载、六模型下载/切换、两款新模型断网翻译、⌥⌘T、⌥D、本地 API 和 PopClip 多行浮窗。
 - [ ] 两款新模型同时通过 TestFlight 验收后，再关联 2.1.0 build，完成出口合规、年龄分级和隐私信息后 Submit for Review。

@@ -74,7 +74,7 @@ jobs:
           echo "SDK version：$SDK_VERSION"
           echo "SDK build：$(xcrun --sdk macosx --show-sdk-build-version)"
           if [ "$SDK_MAJOR" -lt 26 ]; then
-            echo "::error::GemmaTrans 2.0 需要 macOS 26 SDK；请选择包含该 SDK 的正式版 Xcode"
+            echo "::error::GemmaTrans 需要 macOS 26 SDK 编译 Liquid Glass 兼容分支；请选择包含该 SDK 的正式版 Xcode"
             exit 1
           fi
 

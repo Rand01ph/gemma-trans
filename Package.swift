@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "gemma-trans",
-    platforms: [.macOS("26.0"), .iOS(.v18)],
+    platforms: [.macOS(.v15), .iOS(.v18)],
     products: [
         .library(name: "GemmaTransKit", targets: ["GemmaTransKit"]),
         .library(name: "GemmaTransServer", targets: ["GemmaTransServer"]),
@@ -18,8 +18,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "LlamaRuntime",
-            url: "https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r1/LlamaRuntime-2.1.0-r1.zip",
-            checksum: "48dc5d4f58a7f316133dc0204ec62cd152528c581fe1a0e459428df77217ffe8"
+            url: "https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r2/LlamaRuntime-2.1.0-r2.zip",
+            checksum: "205914935c3b5073511bf3d8728af1a640bd763d3e4b5c1f3f286e01e6a5300d"
         ),
         .target(
             name: "GemmaTransKit",

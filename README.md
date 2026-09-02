@@ -4,7 +4,7 @@ macOS 本地大模型划词翻译。基于 **MLX-Swift** 与策展的静态 CPU 
 
 [下载正式版](https://github.com/Rand01ph/gemma-trans/releases/latest) · [App Store](https://apps.apple.com/app/id6778876828) · [2.1 更新说明](docs/release-notes-2.1.md) · [设计系统](DESIGN.md) · [隐私政策](PRIVACY.md)
 
-> GemmaTrans 2.1 要求 **Apple Silicon Mac** 与 **macOS 26 或更高版本**。
+> GemmaTrans 2.1 要求 **Apple Silicon Mac** 与 **macOS 15 或更高版本**。macOS 26 使用 Liquid Glass，macOS 15 使用兼容的系统材质界面。
 
 ## 2.1 亮点
 
@@ -45,7 +45,7 @@ macOS 本地大模型划词翻译。基于 **MLX-Swift** 与策展的静态 CPU 
 
 ## 从源码构建 macOS App
 
-需要带 macOS 26 SDK 的 Xcode、XcodeGen 与 Apple Silicon Mac：
+App 最低支持 macOS 15；从源码构建仍需要带 macOS 26 SDK 的 Xcode（用于编译受可用性保护的 Liquid Glass 分支）、XcodeGen 与 Apple Silicon Mac：
 
 ```bash
 brew install xcodegen

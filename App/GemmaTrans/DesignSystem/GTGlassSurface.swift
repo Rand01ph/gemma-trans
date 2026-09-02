@@ -18,32 +18,53 @@ struct GTGlassSurface: ViewModifier {
 
     @Environment(\.colorScheme) private var colorScheme
 
+    @ViewBuilder
     func body(content: Content) -> some View {
         let shape = RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-        content
-            .clipShape(shape)
-            .background {
-                if level != .flat {
-                    GTExteriorShadow(cornerRadius: cornerRadius,
-                                     color: shadowColor,
-                                     radius: shadowRadius,
-                                     y: shadowY)
+        if #available(macOS 26.0, *) {
+            content
+                .clipShape(shape)
+                .background {
+                    exteriorShadow
                 }
-            }
-            .glassEffect(glass, in: shape)
-            .background {
-                shape.fill(fillStyle)
-            }
-            .overlay {
-                if stroke {
-                    shape.strokeBorder(strokeColor, lineWidth: level == .window ? 1.1 : 1)
+                .glassEffect(interactive ? Glass.regular.interactive() : .regular, in: shape)
+                .background {
+                    shape.fill(fillStyle)
                 }
-            }
+                .overlay {
+                    surfaceStroke(shape: shape)
+                }
+        } else {
+            content
+                .clipShape(shape)
+                .background {
+                    exteriorShadow
+                }
+                .background(.ultraThinMaterial, in: shape)
+                .background {
+                    shape.fill(fillStyle)
+                }
+                .overlay {
+                    surfaceStroke(shape: shape)
+                }
+        }
     }
 
-    private var glass: Glass {
-        let base = Glass.regular
-        return interactive ? base.interactive() : base
+    @ViewBuilder
+    private var exteriorShadow: some View {
+        if level != .flat {
+            GTExteriorShadow(cornerRadius: cornerRadius,
+                             color: shadowColor,
+                             radius: shadowRadius,
+                             y: shadowY)
+        }
+    }
+
+    @ViewBuilder
+    private func surfaceStroke(shape: RoundedRectangle) -> some View {
+        if stroke {
+            shape.strokeBorder(strokeColor, lineWidth: level == .window ? 1.1 : 1)
+        }
     }
 
     private var fillStyle: AnyShapeStyle {
@@ -119,6 +140,15 @@ extension View {
                                 gradient: gradient,
                                 interactive: interactive,
                                 stroke: stroke))
+    }
+
+    @ViewBuilder
+    func gtSoftScrollEdges() -> some View {
+        if #available(macOS 26.0, *) {
+            scrollEdgeEffectStyle(.soft, for: .all)
+        } else {
+            self
+        }
     }
 }
 

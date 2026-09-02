@@ -480,9 +480,7 @@ private struct GTTranslationPanelView: View {
     var body: some View {
         ZStack {
             Color.clear
-            GlassEffectContainer(spacing: GTGlassTokens.Space.m) {
-                visibleSurface
-            }
+            compatibleSurface
             .padding(mode.shadowGutter)
         }
         .frame(width: mode.windowSize.width)
@@ -499,6 +497,17 @@ private struct GTTranslationPanelView: View {
             }
         }
         .onDisappear { copyFeedbackTask?.cancel() }
+    }
+
+    @ViewBuilder
+    private var compatibleSurface: some View {
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: GTGlassTokens.Space.m) {
+                visibleSurface
+            }
+        } else {
+            visibleSurface
+        }
     }
 
     @ViewBuilder

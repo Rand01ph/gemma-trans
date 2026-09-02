@@ -538,7 +538,7 @@ private func makeDownloadCard(root: URL) throws -> NSImage {
             alignment: .center
         )
         drawText(
-            "Apple Silicon  ·  macOS 26+  ·  免费开源",
+            "Apple Silicon  ·  macOS 15+  ·  免费开源",
             in: rectFromTop(x: 100, y: 1560, width: 1240, height: 50),
             font: .systemFont(ofSize: 26, weight: .regular),
             color: palette.secondary,

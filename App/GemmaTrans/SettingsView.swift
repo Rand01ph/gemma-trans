@@ -140,7 +140,7 @@ struct SettingsView: View {
             .padding(GTGlassTokens.Space.xl)
             .frame(maxWidth: GTGlassTokens.Panel.settingsWidth)
         }
-        .scrollEdgeEffectStyle(.soft, for: .all)
+        .gtSoftScrollEdges()
     }
 
     private var appearanceSection: some View {

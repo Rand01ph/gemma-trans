@@ -36,7 +36,7 @@ struct TranslationWorkspace: View {
                             outputCard.frame(minHeight: 340)
                         }
                     }
-                    .scrollEdgeEffectStyle(.soft, for: .all)
+                    .gtSoftScrollEdges()
                 }
             }
             .padding(.horizontal, GTGlassTokens.Window.contentInset)

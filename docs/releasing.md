@@ -36,7 +36,7 @@ PR 的 `CI` workflow 必须通过：
 - Swift package tests；
 - `GemmaTrans` 无签名构建；
 - `GemmaTrans-MAS` 无签名构建；
-- GitHub Runner 必须找到包含 macOS 26 SDK 的正式版 Xcode。
+- GitHub Runner 使用 macOS 15，并选择包含 macOS 26 SDK 的正式版 Xcode；编译产物的 Deployment Target 必须保持 macOS 15.0。
 
 ## 2. Developer ID 验收与发布
 
@@ -48,11 +48,11 @@ PR 的 `CI` workflow 必须通过：
 
 ## 3. Mac App Store
 
-1. 在 App Store Connect 创建或确认 `2.1.0` 版本，并查看当前最大 build 号；若最大值仍为 14，使用 15。
+1. 在 App Store Connect 创建或确认 `2.1.0` 版本，并查看当前最大 build 号；当前 macOS 15 兼容候选使用 build 25。
 2. 将 `App/project.yml` 与 `App/GemmaTrans/Info.plist` 中的 build 号同步提高并提交到目标分支。
 3. 在 App Store Connect › Xcode Cloud › 构建版本中启动“发布流水线”，正式发布始终选择 `main`。
 4. 工作流以 `GemmaTrans-MAS` scheme 执行 macOS Archive，并采用 App Store 分发准备。成功后等待 Apple 处理并在 TestFlight 中确认新 build。
-5. 在 TestFlight 验证六款模型、下载续传、两款新模型断网翻译与本地 API 后，把该 build 关联到 2.1.0，更新截图、描述、What's New 和审核备注，再提交审核。
+5. 分别在 macOS 15 与 macOS 26 的 TestFlight 验证六款模型、下载续传、两款新模型断网翻译与本地 API 后，把该 build 关联到 2.1.0，更新截图、描述、What's New 和审核备注，再提交审核。
 
 `Scripts/release-mas.sh` 与 GitHub `Release MAS (App Store)` 仅保留为故障时的备用上传路径；当前正式路径是 Xcode Cloud。
 
