@@ -480,9 +480,7 @@ private struct GTTranslationPanelView: View {
     var body: some View {
         ZStack {
             Color.clear
-            GlassEffectContainer(spacing: GTGlassTokens.Space.m) {
-                visibleSurface
-            }
+            compatibleSurface
             .padding(mode.shadowGutter)
         }
         .frame(width: mode.windowSize.width)
@@ -499,6 +497,17 @@ private struct GTTranslationPanelView: View {
             }
         }
         .onDisappear { copyFeedbackTask?.cancel() }
+    }
+
+    @ViewBuilder
+    private var compatibleSurface: some View {
+        if #available(macOS 26.0, *) {
+            GlassEffectContainer(spacing: GTGlassTokens.Space.m) {
+                visibleSurface
+            }
+        } else {
+            visibleSurface
+        }
     }
 
     @ViewBuilder
@@ -566,7 +575,15 @@ private struct GTTranslationPanelView: View {
     private var actionHeader: some View {
         HStack(spacing: GTGlassTokens.Space.s) {
             actionIdentity
-            Spacer(minLength: GTGlassTokens.Space.s)
+            // The borderless panel is fully covered by SwiftUI content, so AppKit's
+            // isMovableByWindowBackground fallback never receives this mouse-down.
+            Color.clear
+                .frame(minWidth: GTGlassTokens.Space.s,
+                       maxWidth: .infinity,
+                       minHeight: 24)
+                .contentShape(Rectangle())
+                .gesture(WindowDragGesture())
+                .allowsWindowActivationEvents(true)
             phaseMetadata
             GTGlassIconButton(
                 title: interactionState.isPositionLocked ? "取消固定位置" : "固定浮窗位置",

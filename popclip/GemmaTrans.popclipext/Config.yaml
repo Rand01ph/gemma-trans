@@ -1,4 +1,3 @@
 name: GemmaTrans
 icon: symbol:character.bubble
-after: show-result
-shell script file: translate.sh
+service name: Translate with GemmaTrans

@@ -5,6 +5,10 @@ import FlyingFox
 import GemmaTransKit
 
 @Suite struct TranslateRouteTests {
+    @Test func serverTimeoutCoversLocalGenerationWindow() {
+        #expect(APIServer.requestTimeout == 120)
+    }
+
     func startServer(
         _ translator: some TranslationService, queueTimeout: Double = 30
     ) async throws -> (URL, Task<Void, Error>) {

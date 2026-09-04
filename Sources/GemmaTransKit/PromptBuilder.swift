@@ -8,9 +8,9 @@ public enum PromptBuilder {
     """
 
     static let languageNames: [String: String] = [
-        "zh-Hans": "Simplified Chinese",
+        "zh-Hans": "Chinese",
         "zh-Hant": "Traditional Chinese",
-        "zh": "Simplified Chinese",
+        "zh": "Chinese",
         "en": "English",
         "ja": "Japanese",
         "ko": "Korean",
@@ -20,9 +20,19 @@ public enum PromptBuilder {
         "ru": "Russian",
     ]
 
+    static let chineseLanguageNames: [String: String] = [
+        "zh-Hans": "中文",
+        "zh-Hant": "繁体中文",
+        "zh": "中文",
+    ]
+
     public static func userPrompt(text: String, target: String) -> String {
+        if let name = chineseLanguageNames[target] {
+            return "将以下文本翻译为\(name)，注意只需要输出翻译后的结果，不要额外解释：\n\n\(text)"
+        }
         let name = languageNames[target] ?? target
-        return "Translate the following text into \(name). Output only the translation.\n\n\(text)"
+        return "Translate the following text into \(name). Note that you should only output " +
+            "the translated result without any additional explanation:\n\n\(text)"
     }
 
     // MARK: - Process path

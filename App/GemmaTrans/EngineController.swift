@@ -143,16 +143,14 @@ final class EngineController {
               ) else {
             return .notInstalled
         }
-        let generating = await engine?.isGenerating ?? false
         let loadingNow: Bool = {
             if case .loading = engineStatus { return true }
             if case .downloading = engineStatus { return true }
             return false
         }()
-        // 仅「API 监听中」不再阻断切换——否则默认开 API 时页面整页置灰无法操作。
-        // 在飞的 API 翻译仍由 isGenerating 守住；切换会重启 server 指向新引擎（见下）。
+        // 切换会先停 API，再由 unload 取消并等待当前生成；不把“正在翻译”当成永久阻断条件。
         if let block = ModelSwitchGuard.blockReason(
-            isGenerating: generating, isLoading: loadingNow, apiRunning: false) {
+            isGenerating: false, isLoading: loadingNow, apiRunning: false) {
             GTLog.info("model switch blocked: \(block)")
             return block
         }
@@ -200,19 +198,21 @@ final class EngineController {
     /// 正在后台下载的模型 id；nil 表示当前无后台下载。供设置页显示进度/禁用其他下载。
     private(set) var downloadingModelID: String?
     private(set) var downloadProgress: DownloadProgress?
+    private(set) var modelDownloadErrors: [String: String] = [:]
 
     /// 设置页「下载」入口：把某 catalog 模型下到磁盘，**不切换当前活跃引擎**。
     /// 与 switchModel 的区别：纯磁盘拉取，不动引擎，故可边用当前模型边下新模型。
     /// 一次只下一个（downloadTask 非空时忽略）；Hugging Face 不可用时自动回退 ModelScope。
     func downloadModel(id: String) {
         guard downloadTask == nil, let entry = ModelCatalog.entry(id: id) else { return }
+        modelDownloadErrors[id] = nil
         downloadingModelID = id
         downloadProgress = DownloadProgress(fraction: 0)
         let base = TranslationEngine.defaultModelBase()
         GTLog.info("background download started: \(id)")
         downloadTask = Task {
             do {
-                _ = try await ModelDownloader.download(repo: entry.repo, into: base) { p in
+                _ = try await ModelDownloader.download(entry: entry, into: base) { p in
                     Task { @MainActor in EngineController.shared.downloadProgress = p }
                 }
                 GTLog.info("background download done: \(id)")
@@ -221,6 +221,16 @@ final class EngineController {
                 }
             } catch {
                 GTLog.error("background download failed \(id): \(error)")
+                if let downloadError = error as? ModelDownloadError {
+                    switch downloadError {
+                    case .checksumMismatch, .sizeMismatch:
+                        self.modelDownloadErrors[id] = "模型文件校验失败，请重试"
+                    default:
+                        self.modelDownloadErrors[id] = "模型下载失败，请重试"
+                    }
+                } else if !(error is CancellationError) {
+                    self.modelDownloadErrors[id] = "模型下载失败，请重试"
+                }
             }
             self.downloadingModelID = nil
             self.downloadProgress = nil

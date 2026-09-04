@@ -2,6 +2,33 @@
 
 GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS App 的正式构建号由 App Store Connect 发布流程单独递增。
 
+## [2.1.0] - 2026-08-31
+
+### Added
+
+- 新增 Hy-MT2 1.8B（1.25-bit · 轻量版，约 440 MB）与 Hy-MT2 1.8B（2-bit · 均衡版，约 573 MB）。
+- 新增面向两款策展 GGUF 的 CPU/NEON 静态运行时；运行时来源、补丁、许可证和确定性构建脚本均随仓库提供。
+- 新增固定 revision 单文件下载，下载完成后校验精确字节数和 SHA-256。
+
+### Changed
+
+- 最低系统版本由 macOS 26 下调到 macOS 15；macOS 26 保留 Liquid Glass，macOS 15 自动使用系统材质与标准按钮样式。
+- 模型页由四款增加为六款；旧模型顺序、标识、目录和行为保持不变。
+- Hy-MT2 提示词与官方 1.8B 推荐对齐：完整语言名、仅 user 消息、无 system prompt。
+- 小于 1 GiB 的模型使用 MB 显示体积；下载完成后仍由用户主动切换，不自动改变当前模型。
+- PopClip 插件改为调用 GemmaTrans 的 macOS Service，在原生可滚动多行浮窗中展示完整译文。
+
+### Fixed
+
+- 修复 PopClip `show-result` 将长译文限制为单行、最多预览 160 字符的问题。
+- 修复本地 API 沿用 FlyingFox 15 秒默认 handler 超时、较慢请求提前返回 HTTP 500 的问题。
+
+### Compatibility
+
+- 支持 Apple Silicon Mac 与 macOS 15.0 或更高版本；本版本不新增 iOS App，也不支持 Intel Mac。
+- HTTP API、SSE 格式、UserDefaults key 和旧四款模型目录保持兼容。
+- 构建号 24 已上传 TestFlight 用于 macOS 26 初测；本次 macOS 15 兼容候选构建号为 25。正式 `v2.1.0` 标签仅在验收通过后创建。
+
 ## [2.0.0] - 2026-07-23
 
 ### Added
@@ -35,3 +62,4 @@ GemmaTrans 的用户可见变更记录。版本遵循语义化版本号；macOS 
 - 不修改 HTTP API、UserDefaults key、模型目录或对外数据格式。
 
 [2.0.0]: https://github.com/Rand01ph/gemma-trans/compare/v1.1.0...v2.0.0
+[2.1.0]: https://github.com/Rand01ph/gemma-trans/compare/v2.0.0...v2.1.0

@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "runtimeVersion": "2.1.0-r1",
+  "llamaCpp": {
+    "repository": "https://github.com/ggml-org/llama.cpp.git",
+    "stqBaseline": {
+      "pullRequest": 22836,
+      "commit": "1e411d8f5a1e23525fa3265dfb4bd76265465397"
+    },
+    "q2_0cSource": {
+      "pullRequest": 19357,
+      "commit": "2af64dd00a6689a7bfaf69b4768a944d0ec6bade"
+    },
+    "stqContiguousLayoutReference": {
+      "commit": "08ff527fd5c35e69395ee063fb722fe393e36122"
+    }
+  },
+  "kleidiai": {
+    "version": "1.26.0",
+    "archive": "https://github.com/ARM-software/kleidiai/releases/download/v1.26.0/kleidiai-v1.26.0-src.tar.gz",
+    "md5": "d88795bf737ca52d31eff425eaa274e7"
+  },
+  "ggufTypeMapping": {
+    "40": "STQ1_0 (Hy-MT2 v2 contiguous groups-of-four layout)",
+    "41": "Q2_0C",
+    "42": "Q2_0",
+    "43": "NVFP4 (runtime-internal; not accepted by GemmaTrans)",
+    "44": "Q1_0 (runtime-internal; not accepted by GemmaTrans)"
+  },
+  "build": {
+    "platform": "macOS arm64",
+    "metal": false,
+    "kleidiai": true,
+    "native": false,
+    "openmp": false,
+    "sharedLibraries": false,
+    "tools": false,
+    "server": false,
+    "examples": false,
+    "tests": false,
+    "mtmd": false
+  }
+}

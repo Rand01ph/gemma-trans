@@ -5,7 +5,14 @@ import Testing
     @Test func promptContainsTextAndTargetName() {
         let p = PromptBuilder.userPrompt(text: "Hello world", target: "zh-Hans")
         #expect(p.contains("Hello world"))
-        #expect(p.contains("Simplified Chinese"))
+        #expect(p.contains("中文"))
+        #expect(p.contains("不要额外解释"))
+    }
+
+    @Test func englishTargetUsesOfficialEnglishTemplate() {
+        let p = PromptBuilder.userPrompt(text: "你好", target: "en")
+        #expect(p.contains("English"))
+        #expect(p.contains("without any additional explanation"))
     }
 
     @Test func systemPromptForbidsExplanation() {
