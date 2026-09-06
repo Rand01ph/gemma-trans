@@ -12,14 +12,18 @@ Build the static macOS arm64 XCFramework and deterministic ZIP with:
 Runtime/LlamaRuntime/build-xcframework.sh
 ```
 
-The script targets macOS 15.0 or later, prints the ZIP SHA-256 and SwiftPM checksum, and rejects archive members with a newer minimum OS. Release assets are immutable and use the tag `runtime-llama-2.1.0-r2`.
+The script targets macOS 15.0 or later, prints the ZIP SHA-256 and SwiftPM checksum, and rejects archive members with a newer minimum OS. Release assets are immutable and use the tag `runtime-llama-2.2.0-r1`.
 
 Published asset URL:
 
 ```text
-https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r2/LlamaRuntime-2.1.0-r2.zip
+https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.2.0-r1/LlamaRuntime-2.2.0-r1.zip
 ```
 
 The expected asset and composition-patch digests are recorded in `CHECKSUMS.txt`.
+
+Version 2.2.0-r1 adds `gt_llama_validate_prompt`: it tokenizes the complete chat template and
+reserves output capacity without modifying KV state. Generation repeats this check before
+decoding. The Swift bridge maps capacity rejection to `TranslationError.promptTooLong`.
 
 Run `Tests/RuntimeGate.cpp` against the two pinned model files before publishing the asset. The gate loads 1.25-bit, translates 20 times, completely unloads it, loads 2-bit and translates 20 times, then unloads and switches back to 1.25-bit.

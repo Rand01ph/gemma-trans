@@ -178,6 +178,27 @@ void gt_llama_model_free(gt_llama_model * model) {
     delete model;
 }
 
+int32_t gt_llama_validate_prompt(
+    gt_llama_model * model, const char * user_prompt, int32_t max_tokens,
+    char * error_buffer, size_t error_buffer_capacity
+) {
+    try {
+        if (model == nullptr || model->context == nullptr || model->vocab == nullptr || user_prompt == nullptr) {
+            throw std::runtime_error("invalid model or prompt");
+        }
+        const auto tokens = tokenize(model->vocab, format_user_prompt(model->model, user_prompt));
+        const auto capacity = static_cast<int64_t>(llama_n_ctx(model->context));
+        if (max_tokens < 1 || static_cast<int64_t>(tokens.size()) + max_tokens > capacity) {
+            set_error(error_buffer, error_buffer_capacity, "prompt_too_long");
+            return 1;
+        }
+        return 0;
+    } catch (const std::exception & error) {
+        set_error(error_buffer, error_buffer_capacity, error.what());
+        return -1;
+    }
+}
+
 gt_llama_generation * gt_llama_generation_begin(
     gt_llama_model * model,
     const char * user_prompt,
@@ -193,6 +214,9 @@ gt_llama_generation * gt_llama_generation_begin(
             throw std::runtime_error("translation prompt is empty");
         }
 
+        if (gt_llama_validate_prompt(model, user_prompt, config.max_tokens, error_buffer, error_buffer_capacity) != 0) {
+            return nullptr;
+        }
         llama_memory_clear(llama_get_memory(model->context), true);
         auto result = std::make_unique<gt_llama_generation>();
         result->owner = model;

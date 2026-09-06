@@ -1,6 +1,13 @@
 import Foundation
 import GemmaTransKit
 
+struct OversizedPromptTranslator: TranslationService {
+    var isReady: Bool { get async { true } }
+    func translate(_ text: String, target: String?) async throws -> TranslationStreamResult {
+        throw TranslationError.promptTooLong
+    }
+}
+
 struct MockTranslator: TranslationService {
     var ready = true
     var chunks: [String] = ["你好", "，", "世界"]

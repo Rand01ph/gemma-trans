@@ -55,6 +55,8 @@ func registerChatCompletionsRoute(server: HTTPServer, translator: any Translatio
                 ]],
                 "usage": ["prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0],
             ])
+        } catch TranslationError.promptTooLong {
+            return try .json(["error": "prompt_too_long", "message": TranslationError.promptTooLong.localizedDescription], statusCode: .badRequest)
         } catch TranslationError.modelNotLoaded {
             return try .json(["error": ["message": "model not loaded"]], statusCode: .serviceUnavailable)
         } catch {

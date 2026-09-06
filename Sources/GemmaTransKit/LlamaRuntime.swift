@@ -123,6 +123,23 @@ actor LlamaRuntime {
 #endif
     }
 
+    func validatePrompt(_ prompt: String, maxTokens: Int) throws {
+#if os(macOS)
+        guard let model else { throw TranslationError.modelNotLoaded }
+        var error = Self.errorBuffer()
+        let status = prompt.withCString { text in
+            error.withUnsafeMutableBufferPointer { buffer in
+                gt_llama_validate_prompt(model.pointer, text, Int32(min(1024, max(1, maxTokens))),
+                                         buffer.baseAddress, buffer.count)
+            }
+        }
+        if status == 1 { throw TranslationError.promptTooLong }
+        if status != 0 { throw LlamaRuntimeError.generationSetup(Self.errorMessage(error)) }
+#else
+        throw LlamaRuntimeError.unavailablePlatform
+#endif
+    }
+
     func generate(
         userPrompt: String,
         maxTokens: Int,

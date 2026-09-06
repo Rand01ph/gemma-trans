@@ -8,6 +8,8 @@ import Tokenizers
 
 public actor TranslationEngine: TranslationService {
     private let settings: AppSettings
+    private let promptProvider: (any TranslationPromptProvider)?
+    private var modelContextTokens = 4096
     private var model: ModelContainer?
     private var llamaRuntime: LlamaRuntime?
     private var lastGeneration: Task<Void, Never>?
@@ -28,8 +30,9 @@ public actor TranslationEngine: TranslationService {
     /// 是否有生成正在排队或进行（去抖用：避免热键连按在串行队列里堆积，导致可见浮窗长时间挨饿）
     public var isGenerating: Bool { !generationTasks.isEmpty }
 
-    public init(settings: AppSettings) {
+    public init(settings: AppSettings, promptProvider: (any TranslationPromptProvider)? = nil) {
         self.settings = settings
+        self.promptProvider = promptProvider
     }
 
     public var isReady: Bool { model != nil || llamaRuntime != nil }
@@ -129,7 +132,7 @@ public actor TranslationEngine: TranslationService {
                     from: dir, using: #huggingFaceTokenizerLoader())
             }
         }
-        await finishLoading(loaded, label: configuration.name)
+        try await finishLoading(loaded, label: configuration.name)
     }
 
     /// 加载指定 ResolvedModel（按 entry.repo 下载/加载，按 entry.family 分发）。
@@ -217,15 +220,19 @@ public actor TranslationEngine: TranslationService {
             loaded = try await loadModelContainer(from: snapshotDir, using: #huggingFaceTokenizerLoader())
         }
 
-        await finishLoading(loaded, label: resolved.entry.repo)
+        try await finishLoading(loaded, label: resolved.entry.repo)
     }
 
     /// 预热 + 置 ready + 回收缓冲。两个 load 入口共用。
-    private func finishLoading(_ container: ModelContainer, label: String) async {
+    private func finishLoading(_ container: ModelContainer, label: String) async throws {
         // 预热：首次生成触发 Metal 内核编译（冷启可超 30s，曾致首单超时 500）。
         // 在置 ready 前用 1-token 生成把编译做完，用户首单即快。
         let warmup = ChatSession(container, generateParameters: GenerateParameters(maxTokens: 1))
         _ = try? await warmup.respond(to: "hi")
+        let directory = try await container.modelDirectory
+        let configuration = try JSONSerialization.jsonObject(with: Data(contentsOf: directory.appendingPathComponent("config.json"))) as? [String: Any]
+        let textConfiguration = configuration?["text_config"] as? [String: Any] ?? configuration
+        modelContextTokens = textConfiguration?["max_position_embeddings"] as? Int ?? 4096
         model = container
         llamaRuntime = nil
         acceptingGeneration = true
@@ -247,9 +254,16 @@ public actor TranslationEngine: TranslationService {
         let truncated = trimmed.count > maxChars
         let input = truncated ? String(trimmed.prefix(maxChars)) : trimmed
         let plan = detector.plan(for: input, target: target, settings: settings)
-        let prompt = PromptBuilder.userPrompt(text: input, target: plan.target)
+        let request = TranslationPromptRequest(text: input, detected: plan.detected,
+                                               target: plan.target, family: activeFamily)
+        let composed = try promptProvider?.prompt(for: request) ?? request.defaultPrompt
+        let prompt = composed.user
         let maxTokens = resolvedTuning?.maxTokens ?? 2048
         if let llamaRuntime {
+            try await llamaRuntime.validatePrompt(prompt, maxTokens: maxTokens)
+            guard acceptingGeneration, self.llamaRuntime === llamaRuntime else {
+                throw TranslationError.modelNotLoaded
+            }
             return makeLlamaTranslation(
                 runtime: llamaRuntime,
                 prompt: prompt,
@@ -262,7 +276,18 @@ public actor TranslationEngine: TranslationService {
         guard let model else { throw TranslationError.modelNotLoaded }
         // Gemma 用固定系统指令；Hy-MT2 按推荐只发 user 指令（无 system）。
         // 先 capture 到局部，避免下面的 Task 闭包访问 actor 隔离的 activeFamily。
-        let instructions = activeFamily == .gemma ? PromptBuilder.systemPrompt : nil
+        let instructions = activeFamily == .gemma ? composed.system : nil
+        let contextTokens = modelContextTokens
+        let inputTokens = try await model.perform { context in
+            var messages: [Chat.Message] = []
+            if let instructions { messages.append(.system(instructions)) }
+            messages.append(.user(prompt))
+            let prepared = try await context.processor.prepare(input: UserInput(chat: messages))
+            return prepared.text.tokens.size
+        }
+        try TranslationPromptBudget.validate(inputTokens: inputTokens, outputTokens: maxTokens,
+                                             contextTokens: contextTokens)
+        guard acceptingGeneration, self.model === model else { throw TranslationError.modelNotLoaded }
 
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let generationID = UUID()
