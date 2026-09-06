@@ -2,7 +2,7 @@
 
 macOS 本地大模型划词翻译。基于 **MLX-Swift** 与策展的静态 CPU 运行时，在 Apple Silicon 上运行 Google **Gemma 4** 与腾讯混元 **Hy-MT2**；模型下载完成后，翻译文本不会离开你的 Mac。
 
-[下载正式版](https://github.com/Rand01ph/gemma-trans/releases/latest) · [App Store](https://apps.apple.com/app/id6778876828) · [2.1 更新说明](docs/release-notes-2.1.md) · [设计系统](DESIGN.md) · [隐私政策](PRIVACY.md)
+[下载正式版](https://github.com/Rand01ph/gemma-trans/releases/latest) · [App Store](https://apps.apple.com/app/id6778876828) · [2.1 更新说明](docs/release-notes-2.1.md) · [设计系统](DESIGN.md) · [隐私政策](PRIVACY.md) · [许可证](LICENSE)
 
 > GemmaTrans 2.1 要求 **Apple Silicon Mac** 与 **macOS 15 或更高版本**。macOS 26 使用 Liquid Glass，macOS 15 使用兼容的系统材质界面。
 
@@ -142,6 +142,14 @@ GemmaTransServer  HTTP 层：FlyingFox，/translate + /v1/chat/completions + SSE
 gemma-trans-cli   命令行：spike / serve
 LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放任意 GGUF 加载
 ```
+
+## 许可证与商业版本
+
+除另有声明的第三方内容外，本仓库公开的 GemmaTrans 源代码与随附文档采用 [MIT License](LICENSE)。你可以在保留版权声明与许可证的前提下使用、修改、分发和商业使用这些内容，完整条款以许可证原文为准。
+
+未来如提供独立开发、单独发布且未以 MIT 授权的闭源 Pro 模块，将采用随该模块提供的独立商业许可。付费功能的推出不会收回或限制已按 MIT 发布的代码所授予的权利；本说明也不代表 Pro 功能已经上线。
+
+第三方依赖、运行时中的上游代码（包括补丁中的第三方内容）和模型权重保留各自的版权声明与许可证，不因本项目采用 MIT 而改变授权。App 安装包不内置模型权重，模型在使用时从上游下载；下载方式不免除适用的模型许可义务。来源与许可证入口见 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
 ## 发布
 
