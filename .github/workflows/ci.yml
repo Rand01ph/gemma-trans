@@ -44,6 +44,9 @@ jobs:
             exit 1
           fi
           echo "DEVELOPER_DIR=$SELECTED" >> "$GITHUB_ENV"
+          # XCTest's CPU JIT subprocess may not inherit DEVELOPER_DIR. Keep the
+          # runner's compiler shims on the same Xcode as the loaded test libraries.
+          sudo xcode-select --switch "$SELECTED"
           DEVELOPER_DIR="$SELECTED" xcodebuild -version
           DEVELOPER_DIR="$SELECTED" xcrun --sdk macosx --show-sdk-version
 
@@ -58,6 +61,13 @@ jobs:
 
       - name: 生成工程
         run: (cd App && xcodegen generate)
+
+      - name: Hy-MT2 cache preparation tests
+        run: |
+          xcodebuild -project App/GemmaTrans.xcodeproj -scheme HunyuanModelTests \
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath App/build/ci \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual -skipMacroValidation \
+            -skipPackagePluginValidation test
 
       - name: 构建 Developer ID scheme（无签名）
         run: |
