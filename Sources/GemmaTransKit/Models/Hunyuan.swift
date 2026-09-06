@@ -223,6 +223,26 @@ public class HunyuanModel: Module, LLMModel, KVCacheDimensionProvider {
         }
     }
 
+    /// Match mlx-lm's prefill: populate the cache, then leave one token for decoding.
+    /// The default Swift LLM path evaluates a short prompt in one batch. On Hy-MT2
+    /// this can choose a different first output language than single-token decoding.
+    /// Keep the prompt and sampling parameters intact while using the reference path.
+    public func prepare(_ input: LMInput, cache: [KVCache], windowSize: Int?) throws -> PrepareResult {
+        guard !cache.isEmpty else { return .tokens(input.text) }
+        let chunkSize = max(1, windowSize ?? 512)
+        var remaining = input.text
+        try withPreparedCache(cache, lengths: remaining.sequenceLengths) {
+            while remaining.tokens.size > 1 {
+                try Task.checkCancellation()
+                let count = min(chunkSize, remaining.tokens.size - 1)
+                _ = self(remaining[.newAxis, ..<count], cache: cache, state: nil)
+                eval(cache)
+                remaining = remaining[count...]
+            }
+        }
+        return .tokens(remaining)
+    }
+
     public func callAsFunction(_ inputs: MLXArray, cache: [KVCache]?) -> MLXArray {
         let out = model(inputs, cache: cache)
         if let lmHead {

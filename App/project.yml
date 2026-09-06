@@ -10,6 +10,20 @@ packages:
     url: https://github.com/sindresorhus/KeyboardShortcuts
     from: 2.0.0
 targets:
+  HunyuanModelTests:
+    type: bundle.unit-test
+    platform: macOS
+    sources:
+    - ../Tests/GemmaTransKitTests/HunyuanPrefillTests.swift
+    dependencies:
+    - package: GemmaTransCore
+      product: GemmaTransKit
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.tests.hunyuan
+        SWIFT_VERSION: '6.0'
+        ARCHS: arm64
   GemmaTrans:
     sources:
     - GemmaTrans
@@ -101,5 +115,15 @@ targets:
         PRODUCT_NAME: GemmaTrans
     templates:
     - GemmaTransShared
+schemes:
+  HunyuanModelTests:
+    build:
+      targets:
+        HunyuanModelTests: all
+    test:
+      targets:
+      - HunyuanModelTests
+      environmentVariables:
+        GEMMATRANS_HYMT_PREFILL_TEST: '1'
 include:
 - shared-targets.yml

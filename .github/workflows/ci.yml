@@ -59,6 +59,13 @@ jobs:
       - name: 生成工程
         run: (cd App && xcodegen generate)
 
+      - name: Hy-MT2 cache preparation tests
+        run: |
+          xcodebuild -project App/GemmaTrans.xcodeproj -scheme HunyuanModelTests \
+            -destination 'platform=macOS,arch=arm64' -derivedDataPath App/build/ci \
+            CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual -skipMacroValidation \
+            -skipPackagePluginValidation test
+
       - name: 构建 Developer ID scheme（无签名）
         run: |
           xcodebuild -project App/GemmaTrans.xcodeproj -scheme GemmaTrans \
