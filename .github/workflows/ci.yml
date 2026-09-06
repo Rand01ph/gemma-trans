@@ -44,6 +44,9 @@ jobs:
             exit 1
           fi
           echo "DEVELOPER_DIR=$SELECTED" >> "$GITHUB_ENV"
+          # XCTest's CPU JIT subprocess may not inherit DEVELOPER_DIR. Keep the
+          # runner's compiler shims on the same Xcode as the loaded test libraries.
+          sudo xcode-select --switch "$SELECTED"
           DEVELOPER_DIR="$SELECTED" xcodebuild -version
           DEVELOPER_DIR="$SELECTED" xcrun --sdk macosx --show-sdk-version
 
