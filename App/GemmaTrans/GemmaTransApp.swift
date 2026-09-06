@@ -39,6 +39,7 @@ struct GemmaTransApp: App {
                 Text("API 失败: \(msg)")
             }
             Divider()
+            AppFeatureRegistry.current.menuContent()
             Button("显示窗口") { MainWindowController.shared.show() }
             Toggle("本地 API", isOn: Binding(
                 get: { EngineController.shared.settings.apiEnabled },

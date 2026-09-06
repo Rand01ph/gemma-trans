@@ -1,5 +1,7 @@
 # GemmaTrans macOS 发布指南
 
+> 从 macOS 2.2 开始，App Store 包由私有分发仓库构建。本文的公开仓库 MAS 上传步骤仅适用于历史版本；旧入口会明确停止，避免用免费构建覆盖商店包。GitHub 免费版签名、公证和 Release 流程继续使用。参见 [构建装配说明](app-extensions.md)。
+
 GemmaTrans 提供两条独立分发链：Developer ID 签名、公证后的 GitHub Release，以及由 Xcode Cloud 归档并上传的 Mac App Store 包。两条链都不依赖个人电脑常驻在线，也不要求安装第三方 `asc` CLI。
 
 ## 版本规则

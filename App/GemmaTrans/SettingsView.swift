@@ -7,6 +7,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
     case general
     case models
     case integrations
+    case extensionSettings
 
     var id: String { rawValue }
 
@@ -15,6 +16,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .general: return "通用"
         case .models: return "模型"
         case .integrations: return "集成"
+        case .extensionSettings: return "扩展"
         }
     }
 
@@ -23,6 +25,7 @@ enum SettingsSection: String, CaseIterable, Identifiable {
         case .general: return "gearshape"
         case .models: return "cpu"
         case .integrations: return "point.3.connected.trianglepath.dotted"
+        case .extensionSettings: return "slider.horizontal.3"
         }
     }
 }
@@ -79,6 +82,12 @@ struct SettingsView: View {
                 }
                 .tabItem { Label(SettingsSection.integrations.title, systemImage: SettingsSection.integrations.symbol) }
                 .tag(SettingsSection.integrations)
+
+                if let title = AppFeatureRegistry.current.settingsTitle {
+                    AppFeatureRegistry.current.settingsView()
+                        .tabItem { Label(title, systemImage: "slider.horizontal.3") }
+                        .tag(SettingsSection.extensionSettings)
+                }
             }
             .padding(.top, GTGlassTokens.Space.s)
         }

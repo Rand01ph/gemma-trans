@@ -19,6 +19,7 @@ struct TranslationWorkspace: View {
     var body: some View {
         GeometryReader { proxy in
             VStack(spacing: GTGlassTokens.Space.m) {
+                AppFeatureRegistry.current.scenePicker()
                 if controller.engineStatus != .ready {
                     engineNotice
                 }

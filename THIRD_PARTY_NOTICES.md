@@ -12,7 +12,7 @@ GemmaTrans 2.1.0 contains a statically linked, CPU-only runtime used only for th
 - Complete machine-readable source manifest: `Runtime/LlamaRuntime/upstream.json`.
 - Reproducible composition patch: `Runtime/LlamaRuntime/patches/combined.patch`.
 - Deterministic build entry point: `Runtime/LlamaRuntime/build-xcframework.sh`.
-- Published immutable artifact: `runtime-llama-2.1.0-r2`, verified by the SwiftPM checksum recorded in [Runtime/LlamaRuntime/CHECKSUMS.txt](Runtime/LlamaRuntime/CHECKSUMS.txt).
+- Published immutable artifact: `runtime-llama-2.2.0-r1`, verified by the SwiftPM checksum recorded in [Runtime/LlamaRuntime/CHECKSUMS.txt](Runtime/LlamaRuntime/CHECKSUMS.txt).
 
 ## Runtime licenses
 

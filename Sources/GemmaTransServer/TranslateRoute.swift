@@ -68,6 +68,8 @@ func registerTranslateRoute(
             ])
         } catch TranslationError.emptyInput {
             return try .json(["error": "text is empty"], statusCode: .badRequest)
+        } catch TranslationError.promptTooLong {
+            return try .json(["error": "prompt_too_long", "message": TranslationError.promptTooLong.localizedDescription], statusCode: .badRequest)
         } catch TranslationError.modelNotLoaded {
             return try .json(["error": "model not loaded"], statusCode: .serviceUnavailable)
         } catch TranslationError.queueTimeout {

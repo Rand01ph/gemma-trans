@@ -60,6 +60,13 @@ gt_llama_model * gt_llama_model_load(
 
 void gt_llama_model_free(gt_llama_model * model);
 
+// Pure preflight using the model's chat template and tokenizer. 0 = valid, 1 = capacity exceeded,
+// -1 = invalid model/template. Does not clear or otherwise change the KV cache.
+int32_t gt_llama_validate_prompt(
+    gt_llama_model * model, const char * user_prompt, int32_t max_tokens,
+    char * error_buffer, size_t error_buffer_capacity
+);
+
 gt_llama_generation * gt_llama_generation_begin(
     gt_llama_model * model,
     const char * user_prompt,

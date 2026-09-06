@@ -1,0 +1,31 @@
+targetTemplates:
+  GemmaTransShared:
+    type: application
+    platform: macOS
+    postBuildScripts:
+    - name: Bundle source and dependency notices
+      basedOnDependencyAnalysis: false
+      script: |
+        set -eu
+        python3 "$GEMMATRANS_SOURCE_ROOT/Scripts/collect-notices.py" --output "$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/Notices" --checkouts "$GEMMATRANS_DEPENDENCY_CHECKOUTS"
+    dependencies:
+    - package: GemmaTransCore
+      product: GemmaTransKit
+    - package: GemmaTransCore
+      product: GemmaTransServer
+    - package: KeyboardShortcuts
+    settings:
+      base:
+        GEMMATRANS_SOURCE_ROOT: $(SRCROOT)/..
+        GEMMATRANS_DEPENDENCY_CHECKOUTS: $(BUILD_DIR)/../../SourcePackages/checkouts
+        ENABLE_USER_SCRIPT_SANDBOXING: false
+        DEVELOPMENT_TEAM: G2XC9VU88M
+        CODE_SIGN_STYLE: Automatic
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        SWIFT_VERSION: '6.0'
+        ARCHS: arm64
+        MARKETING_VERSION: "2.2.0"
+        CURRENT_PROJECT_VERSION: "26"
+        PRODUCT_BUNDLE_IDENTIFIER: com.gemmatrans.GemmaTrans
+        PRODUCT_NAME: GemmaTrans

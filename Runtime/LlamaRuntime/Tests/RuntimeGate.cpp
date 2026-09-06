@@ -124,6 +124,16 @@ void run_model(const char * path, gt_llama_quantization quantization, int repeti
         std::exit(7);
     }
 
+    std::string too_long;
+    for (int i = 0; i < 8192; ++i) { too_long += "hello "; }
+    if (gt_llama_validate_prompt(model.get(), too_long.c_str(), 1024, error, sizeof(error)) != 1) {
+        std::fprintf(stderr, "context preflight failed to reject an oversized prompt\n");
+        std::exit(12);
+    }
+    if (gt_llama_validate_prompt(model.get(), "Translate hello into Chinese", 1024, error, sizeof(error)) != 0) {
+        std::fprintf(stderr, "context preflight rejected a short prompt\n");
+        std::exit(13);
+    }
     cancel_generation(model.get());
     uint64_t fifth_rss = 0;
 

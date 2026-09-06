@@ -18,8 +18,8 @@ let package = Package(
     targets: [
         .binaryTarget(
             name: "LlamaRuntime",
-            url: "https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.1.0-r2/LlamaRuntime-2.1.0-r2.zip",
-            checksum: "205914935c3b5073511bf3d8728af1a640bd763d3e4b5c1f3f286e01e6a5300d"
+            url: "https://github.com/Rand01ph/gemma-trans/releases/download/runtime-llama-2.2.0-r1/LlamaRuntime-2.2.0-r1.zip",
+            checksum: "58dcad403e81b6e82d43aa2c87d0c35c4b21c620563ebe892dc34f25a1e6130f"
         ),
         .target(
             name: "GemmaTransKit",

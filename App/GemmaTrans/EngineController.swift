@@ -74,7 +74,8 @@ final class EngineController {
                 GTLog.error("startup aborted: another GemmaTrans on \(settings.port)")
                 return
             }
-            let engine = TranslationEngine(settings: settings)
+            let engine = TranslationEngine(settings: settings,
+                                           promptProvider: AppFeatureRegistry.current.promptProvider)
             // start() 已确认快照完整；这里的进度状态只处理下载完成与加载之间的兼容回调。
             let progressHandler: @Sendable (DownloadProgress) -> Void = { progress in
                 Task { @MainActor in

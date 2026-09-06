@@ -139,13 +139,13 @@ xcodebuild -create-xcframework \
     -output "$OUTPUT_DIR/LlamaRuntime.xcframework"
 
 find "$OUTPUT_DIR/LlamaRuntime.xcframework" -exec touch -h -t 202001010000 {} +
-rm -f "$OUTPUT_DIR/LlamaRuntime-2.1.0-r2.zip"
+rm -f "$OUTPUT_DIR/LlamaRuntime-2.2.0-r1.zip"
 (
     cd "$OUTPUT_DIR"
     find LlamaRuntime.xcframework -print | LC_ALL=C sort | \
-        COPYFILE_DISABLE=1 zip -X -q "LlamaRuntime-2.1.0-r2.zip" -@
+        COPYFILE_DISABLE=1 zip -X -q "LlamaRuntime-2.2.0-r1.zip" -@
 )
 
 file "$PRODUCT_DIR/libLlamaRuntime.a"
-shasum -a 256 "$OUTPUT_DIR/LlamaRuntime-2.1.0-r2.zip"
-swift package compute-checksum "$OUTPUT_DIR/LlamaRuntime-2.1.0-r2.zip"
+shasum -a 256 "$OUTPUT_DIR/LlamaRuntime-2.2.0-r1.zip"
+swift package compute-checksum "$OUTPUT_DIR/LlamaRuntime-2.2.0-r1.zip"

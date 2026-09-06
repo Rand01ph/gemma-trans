@@ -160,5 +160,6 @@ LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放
 - [docs/social-launch-2.0.md](docs/social-launch-2.0.md)：小红书首发、连续宣传选题与 V2EX 技术复盘稿
 - [docs/store-listing.md](docs/store-listing.md)：Mac App Store 描述、审核备注与提审清单
 - [docs/releasing.md](docs/releasing.md)：版本、Actions Secrets、签名、公证与 MAS 发布步骤
+- [docs/app-extensions.md](docs/app-extensions.md)：2.2 的通用提示词接口、共享 App 构建与分发装配
 - `Scripts/release.sh`：Developer ID 签名、公证并生成 ZIP/DMG
 - `Scripts/release-mas.sh`：使用 Xcode 自带工具归档、导出及可选上传 MAS 包，不依赖第三方 `asc` CLI

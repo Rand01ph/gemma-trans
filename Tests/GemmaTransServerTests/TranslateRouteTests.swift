@@ -5,6 +5,22 @@ import FlyingFox
 import GemmaTransKit
 
 @Suite struct TranslateRouteTests {
+    @Test(arguments: [false, true]) func oversizedPromptFailsBeforeStartingEitherStream(stream: Bool) async throws {
+        let (base, task) = try await startServer(OversizedPromptTranslator())
+        defer { task.cancel() }
+        for path in ["translate", "v1/chat/completions"] {
+            var request = URLRequest(url: base.appendingPathComponent(path))
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            request.httpBody = try JSONSerialization.data(withJSONObject:
+                path == "translate" ? ["text": "hello", "stream": stream] :
+                    ["messages": [["role": "user", "content": "hello"]], "stream": stream])
+            let (data, response) = try await URLSession.shared.data(for: request)
+            #expect((response as? HTTPURLResponse)?.statusCode == 400)
+            let body = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            #expect(body?["error"] as? String == "prompt_too_long")
+        }
+    }
     @Test func serverTimeoutCoversLocalGenerationWindow() {
         #expect(APIServer.requestTimeout == 120)
     }
