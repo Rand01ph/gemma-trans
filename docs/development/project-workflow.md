@@ -21,7 +21,7 @@
 以下是迁移清单，不表示远端设置已经完成：
 
 - [x] 确立通用策略、项目配置和 AGENTS 入口。
-- [ ] 从现有 main 保存后续开发进度到 develop，调整相关 PR 的目标分支。
+- [x] 从现有 main `8138d19` 保存后续开发进度到 develop，开发 PR #17 已调整目标分支。
 - [ ] 通过 PR 将 main 整理为本次可发布源码；不得强推覆盖历史。
 - [ ] 建立并验证 Cloud PR 检查、develop 集成检查和 main 正式发布流程。
 - [ ] 将 Swift、模型和 UI 契约检查从 Actions 完整迁移到 Cloud。
@@ -38,3 +38,5 @@
 ## 复用到其他项目
 
 复制 `workflow-policy.md`，新增该项目的配置文件，再从其根目录 `AGENTS.md` 引用两者。保持通用规则与项目 ID、测试命令、分发目标分离；通过 PR 升级策略版本，不通过本机绝对路径依赖另一仓库的文档。
+
+迁移验证分支使用 `script/ci_validate.sh` 执行 checksum、Swift tests、已有 UI 契约、Hy-MT2 专项测试及 Developer ID scheme 编译，Cloud 原生动作负责 MAS scheme。尚未引入 UI 契约的旧开发快照不宣称通过 UI 验收。分发归档继续阻止，待 main 发布源码迁移 PR 审阅后再放行。旧 Actions 验证在替代检查通过并设为必需前保留。
