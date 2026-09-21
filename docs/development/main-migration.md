@@ -8,8 +8,8 @@ App（除 ci_scripts）、Sources、Runtime、Tests 和 Package 文件与该 2.1
 
 ## 未完成门槛
 
-本 PR 是源码准备，不能视为发布许可。Cloud 验证已首次通过，main/develop 已要求 Cloud 检查，旧 Actions 已停用；本 PR 最新源码的 Cloud 验证、main 正式归档保护、正式新 build 和图形验收仍需完成。此 PR 继续阻止 archive。
+本 PR 是源码准备，不能视为发布许可。Cloud 验证已首次通过，main/develop 已要求 Cloud 检查，旧 Actions 已停用；本 PR 最新源码的 Cloud 验证、main 正式归档保护、正式新 build 和图形验收仍需完成。本 PR 仅允许 main 的手动 GemmaTrans Release 归档；发布工作流默认禁用，验收前不触发。
 
-原始截图仍保存在完整修复工作树；由于先前大文件上传失败，当前分支只有元素 JSON/索引，不能宣称图像基线已经交付。须补齐图片并完成固定图形环境验收后再发布。
+74 张原始截图已补齐，与完整修复工作树逐张 SHA-256 一致。此为原始基线交付；最新固定图形环境验收仍未完成，不能以图片补齐或 Cloud 编译代替。
 
 此前临时 Cloud run 39 对应 Apple build 39，已处理为 VALID；工程预设 build 40 未决定最终 Apple build，正式记录以实际产物为准，该临时包不替代 main 构建。
