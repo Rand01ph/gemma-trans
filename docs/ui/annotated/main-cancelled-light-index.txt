@@ -1,0 +1,5 @@
+1. main.clear: 清空原文
+2. main.copy: 复制译文
+3. main.input: 真正好的工具不会打断工作，而是在需要时安静地出现。
+4. main.result: First translated paragraph.
+5. main.translate: 翻译

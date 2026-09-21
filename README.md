@@ -52,6 +52,8 @@ brew install xcodegen
 ./script/build_and_run.sh --verify
 ```
 
+本地构建默认使用独立 QA/Dev 身份，安装到 `~/Applications`，不会覆盖商店版。QA 划词快捷键为 **⌃⌥⌘T**；详细通道、数据隔离和回滚规则见 [本地测试通道](docs/development/local-channels.md)。
+
 脚本只为当前项目设置 `DEVELOPER_DIR`，不会修改系统全局 `xcode-select`。默认使用 `/Applications/Xcode-beta.app/Contents/Developer`，可在脚本调用前覆盖 `DEVELOPER_DIR`。
 
 ## CLI 与本地 API

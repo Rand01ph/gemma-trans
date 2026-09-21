@@ -1,0 +1,89 @@
+{
+  "appearance" : "light",
+  "elements" : [
+    {
+      "enabled" : true,
+      "frame" : [
+        40,
+        45.238525390625,
+        41,
+        13.52294921875
+      ],
+      "id" : "panel.action",
+      "text" : "翻译"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        480,
+        42,
+        20,
+        20
+      ],
+      "id" : "panel.close",
+      "text" : "关闭"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        40,
+        170,
+        22,
+        22
+      ],
+      "id" : "panel.copy",
+      "text" : "复制译文"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        452,
+        42,
+        20,
+        20
+      ],
+      "id" : "panel.pin",
+      "text" : "固定浮窗位置"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        42,
+        71,
+        161,
+        16
+      ],
+      "id" : "panel.result",
+      "text" : "First translated paragraph."
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        70,
+        170,
+        22,
+        22
+      ],
+      "id" : "panel.speak",
+      "text" : "朗读译文"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        414,
+        45.5,
+        30,
+        13
+      ],
+      "id" : "panel.status",
+      "text" : "已停止"
+    }
+  ],
+  "font" : ".AppleSystemUIFont",
+  "height" : 468,
+  "os" : "Version 27.0 (Build 26A428)",
+  "scale" : 2,
+  "scene" : "panel-cancelled",
+  "width" : 1080,
+  "windowNumber" : 2625
+}

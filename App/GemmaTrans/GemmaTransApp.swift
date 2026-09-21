@@ -32,22 +32,37 @@ struct GemmaTransApp: App {
             }
             switch controller.apiStatus {
             case .disabled:
-                Text("API：已关闭")
+                Text("API：已关闭").accessibilityIdentifier("menu.apiStatus")
             case .running(let port):
                 Text("API：127.0.0.1:\(String(port))")
             case .failed(let msg):
                 Text("API 失败: \(msg)")
             }
+            if AppChannel.current != .production && AppChannel.current != .uitest {
+                Divider()
+                Button("关于 " + AppChannel.current.displayName) {
+                    let info = Bundle.main.infoDictionary ?? [:]
+                    NSApp.orderFrontStandardAboutPanel(options: [
+                        .applicationName: AppChannel.current.displayName,
+                        .applicationVersion: "\(info["CFBundleShortVersionString"] ?? "") (\(info["CFBundleVersion"] ?? ""))",
+                        .version: "\(info["GTBranch"] ?? "") · \(info["GTCommit"] ?? "")\((info["GTDirty"] as? Bool == true) ? " · dirty" : "")"
+                    ])
+                }
+            }
             Divider()
             Button("显示窗口") { MainWindowController.shared.show() }
+                .accessibilityIdentifier("menu.show")
             Toggle("本地 API", isOn: Binding(
                 get: { EngineController.shared.settings.apiEnabled },
                 set: { EngineController.shared.setAPIEnabled($0) }
-            ))
+            )).accessibilityIdentifier("menu.api")
             Button("设置…") { MainWindowController.shared.showSettings() }
+                .accessibilityIdentifier("menu.settings")
             Button("退出") { NSApplication.shared.terminate(nil) }
+                .accessibilityIdentifier("menu.quit")
         } label: {
             Image(systemName: controller.engineStatus == .ready ? "character.book.closed.fill" : "character.book.closed")
+                .accessibilityLabel("GemmaTrans")
         }
 
         Settings {
@@ -79,7 +94,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.setActivationPolicy(.accessory)
         GTAppearanceStore.shared.reloadFromDefaults()
         EngineController.shared.start()
+#if DEBUG
+        if GTDebugScreenshotFixture.scene == nil { HotkeyCenter.install() }
+#else
         HotkeyCenter.install()
+#endif
         NSApp.servicesProvider = services
         NSUpdateDynamicServices()
         Task { @MainActor in
@@ -90,6 +109,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                 MainWindowController.shared.showSettings()
             } else if GTDebugScreenshotFixture.isPanel {
                 TranslationPanel.shared.showScreenshotFixture()
+            } else if GTDebugScreenshotFixture.scene == "menu" {
+                GTDebugScreenshotFixture.prepareMenuBackdrop()
             }
 #endif
         }
@@ -102,7 +123,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // Visual-QA hook for exercising the real floating-panel path without relying on a signed
         // global shortcut. It is compiled out of Release/App Store builds.
         debugTranslateClipboardObserver = DistributedNotificationCenter.default().addObserver(
-            forName: Notification.Name("com.gemmatrans.debug.translate-clipboard"),
+            forName: Notification.Name((Bundle.main.bundleIdentifier ?? "com.gemmatrans.GemmaTrans") + ".debug.translate-clipboard"),
             object: nil,
             queue: .main
         ) { _ in

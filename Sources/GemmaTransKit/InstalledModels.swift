@@ -7,7 +7,11 @@ public struct InstalledModel: Sendable, Equatable {
 
 public enum InstalledModels {
     public static var defaultLegacyHuggingFaceHub: URL {
-        URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
+        if AppChannel.current != .production {
+            return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent(AppChannel.current.displayName + "/legacy-hf", isDirectory: true)
+        }
+        return URL(fileURLWithPath: NSHomeDirectory(), isDirectory: true)
             .appendingPathComponent(".cache/huggingface/hub", isDirectory: true)
     }
 

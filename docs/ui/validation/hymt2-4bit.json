@@ -1,0 +1,7 @@
+{
+  "allMarkers" : true,
+  "inputCharacters" : 3514,
+  "model" : "hymt2-4bit",
+  "outputCharacters" : 1086,
+  "tokensPerSecond" : 75.099496034403543
+}

@@ -1,0 +1,66 @@
+{
+  "appearance" : "dark",
+  "elements" : [
+    {
+      "enabled" : false,
+      "frame" : [
+        0,
+        29,
+        304,
+        24
+      ],
+      "id" : "menu.apiStatus",
+      "text" : "API：已关闭"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        64,
+        304,
+        24
+      ],
+      "id" : "menu.show",
+      "text" : "显示窗口"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        88,
+        304,
+        24
+      ],
+      "id" : "menu.api",
+      "text" : "本地 API"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        112,
+        304,
+        24
+      ],
+      "id" : "menu.settings",
+      "text" : "设置…"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        136,
+        304,
+        24
+      ],
+      "id" : "menu.quit",
+      "text" : "退出"
+    }
+  ],
+  "font" : ".AppleSystemUIFont",
+  "height" : 330,
+  "os" : "版本27.0（版号26A428）",
+  "scale" : 2,
+  "scene" : "menu",
+  "width" : 608
+}

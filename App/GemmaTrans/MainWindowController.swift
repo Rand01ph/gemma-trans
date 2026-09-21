@@ -1,4 +1,5 @@
 import AppKit
+import GemmaTransKit
 import OSLog
 import SwiftUI
 
@@ -67,7 +68,7 @@ final class MainWindowController: NSObject, NSToolbarDelegate {
                 rootView: MainView(controller: EngineController.shared)
             )
             let win = NSWindow(contentViewController: hosting)
-            win.title = "GemmaTrans"
+            win.title = AppChannel.current == .uitest ? "GemmaTrans" : AppChannel.current.displayName
             win.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             win.titleVisibility = .visible
             win.titlebarAppearsTransparent = true

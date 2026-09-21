@@ -64,12 +64,14 @@ struct SettingsView: View {
                     translationSection
                     performanceSection
                 }
+                .gtUIElement("settings.general", text: "通用")
                 .tabItem { Label(SettingsSection.general.title, systemImage: SettingsSection.general.symbol) }
                 .tag(SettingsSection.general)
 
                 settingsPage(title: "模型", subtitle: "下载、切换和管理本地模型。") {
                     modelSection
                 }
+                .gtUIElement("settings.models", text: "模型")
                 .tabItem { Label(SettingsSection.models.title, systemImage: SettingsSection.models.symbol) }
                 .tag(SettingsSection.models)
 
@@ -77,6 +79,7 @@ struct SettingsView: View {
                     apiSection
                     shortcutsSection
                 }
+                .gtUIElement("settings.integrations", text: "集成")
                 .tabItem { Label(SettingsSection.integrations.title, systemImage: SettingsSection.integrations.symbol) }
                 .tag(SettingsSection.integrations)
             }
@@ -86,7 +89,12 @@ struct SettingsView: View {
                height: GTGlassTokens.Panel.settingsHeight)
         .background(SettingsWindowReader())
         .gtApplicationAppearance()
-        .onAppear(perform: reloadSettings)
+        .onAppear {
+            reloadSettings()
+#if DEBUG
+            if let section = GTDebugScreenshotFixture.settingsSection { selectedSection = section }
+#endif
+        }
         .onChange(of: EngineController.shared.engineStatus) { _, _ in refreshInstalledModels() }
         .onChange(of: EngineController.shared.downloadingModelID) { _, _ in refreshInstalledModels() }
         .onDisappear {
@@ -153,6 +161,7 @@ struct SettingsView: View {
                 }
                 .labelsHidden()
                 .pickerStyle(.segmented)
+                .gtUIElement("settings.appearance", text: "主题")
                 .frame(width: 232)
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
@@ -165,6 +174,7 @@ struct SettingsView: View {
                            step: 1)
                         .frame(width: 148)
                         .accessibilityLabel("浮窗译文字号")
+                        .gtUIElement("settings.fontSize", text: "浮窗译文字号")
                         .accessibilityValue("\(Int(settings.translationFontSize)) 点")
 
                     Text("\(Int(settings.translationFontSize)) pt")
@@ -241,6 +251,7 @@ struct SettingsView: View {
             GTPanelRow(title: "翻译剪贴板", subtitle: "先复制，再按快捷键。") {
                 KeyboardShortcuts.Recorder("", name: .translateSelection)
                     .labelsHidden()
+                    .gtUIElement("settings.shortcut", text: "翻译剪贴板")
             }
             GTPanelDivider()
             GTPanelRow(title: "划词翻译", subtitle: "选中文字后按服务快捷键。") {
@@ -250,7 +261,7 @@ struct SettingsView: View {
                         .foregroundStyle(GTGlassPalette.secondaryText)
                     GTSettingsActionButton(title: "系统设置…") {
                         Self.openServicesShortcutSettings()
-                    }
+                    }.gtUIElement("settings.services", text: "系统设置…")
                 }
             }
             Text("首次使用若按了没反应，请在系统设置的“键盘快捷键 > 服务”中勾选 Translate with GemmaTrans。")
@@ -268,11 +279,12 @@ struct SettingsView: View {
             title: "本地模型",
             subtitle: "下载后选择使用；Hugging Face 不可用时会自动切换 ModelScope。"
         ) {
-            engineStatusRow
+            engineStatusRow.gtUIElement("settings.engine", text: "引擎状态")
             GTPanelDivider()
 
             ForEach(ModelCatalog.entries) { entry in
                 catalogRow(entry, installedIDs: installedIDs)
+                    .gtUIElement("settings.model.\(entry.id)", text: entry.displayName)
                 if entry.id != ModelCatalog.entries.last?.id {
                     GTPanelDivider()
                 }
@@ -363,7 +375,7 @@ struct SettingsView: View {
     private func catalogRow(_ entry: ModelCatalogEntry, installedIDs: Set<String>) -> some View {
         let ec = EngineController.shared
         let installed = installedIDs.contains(entry.id)
-        return modelRow(title: entry.displayName,
+        return modelRow(id: entry.id, title: entry.displayName,
                         subtitle: ec.modelDownloadErrors[entry.id] ?? formatBytes(entry.estimatedBytes),
                         active: installed && ec.selectedModelID == entry.id,
                         installed: installed,
@@ -378,7 +390,7 @@ struct SettingsView: View {
             .help("模型仓库：\(entry.repo)")
     }
 
-    private func modelRow(title: String,
+    private func modelRow(id: String, title: String,
                           subtitle: String,
                           active: Bool,
                           installed: Bool = true,
@@ -399,6 +411,7 @@ struct SettingsView: View {
                                 .monospacedDigit()
                         }
                         GTModelStateBadge()
+                            .gtUIElement("settings.model.\(id).active", text: "使用中")
                         modelOverflowPlaceholder
                     }
                 } else if downloading {
@@ -415,10 +428,12 @@ struct SettingsView: View {
                         GTSettingsActionButton(title: "使用",
                                                systemImage: "checkmark",
                                                action: switchAction)
+                            .gtUIElement("settings.model.\(id).use", text: "使用", enabled: !isEngineBusy)
                             .disabled(isEngineBusy)
                         if let deleteAction {
                             GTSettingsDestructiveIconButton(title: "删除模型…",
                                                             action: deleteAction)
+                            .gtUIElement("settings.model.\(id).delete", text: "删除模型", enabled: !isEngineBusy)
                             .disabled(isEngineBusy)
                         } else {
                             modelOverflowPlaceholder
@@ -429,6 +444,7 @@ struct SettingsView: View {
                         GTSettingsActionButton(title: "下载",
                                                systemImage: "arrow.down",
                                                action: downloadAction)
+                            .gtUIElement("settings.model.\(id).download", text: "下载", enabled: EngineController.shared.downloadingModelID == nil)
                             .disabled(EngineController.shared.downloadingModelID != nil)
                         modelOverflowPlaceholder
                     }
@@ -485,6 +501,9 @@ struct SettingsView: View {
     }
 
     private func refreshInstalledModels() {
+#if DEBUG
+        if GTDebugScreenshotFixture.scene != nil { installed = []; return }
+#endif
         installed = EngineController.shared.installedModels()
     }
 
@@ -575,7 +594,7 @@ struct SettingsView: View {
     static var serviceShortcutGlyphs: String {
         guard let services = Bundle.main.infoDictionary?["NSServices"] as? [[String: Any]],
               let keyEq = services.first?["NSKeyEquivalent"] as? [String: String],
-              let def = keyEq["default"] else { return "⌥⌘T" }
+              let def = keyEq["default"] else { return AppChannel.current == .production ? "⌥⌘T" : "未设置" }
         var out = ""
         for ch in def {
             switch ch {

@@ -484,7 +484,7 @@ public actor TranslationEngine: TranslationService {
     private static func defaultModelDirectory() -> URL {
         let dir = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("GemmaTrans/models", isDirectory: true)
+            .appendingPathComponent(AppChannel.current.displayName + "/models", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

@@ -12,3 +12,6 @@ App/build-mas/
 App/build-release/
 AppiOS/build/
 Runtime/LlamaRuntime/Artifacts/
+
+# Python UI verification caches
+__pycache__/

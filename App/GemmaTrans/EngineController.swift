@@ -38,6 +38,16 @@ final class EngineController {
     }
 
     func start() {
+#if DEBUG
+        if GTDebugScreenshotFixture.scene != nil {
+            settings = AppSettings(apiEnabled: false, selectedModelID: "hymt2-1.25bit")
+            selectedModelID = settings.selectedModelID
+            engineStatus = .ready
+            apiStatus = .disabled
+            return
+        }
+#endif
+
         engineStatus = .loading("正在准备…")
         // 重读设置：模型、参数和 API 偏好可能已在设置页修改。
         settings = AppSettings.load()
