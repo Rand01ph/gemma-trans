@@ -52,6 +52,8 @@ brew install xcodegen
 ./script/build_and_run.sh --verify
 ```
 
+本地构建默认使用独立 QA/Dev 身份，安装到 `~/Applications`。QA 划词快捷键为 **⌃⌥⌘T**；详细通道与隔离规则见 [本地测试通道](docs/development/local-channels.md)。
+
 脚本只为当前项目设置 `DEVELOPER_DIR`，不会修改系统全局 `xcode-select`。默认使用 `/Applications/Xcode-beta.app/Contents/Developer`，可在脚本调用前覆盖 `DEVELOPER_DIR`。
 
 ## CLI 与本地 API
@@ -143,11 +145,10 @@ gemma-trans-cli   命令行：spike / serve
 LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放任意 GGUF 加载
 ```
 
-## 许可证与商业版本
+## 许可证
 
 除另有声明的第三方内容外，本仓库公开的 GemmaTrans 源代码与随附文档采用 [MIT License](LICENSE)。你可以在保留版权声明与许可证的前提下使用、修改、分发和商业使用这些内容，完整条款以许可证原文为准。
 
-未来如提供独立开发、单独发布且未以 MIT 授权的闭源 Pro 模块，将采用随该模块提供的独立商业许可。付费功能的推出不会收回或限制已按 MIT 发布的代码所授予的权利；本说明也不代表 Pro 功能已经上线。
 
 第三方依赖、运行时中的上游代码（包括补丁中的第三方内容）和模型权重保留各自的版权声明与许可证，不因本项目采用 MIT 而改变授权。App 安装包不内置模型权重，模型在使用时从上游下载；下载方式不免除适用的模型许可义务。来源与许可证入口见 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
@@ -164,6 +165,5 @@ LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放
 - [docs/social-launch-2.0.md](docs/social-launch-2.0.md)：小红书首发、连续宣传选题与 V2EX 技术复盘稿
 - [docs/store-listing.md](docs/store-listing.md)：Mac App Store 描述、审核备注与提审清单
 - [docs/releasing.md](docs/releasing.md)：基于 main 的 Cloud 构建、签名、审核与发布步骤
-- [docs/app-extensions.md](docs/app-extensions.md)：2.2 的通用提示词接口、共享 App 构建与分发装配
 - `Scripts/release.sh`：Developer ID 签名、公证并生成 ZIP/DMG
 - `Scripts/release-mas.sh`：使用 Xcode 自带工具归档、导出及可选上传 MAS 包，不依赖第三方 `asc` CLI

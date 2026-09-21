@@ -8,7 +8,7 @@ App（除 ci_scripts）、Sources、Runtime、Tests 和 Package 文件与该 2.1
 
 ## 未完成门槛
 
-本 PR 是源码准备，不能视为发布许可。Cloud 验证、main/develop 必需检查、main 正式归档保护、旧 tag 构建停用、正式新 build 和图形验收仍需完成。此 PR 继续阻止 archive。
+本 PR 是源码准备，不能视为发布许可。Cloud 验证已首次通过，main/develop 已要求 Cloud 检查，旧 Actions 已停用；本 PR 最新源码的 Cloud 验证、main 正式归档保护、正式新 build 和图形验收仍需完成。此 PR 继续阻止 archive。
 
 原始截图仍保存在完整修复工作树；由于先前大文件上传失败，当前分支只有元素 JSON/索引，不能宣称图像基线已经交付。须补齐图片并完成固定图形环境验收后再发布。
 
