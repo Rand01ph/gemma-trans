@@ -1,0 +1,166 @@
+{
+  "appearance" : "dark",
+  "elements" : [
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        209,
+        568,
+        44
+      ],
+      "id" : "settings.engine",
+      "text" : "引擎状态"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        299,
+        568,
+        44
+      ],
+      "id" : "settings.model.gemma-e2b-4bit",
+      "text" : "Gemma 4 E2B (4-bit)"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        476,
+        307,
+        92,
+        28
+      ],
+      "id" : "settings.model.gemma-e2b-4bit.download",
+      "text" : "下载"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        254,
+        568,
+        44
+      ],
+      "id" : "settings.model.gemma-e4b-4bit",
+      "text" : "Gemma 4 E4B (4-bit)"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        476,
+        262,
+        92,
+        28
+      ],
+      "id" : "settings.model.gemma-e4b-4bit.download",
+      "text" : "下载"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        434,
+        568,
+        44
+      ],
+      "id" : "settings.model.hymt2-1.25bit",
+      "text" : "Hy-MT2 1.8B（1.25-bit · 轻量版）"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        476,
+        442,
+        92,
+        28
+      ],
+      "id" : "settings.model.hymt2-1.25bit.download",
+      "text" : "下载"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        479,
+        568,
+        44
+      ],
+      "id" : "settings.model.hymt2-2bit",
+      "text" : "Hy-MT2 1.8B（2-bit · 均衡版）"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        476,
+        487,
+        92,
+        28
+      ],
+      "id" : "settings.model.hymt2-2bit.download",
+      "text" : "下载"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        344,
+        568,
+        44
+      ],
+      "id" : "settings.model.hymt2-4bit",
+      "text" : "Hy-MT2 1.8B (4-bit · 翻译专用)"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        476,
+        352,
+        92,
+        28
+      ],
+      "id" : "settings.model.hymt2-4bit.download",
+      "text" : "下载"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        36,
+        389,
+        568,
+        44
+      ],
+      "id" : "settings.model.hymt2-8bit",
+      "text" : "Hy-MT2 1.8B (8-bit · 翻译专用)"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        476,
+        397,
+        92,
+        28
+      ],
+      "id" : "settings.model.hymt2-8bit.download",
+      "text" : "下载"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        96,
+        640,
+        492
+      ],
+      "id" : "settings.models",
+      "text" : "模型"
+    }
+  ],
+  "font" : ".AppleSystemUIFont",
+  "height" : 1176,
+  "os" : "Version 27.0 (Build 26A428)",
+  "scale" : 2,
+  "scene" : "settings-models",
+  "width" : 1280,
+  "windowNumber" : 3017
+}

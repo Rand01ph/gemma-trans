@@ -1,0 +1,78 @@
+{
+  "appearance" : "light",
+  "elements" : [
+    {
+      "enabled" : true,
+      "frame" : [
+        413,
+        204,
+        150,
+        24
+      ],
+      "id" : "settings.appearance",
+      "text" : "主题"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        372,
+        347.996826171875,
+        232,
+        24.00634765625
+      ],
+      "id" : "settings.field.中文翻译为",
+      "text" : "en"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        372,
+        392.996826171875,
+        232,
+        24.00634765625
+      ],
+      "id" : "settings.field.其他语言翻译为",
+      "text" : "zh-Hans"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        410,
+        253,
+        148,
+        16
+      ],
+      "id" : "settings.fontSize",
+      "text" : "浮窗译文字号"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        96,
+        640,
+        492
+      ],
+      "id" : "settings.general",
+      "text" : "通用"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        550,
+        492,
+        54,
+        24
+      ],
+      "id" : "settings.toggle.自动配置参数",
+      "text" : "true"
+    }
+  ],
+  "font" : ".AppleSystemUIFont",
+  "height" : 1176,
+  "os" : "Version 27.0 (Build 26A428)",
+  "scale" : 2,
+  "scene" : "settings-general",
+  "width" : 1280,
+  "windowNumber" : 2989
+}

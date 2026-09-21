@@ -47,13 +47,11 @@ final class TranslationPanel {
 #if DEBUG
     func showScreenshotFixture() {
         let model = TranslationViewModel()
-        model.setMessage(GTDebugScreenshotFixture.panelOutput)
-        model.status = "zh-Hans → en"
-        model.tokensPerSecond = 72.4
+        model.configureScreenshotFixture()
         interactionState.isPositionLocked = true
-        present(model: model)
+        present(model: model, onRetry: { model.configureScreenshotFixture() })
         if let panel {
-            GTDebugScreenshotFixture.captureIfRequested(window: panel, matching: "panel")
+            GTDebugScreenshotFixture.captureIfRequested(window: panel, matching: GTDebugScreenshotFixture.scene ?? "panel")
         }
     }
 #endif
@@ -171,6 +169,9 @@ final class TranslationPanel {
     /// 非激活浮窗不会收到本地 NSEvent；用与 app 全局快捷键相同的 Carbon 路径，
     /// 仅在浮窗可见期间注册 Esc。它不会激活 GemmaTrans，也不会把普通窗口带到前台。
     private func installEscapeShortcut() {
+#if DEBUG
+        if GTDebugScreenshotFixture.scene != nil { return }
+#endif
         uninstallEscapeShortcut()
         KeyboardShortcuts.setShortcut(.init(.escape), for: .closeTranslationPanel)
         KeyboardShortcuts.onKeyDown(for: .closeTranslationPanel) { [weak self] in
@@ -387,6 +388,9 @@ final class TranslationViewModel {
     }
 
     func start(text: String, engine: TranslationEngine) {
+        task?.cancel()
+        output = ""
+        tokensPerSecond = nil
         generation += 1
         let currentGeneration = generation
         phase = .running
@@ -396,13 +400,19 @@ final class TranslationViewModel {
             do {
                 let result = try await engine.translate(text, target: nil)
                 guard currentGeneration == generation else { return }
-                if result.truncated { status = "（超长已截断）翻译中…" }
+                let progressTask = Task { @MainActor in
+                    for await progress in result.progress {
+                        guard currentGeneration == generation, isRunning, !Task.isCancelled else { return }
+                        status = progress.status
+                    }
+                }
+                defer { progressTask.cancel() }
                 for try await chunk in result.chunks {
                     guard currentGeneration == generation else { return }
                     output += chunk
                 }
                 guard currentGeneration == generation else { return }
-                tokensPerSecond = await engine.lastTokensPerSecond
+                tokensPerSecond = await result.statistics.metrics?.tokensPerSecond
                 EngineController.shared.recordTokensPerSecond(tokensPerSecond)
                 status = "\(result.detected) → \(result.target)"
                 phase = .completed
@@ -412,7 +422,7 @@ final class TranslationViewModel {
                 if output.isEmpty { status = "已停止" }
             } catch {
                 guard currentGeneration == generation else { return }
-                let message = "\(error)"
+                let message = error.localizedDescription
                 phase = .failed(message)
                 status = ""
                 GTLog.error("translation failed: \(error)")
@@ -439,6 +449,33 @@ final class TranslationViewModel {
         tokensPerSecond = nil
         phase = .idle
     }
+
+#if DEBUG
+    func configureScreenshotFixture() {
+        reset()
+        switch GTDebugScreenshotFixture.state {
+        case "idle": break
+        case "running":
+            phase = .running
+            output = "First translated paragraph."
+            status = "翻译中 3/12"
+        case "failed":
+            output = "First translated paragraph."
+            phase = .failed("翻译未完成：测试错误")
+        case "cancelled":
+            output = "First translated paragraph."
+            status = "已停止"
+            phase = .cancelled
+        default:
+            let text = GTDebugScreenshotFixture.isMain
+                ? GTDebugScreenshotFixture.mainOutput : GTDebugScreenshotFixture.panelOutput
+            setMessage(GTDebugScreenshotFixture.state == "long"
+                ? String(repeating: text + "\n\n", count: 30) : text)
+            status = "zh-Hans → en"
+            tokensPerSecond = 72.4
+        }
+    }
+#endif
 
     func setMessage(_ message: String) {
         reset()
@@ -574,7 +611,7 @@ private struct GTTranslationPanelView: View {
 
     private var actionHeader: some View {
         HStack(spacing: GTGlassTokens.Space.s) {
-            actionIdentity
+            actionIdentity.gtUIElement("panel.action", text: "翻译")
             // The borderless panel is fully covered by SwiftUI content, so AppKit's
             // isMovableByWindowBackground fallback never receives this mouse-down.
             Color.clear
@@ -584,7 +621,7 @@ private struct GTTranslationPanelView: View {
                 .contentShape(Rectangle())
                 .gesture(WindowDragGesture())
                 .allowsWindowActivationEvents(true)
-            phaseMetadata
+            phaseMetadata.accessibilityElement(children: .contain).gtUIElement("panel.status", text: model.status)
             GTGlassIconButton(
                 title: interactionState.isPositionLocked ? "取消固定位置" : "固定浮窗位置",
                 systemImage: interactionState.isPositionLocked ? "pin.fill" : "pin",
@@ -592,8 +629,9 @@ private struct GTTranslationPanelView: View {
                 quiet: !interactionState.isPositionLocked,
                 size: 24,
                 action: onTogglePositionLock
-            )
+            ).gtUIElement("panel.pin", text: "固定浮窗位置")
             GTGlassIconButton(title: "关闭", systemImage: "xmark", quiet: true, size: 24, action: onClose)
+                .gtUIElement("panel.close", text: "关闭")
                 .keyboardShortcut(.cancelAction)
         }
         .frame(minHeight: 24)
@@ -638,7 +676,7 @@ private struct GTTranslationPanelView: View {
             case .running:
                 HStack(spacing: GTGlassTokens.Space.s) {
                     ProgressView().controlSize(.small)
-                    Text("正在翻译…")
+                    Text(model.status.isEmpty ? "正在翻译…" : model.status)
                 }
                 .foregroundStyle(GTGlassPalette.secondaryText)
             case .completed:
@@ -657,6 +695,7 @@ private struct GTTranslationPanelView: View {
     private var resultSurface: some View {
         ScrollView(.vertical) {
             Text(resultText)
+                .gtUIElement("panel.result", text: resultText)
                 .font(.system(size: resultFontSize, weight: .regular))
                 .lineSpacing(resultLineSpacing)
                 .foregroundStyle(resultForeground)
@@ -699,12 +738,12 @@ private struct GTTranslationPanelView: View {
             case .running:
                 GTGlassButton("停止", systemImage: "stop.fill", emphasis: .interrupt, compact: true) {
                     onStop()
-                }
+                }.gtUIElement("panel.stop", text: "停止")
             case .failed:
                 if let onRetry {
                     GTGlassButton("重试", systemImage: "arrow.clockwise", emphasis: .primary, compact: true) {
                         onRetry()
-                    }
+                    }.gtUIElement("panel.retry", text: "重试")
                     .keyboardShortcut(.return, modifiers: .command)
                 }
             case .completed, .cancelled:
@@ -715,7 +754,7 @@ private struct GTTranslationPanelView: View {
                     size: 26
                 ) {
                     copyResult()
-                }
+                }.gtUIElement("panel.copy", text: copied ? "已复制译文" : "复制译文", enabled: !model.output.isEmpty)
                 .disabled(model.output.isEmpty)
 
                 GTGlassIconButton(
@@ -724,18 +763,27 @@ private struct GTTranslationPanelView: View {
                     size: 26
                 ) {
                     speaker.speak(model.output)
-                }
+                }.gtUIElement("panel.speak", text: "朗读译文", enabled: !model.output.isEmpty)
                 .disabled(model.output.isEmpty)
             case .idle:
                 EmptyView()
             }
             Spacer()
+            if model.phase == .completed,
+               let rate = model.tokensPerSecond, rate.isFinite, rate > 0 {
+                Text(String(format: "%.1f tok/s", rate))
+                    .font(.caption)
+                    .monospacedDigit()
+                    .foregroundStyle(GTGlassPalette.secondaryText)
+                    .gtUIElement("panel.rate", text: String(format: "%.1f tok/s", rate))
+            }
         }
         .frame(height: 26)
     }
 
     private var resultText: String {
-        model.error ?? (model.output.isEmpty ? "译文会显示在这里…" : model.output)
+        if let error = model.error { return model.output.isEmpty ? error : model.output + "\n\n" + error }
+        return model.output.isEmpty ? "译文会显示在这里…" : model.output
     }
 
     private var resultForeground: Color {
@@ -791,6 +839,7 @@ private struct GTTranslationPanelView: View {
 
     private var completedStatus: some View {
         Text(completedStatusText)
+            .gtUIElement("panel.direction", text: completedStatusText)
             .foregroundStyle(GTGlassPalette.secondaryText)
             .help(completedPerformanceHelp)
     }

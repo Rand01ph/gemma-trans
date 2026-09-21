@@ -1,0 +1,29 @@
+name: macOS UI regression
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  visual:
+    # A logged-in graphical session matching docs/ui/baseline is required.
+    runs-on: [self-hosted, macOS, gemmatrans-ui]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build isolated app and test native interactions
+        run: GEMMATRANS_TEST_RESULT="$PWD/App/build/ui-tests.xcresult" ./script/build_and_run.sh --ui-test
+      - run: python3 script/export_ui_menu.py App/build/ui-tests.xcresult App/build/ui-menu
+      - run: python3 script/capture_ui.py --menu-captures App/build/ui-menu --output App/build/ui-current
+      - name: Compare screenshots and geometry
+        run: |
+          python3 -m venv App/build/ui-python
+          App/build/ui-python/bin/pip install -r script/requirements-ui.txt
+          App/build/ui-python/bin/python script/ui_contract.py --baseline docs/ui/baseline --current App/build/ui-current --output App/build/ui-diff
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: macos-ui-evidence
+          path: |
+            App/build/ui-current
+            App/build/ui-diff
+            App/build/ui-tests.xcresult

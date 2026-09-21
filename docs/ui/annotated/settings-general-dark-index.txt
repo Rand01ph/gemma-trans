@@ -1,0 +1,6 @@
+1. settings.appearance: 主题
+2. settings.field.中文翻译为: en
+3. settings.field.其他语言翻译为: zh-Hans
+4. settings.fontSize: 浮窗译文字号
+5. settings.general: 通用
+6. settings.toggle.自动配置参数: true

@@ -1,0 +1,62 @@
+{
+  "panel-completed-dark.png": {
+    "changedBounds": [
+      902,
+      311,
+      998,
+      331
+    ],
+    "identical": false
+  },
+  "settings-general-dark.png": {
+    "changedBounds": null,
+    "identical": true
+  },
+  "settings-general-light.png": {
+    "changedBounds": null,
+    "identical": true
+  },
+  "settings-models-light.png": {
+    "changedBounds": [
+      1005,
+      704,
+      1208,
+      760
+    ],
+    "identical": false
+  },
+  "panel-completed-light.png": {
+    "changedBounds": [
+      902,
+      312,
+      998,
+      331
+    ],
+    "identical": false
+  },
+  "settings-integrations-dark.png": {
+    "changedBounds": null,
+    "identical": true
+  },
+  "main-completed-light.png": {
+    "changedBounds": null,
+    "identical": true
+  },
+  "settings-models-dark.png": {
+    "changedBounds": [
+      1005,
+      704,
+      1208,
+      760
+    ],
+    "identical": false
+  },
+  "settings-integrations-light.png": {
+    "changedBounds": null,
+    "identical": true
+  },
+  "main-completed-dark.png": {
+    "changedBounds": null,
+    "identical": true
+  }
+}

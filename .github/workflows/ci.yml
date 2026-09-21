@@ -53,6 +53,9 @@ jobs:
       - name: 准备 Metal 工具链
         run: xcodebuild -downloadComponent MetalToolchain || true
 
+      - name: UI element contract
+        run: python3 script/ui_contract.py
+
       - name: Swift tests
         run: swift test
 

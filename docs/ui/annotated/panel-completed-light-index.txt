@@ -1,0 +1,9 @@
+1. panel.action: 翻译
+2. panel.close: 关闭
+3. panel.copy: 复制译文
+4. panel.direction: zh-Hans → en
+5. panel.pin: 固定浮窗位置
+6. panel.rate: 72.4 tok/s
+7. panel.result: Great tools don’t interrupt your flow. They simply appear, quietly, when you nee
+8. panel.speak: 朗读译文
+9. panel.status: zh-Hans → en

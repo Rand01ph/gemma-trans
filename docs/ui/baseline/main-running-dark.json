@@ -1,0 +1,78 @@
+{
+  "appearance" : "dark",
+  "elements" : [
+    {
+      "enabled" : true,
+      "frame" : [
+        269,
+        508,
+        107.5,
+        28
+      ],
+      "id" : "main.clear",
+      "text" : "清空原文"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        818,
+        508,
+        128,
+        28
+      ],
+      "id" : "main.copy",
+      "text" : "复制译文"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        34,
+        114,
+        432,
+        382
+      ],
+      "id" : "main.input",
+      "text" : "真正好的工具不会打断工作，而是在需要时安静地出现。"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        526,
+        126,
+        161,
+        16
+      ],
+      "id" : "main.result",
+      "text" : "First translated paragraph."
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        730,
+        508,
+        80,
+        28
+      ],
+      "id" : "main.stop",
+      "text" : "停止"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        384.5,
+        508,
+        81.5,
+        28
+      ],
+      "id" : "main.translate",
+      "text" : "翻译"
+    }
+  ],
+  "font" : ".AppleSystemUIFont",
+  "height" : 1140,
+  "os" : "Version 27.0 (Build 26A428)",
+  "scale" : 2,
+  "scene" : "main-running",
+  "width" : 1960,
+  "windowNumber" : 2655
+}

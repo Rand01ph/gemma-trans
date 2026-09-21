@@ -13,9 +13,7 @@ struct MainView: View {
 #if DEBUG
         if GTDebugScreenshotFixture.isMain {
             initialInput = GTDebugScreenshotFixture.mainInput
-            initialViewModel.setMessage(GTDebugScreenshotFixture.mainOutput)
-            initialViewModel.status = "zh-Hans → en"
-            initialViewModel.tokensPerSecond = 72.4
+            initialViewModel.configureScreenshotFixture()
         }
 #endif
         _input = State(initialValue: initialInput)

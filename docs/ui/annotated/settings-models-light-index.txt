@@ -1,0 +1,14 @@
+1. settings.engine: 引擎状态
+2. settings.model.gemma-e2b-4bit: Gemma 4 E2B (4-bit)
+3. settings.model.gemma-e2b-4bit.download: 下载
+4. settings.model.gemma-e4b-4bit: Gemma 4 E4B (4-bit)
+5. settings.model.gemma-e4b-4bit.download: 下载
+6. settings.model.hymt2-1.25bit: Hy-MT2 1.8B（1.25-bit · 轻量版）
+7. settings.model.hymt2-1.25bit.download: 下载
+8. settings.model.hymt2-2bit: Hy-MT2 1.8B（2-bit · 均衡版）
+9. settings.model.hymt2-2bit.download: 下载
+10. settings.model.hymt2-4bit: Hy-MT2 1.8B (4-bit · 翻译专用)
+11. settings.model.hymt2-4bit.download: 下载
+12. settings.model.hymt2-8bit: Hy-MT2 1.8B (8-bit · 翻译专用)
+13. settings.model.hymt2-8bit.download: 下载
+14. settings.models: 模型
