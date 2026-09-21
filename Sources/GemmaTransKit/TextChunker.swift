@@ -6,6 +6,14 @@ import Foundation
 /// 不变量：任何非空白字符不丢失、顺序不变（块间分隔空白允许丢弃）；
 /// 空文本 → []；text ≤ limit → [text]（原样，不修剪）。
 public enum TextChunker {
+    /// Do not pack separate article paragraphs into one generation: small translation
+    /// models can collapse repeated paragraphs even when they finish with EOS.
+    static func translationSegments(_ text: String, limit: Int) -> [String] {
+        splitAfterNewlineRuns(text[...], minNewlines: 2).flatMap {
+            split(String($0).trimmingCharacters(in: .whitespacesAndNewlines), limit: limit)
+        }.filter { !$0.isEmpty }
+    }
+
     public static func split(_ text: String, limit: Int) -> [String] {
         precondition(limit > 0, "limit must be positive")
         if text.isEmpty { return [] }
