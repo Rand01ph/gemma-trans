@@ -25,5 +25,5 @@ defaults write com.apple.dt.Xcode IDESkipMacroFingerprintValidation -bool YES ||
 # 显式预解析一次，确保完整的 Package.resolved 就位
 xcodebuild -resolvePackageDependencies \
   -project GemmaTrans.xcodeproj -scheme GemmaTrans-MAS \
-  -skipMacroValidation || true
+  -skipMacroValidation
 echo "✅ 依赖解析完成"
