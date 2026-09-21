@@ -1,0 +1,5 @@
+1. panel.action: 翻译
+2. panel.close: 关闭
+3. panel.pin: 固定浮窗位置
+4. panel.result: 译文会显示在这里…
+5. panel.status:

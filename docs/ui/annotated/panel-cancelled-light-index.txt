@@ -1,0 +1,7 @@
+1. panel.action: 翻译
+2. panel.close: 关闭
+3. panel.copy: 复制译文
+4. panel.pin: 固定浮窗位置
+5. panel.result: First translated paragraph.
+6. panel.speak: 朗读译文
+7. panel.status: 已停止

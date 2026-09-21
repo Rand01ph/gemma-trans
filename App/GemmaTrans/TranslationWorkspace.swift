@@ -19,7 +19,6 @@ struct TranslationWorkspace: View {
     var body: some View {
         GeometryReader { proxy in
             VStack(spacing: GTGlassTokens.Space.m) {
-                AppFeatureRegistry.current.scenePicker()
                 if controller.engineStatus != .ready {
                     engineNotice
                 }
@@ -59,6 +58,7 @@ struct TranslationWorkspace: View {
                 .frame(minHeight: 220, maxHeight: .infinity)
                 .gtContentSurface(.reading)
                 .accessibilityLabel("原文")
+                .gtUIElement("main.input", text: input)
 
             HStack(spacing: GTGlassTokens.Space.s) {
                 Label("自动检测语言", systemImage: "globe")
@@ -70,11 +70,13 @@ struct TranslationWorkspace: View {
                     inputFocused = true
                 }
                 .disabled(input.isEmpty)
+                .gtUIElement("main.clear", text: "清空原文", enabled: !input.isEmpty)
 
                 GTGlassButton("翻译", systemImage: "arrow.right.circle.fill", emphasis: .primary) {
                     translate()
                 }
                 .disabled(!canTranslate)
+                .gtUIElement("main.translate", text: "翻译", enabled: canTranslate)
                 .keyboardShortcut(.return, modifiers: .command)
             }
         }
@@ -87,6 +89,7 @@ struct TranslationWorkspace: View {
                     systemImage: "text.quote") {
             ScrollView {
                 Text(outputText)
+                    .gtUIElement("main.result", text: outputText)
                     .frame(maxWidth: .infinity, alignment: .topLeading)
                     .textSelection(.enabled)
                     .foregroundStyle(viewModel.error == nil
@@ -100,6 +103,7 @@ struct TranslationWorkspace: View {
             HStack(spacing: GTGlassTokens.Space.s) {
                 if let tps = viewModel.tokensPerSecond {
                     Text(String(format: "%.1f tok/s", tps))
+                        .gtUIElement("main.rate", text: String(format: "%.1f tok/s", tps))
                         .font(.caption)
                         .foregroundStyle(GTGlassPalette.secondaryText)
                 }
@@ -107,7 +111,7 @@ struct TranslationWorkspace: View {
                 if viewModel.isRunning {
                     GTGlassButton("停止", systemImage: "stop.fill", emphasis: .interrupt) {
                         viewModel.cancel()
-                    }
+                    }.gtUIElement("main.stop", text: "停止")
                 }
                 GTGlassButton(copied ? "已复制" : "复制译文",
                               systemImage: copied ? "checkmark" : "doc.on.doc",
@@ -116,6 +120,7 @@ struct TranslationWorkspace: View {
                     copyOutput()
                 }
                 .disabled(viewModel.output.isEmpty)
+                .gtUIElement("main.copy", text: "复制译文", enabled: !viewModel.output.isEmpty)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

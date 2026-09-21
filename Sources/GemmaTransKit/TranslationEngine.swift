@@ -8,7 +8,6 @@ import Tokenizers
 
 public actor TranslationEngine: TranslationService {
     private let settings: AppSettings
-    private let promptProvider: (any TranslationPromptProvider)?
     private var modelContextTokens = 4096
     private var model: ModelContainer?
     private var llamaRuntime: LlamaRuntime?
@@ -30,9 +29,8 @@ public actor TranslationEngine: TranslationService {
     /// 是否有生成正在排队或进行（去抖用：避免热键连按在串行队列里堆积，导致可见浮窗长时间挨饿）
     public var isGenerating: Bool { !generationTasks.isEmpty }
 
-    public init(settings: AppSettings, promptProvider: (any TranslationPromptProvider)? = nil) {
+    public init(settings: AppSettings) {
         self.settings = settings
-        self.promptProvider = promptProvider
     }
 
     public var isReady: Bool { model != nil || llamaRuntime != nil }
@@ -132,7 +130,7 @@ public actor TranslationEngine: TranslationService {
                     from: dir, using: #huggingFaceTokenizerLoader())
             }
         }
-        try await finishLoading(loaded, label: configuration.name)
+        await finishLoading(loaded, label: configuration.name)
     }
 
     /// 加载指定 ResolvedModel（按 entry.repo 下载/加载，按 entry.family 分发）。
@@ -220,19 +218,21 @@ public actor TranslationEngine: TranslationService {
             loaded = try await loadModelContainer(from: snapshotDir, using: #huggingFaceTokenizerLoader())
         }
 
-        try await finishLoading(loaded, label: resolved.entry.repo)
+        await finishLoading(loaded, label: resolved.entry.repo)
     }
 
     /// 预热 + 置 ready + 回收缓冲。两个 load 入口共用。
-    private func finishLoading(_ container: ModelContainer, label: String) async throws {
+    private func finishLoading(_ container: ModelContainer, label: String) async {
         // 预热：首次生成触发 Metal 内核编译（冷启可超 30s，曾致首单超时 500）。
         // 在置 ready 前用 1-token 生成把编译做完，用户首单即快。
         let warmup = ChatSession(container, generateParameters: GenerateParameters(maxTokens: 1))
         _ = try? await warmup.respond(to: "hi")
-        let directory = try await container.modelDirectory
-        let configuration = try JSONSerialization.jsonObject(with: Data(contentsOf: directory.appendingPathComponent("config.json"))) as? [String: Any]
-        let textConfiguration = configuration?["text_config"] as? [String: Any] ?? configuration
-        modelContextTokens = textConfiguration?["max_position_embeddings"] as? Int ?? 4096
+        if let directory = try? await container.modelDirectory,
+           let data = try? Data(contentsOf: directory.appendingPathComponent("config.json")),
+           let config = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
+            let textConfig = config["text_config"] as? [String: Any] ?? config
+            modelContextTokens = textConfig["max_position_embeddings"] as? Int ?? 4096
+        } else { modelContextTokens = 4096 }
         model = container
         llamaRuntime = nil
         acceptingGeneration = true
@@ -250,128 +250,75 @@ public actor TranslationEngine: TranslationService {
         let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw TranslationError.emptyInput }
 
-        let maxChars = resolvedTuning?.maxInputChars ?? settings.maxInputChars
-        let truncated = trimmed.count > maxChars
-        let input = truncated ? String(trimmed.prefix(maxChars)) : trimmed
-        let plan = detector.plan(for: input, target: target, settings: settings)
-        let request = TranslationPromptRequest(text: input, detected: plan.detected,
-                                               target: plan.target, family: activeFamily)
-        let composed = try promptProvider?.prompt(for: request) ?? request.defaultPrompt
-        let prompt = composed.user
-        let maxTokens = resolvedTuning?.maxTokens ?? 2048
-        if let llamaRuntime {
-            try await llamaRuntime.validatePrompt(prompt, maxTokens: maxTokens)
-            guard acceptingGeneration, self.llamaRuntime === llamaRuntime else {
-                throw TranslationError.modelNotLoaded
-            }
-            return makeLlamaTranslation(
-                runtime: llamaRuntime,
-                prompt: prompt,
-                detected: plan.detected,
-                target: plan.target,
-                truncated: truncated,
-                maxTokens: maxTokens
-            )
-        }
-        guard let model else { throw TranslationError.modelNotLoaded }
-        // Gemma 用固定系统指令；Hy-MT2 按推荐只发 user 指令（无 system）。
-        // 先 capture 到局部，避免下面的 Task 闭包访问 actor 隔离的 activeFamily。
-        let instructions = activeFamily == .gemma ? composed.system : nil
+        let limit = max(1, resolvedTuning?.maxInputChars ?? settings.maxInputChars)
+        let plan = detector.plan(for: trimmed, target: target, settings: settings)
+        let maxTokens = max(1, resolvedTuning?.maxTokens ?? 2048)
+        let instructions = activeFamily == .gemma ? PromptBuilder.systemPrompt : nil
+        let model = self.model
         let contextTokens = modelContextTokens
-        let inputTokens = try await model.perform { context in
-            var messages: [Chat.Message] = []
-            if let instructions { messages.append(.system(instructions)) }
-            messages.append(.user(prompt))
-            let prepared = try await context.processor.prepare(input: UserInput(chat: messages))
-            return prepared.text.tokens.size
-        }
-        try TranslationPromptBudget.validate(inputTokens: inputTokens, outputTokens: maxTokens,
-                                             contextTokens: contextTokens)
-        guard acceptingGeneration, self.model === model else { throw TranslationError.modelNotLoaded }
-
-        let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
-        let generationID = UUID()
-        let previous = lastGeneration
-        let generationTask = Task {
-            await previous?.value  // 串行：GPU 单飞，等上一个生成自然结束
-            defer { self.generationFinished(id: generationID) }
-            do {
-                try Task.checkCancellation()
-                // 每次翻译一次性会话：无历史、系统指令固定
-                // 翻译是确定性任务：默认温度 0.6 的采样随机性会偶尔走到「复述原文/跑偏」，
-                // 降到 0.1（近贪心）让模型确定性遵循翻译指令。repetitionPenalty 抑制小模型复读。
-                let session = ChatSession(
-                    model,
-                    instructions: instructions,
-                    generateParameters: GenerateParameters(
-                        maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1)
-                )
-                for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
-                    try Task.checkCancellation()
-                    switch item {
-                    case .chunk(let text):
-                        continuation.yield(text)
-                    case .info(let info):
-                        lastTokensPerSecond = info.tokensPerSecond
-                        GTLog.info("mlx gen: \(info.generationTokenCount) tok, " +
-                            String(format: "%.2fs, %.1f tok/s", info.generateTime, info.tokensPerSecond))
-                    case .toolCall:
-                        break
-                    }
-                }
-                continuation.finish()
-            } catch is CancellationError {
-                continuation.finish(throwing: CancellationError())
-            } catch {
-                GTLog.error("generation failed: \(error)")
-                continuation.finish(throwing: error)
-            }
-        }
-        generationTasks[generationID] = generationTask
-        lastGeneration = generationTask
-        continuation.onTermination = { @Sendable [weak self] termination in
-            guard case .cancelled = termination else { return }
-            Task { await self?.cancelGeneration(id: generationID) }
-        }
-        return TranslationStreamResult(
-            detected: plan.detected, target: plan.target, truncated: truncated, chunks: stream
-        )
-    }
-
-    private func makeLlamaTranslation(
-        runtime: LlamaRuntime,
-        prompt: String,
-        detected: String,
-        target: String,
-        truncated: Bool,
-        maxTokens: Int
-    ) -> TranslationStreamResult {
+        let runtime = llamaRuntime
+        let statistics = TranslationStatistics()
+        let (progress, progressContinuation) = AsyncStream.makeStream(
+            of: TranslationProgress.self, bufferingPolicy: .bufferingNewest(1))
         let (stream, continuation) = AsyncThrowingStream.makeStream(of: String.self)
         let generationID = UUID()
         let previous = lastGeneration
         let generationTask = Task {
             await previous?.value
-            defer { self.generationFinished(id: generationID) }
+            defer {
+                progressContinuation.finish()
+                self.generationFinished(id: generationID)
+            }
             do {
-                try Task.checkCancellation()
-                let metrics = try await runtime.generate(
-                    userPrompt: prompt,
-                    maxTokens: maxTokens,
-                    onChunk: { continuation.yield($0) }
-                )
+                let metrics = try await SegmentedTranslation.run(
+                    text: trimmed, limit: limit,
+                    generate: { input in
+                        let prompt = PromptBuilder.userPrompt(text: input, target: plan.target)
+                        if let runtime {
+                            return try await runtime.translateSegment(prompt: prompt, maxTokens: maxTokens)
+                        }
+                        guard let model else { throw TranslationError.modelNotLoaded }
+                        let inputTokens = try await model.perform { context in
+                            var messages: [Chat.Message] = []
+                            if let instructions { messages.append(.system(instructions)) }
+                            messages.append(.user(prompt))
+                            let prepared = try await context.processor.prepare(input: UserInput(chat: messages))
+                            return prepared.text.tokens.size
+                        }
+                        guard inputTokens <= contextTokens - maxTokens else { throw SegmentLimit.context }
+                        let session = ChatSession(
+                            model, instructions: instructions,
+                            generateParameters: GenerateParameters(
+                                maxTokens: maxTokens, temperature: 0.1, repetitionPenalty: 1.1))
+                        var output = ""
+                        var metrics: TranslationMetrics?
+                        for try await item in session.streamDetails(to: prompt, images: [], videos: []) {
+                            try Task.checkCancellation()
+                            switch item {
+                            case .chunk(let text): output += text
+                            case .info(let info):
+                                switch info.stopReason {
+                                case .length: throw SegmentLimit.output
+                                case .cancelled: throw CancellationError()
+                                case .stop: break
+                                }
+                                metrics = TranslationMetrics(
+                                    generatedTokens: info.generationTokenCount,
+                                    generationSeconds: info.generateTime)
+                            case .toolCall: break
+                            }
+                        }
+                        try Task.checkCancellation()
+                        guard let metrics else {
+                            throw TranslationError.incompleteTranslation("模型未返回生成完成信息")
+                        }
+                        return TranslationSegment(text: output, metrics: metrics)
+                    }, progress: { progressContinuation.yield($0) },
+                    emit: { continuation.yield($0) })
+                await statistics.finish(metrics)
                 lastTokensPerSecond = metrics.tokensPerSecond
-                GTLog.info("llama gen: \(metrics.generatedTokens) tok, " +
-                    String(
-                        format: "first %.2fs total %.2fs %.1f tok/s",
-                        metrics.firstTokenSeconds,
-                        metrics.totalSeconds,
-                        metrics.tokensPerSecond
-                    ))
                 continuation.finish()
-            } catch is CancellationError {
-                continuation.finish(throwing: CancellationError())
             } catch {
-                GTLog.error("llama generation failed: \(error)")
                 continuation.finish(throwing: error)
             }
         }
@@ -382,11 +329,8 @@ public actor TranslationEngine: TranslationService {
             Task { await self?.cancelGeneration(id: generationID) }
         }
         return TranslationStreamResult(
-            detected: detected,
-            target: target,
-            truncated: truncated,
-            chunks: stream
-        )
+            detected: plan.detected, target: plan.target, truncated: false, chunks: stream,
+            statistics: statistics, progress: progress)
     }
 
     /// 一次性 process 会话：按 instruction 处理 text，返回聚合结果。
@@ -540,7 +484,7 @@ public actor TranslationEngine: TranslationService {
     private static func defaultModelDirectory() -> URL {
         let dir = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("GemmaTrans/models", isDirectory: true)
+            .appendingPathComponent(AppChannel.current.displayName + "/models", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }

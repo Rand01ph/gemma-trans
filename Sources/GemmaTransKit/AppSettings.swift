@@ -34,16 +34,22 @@ public struct AppSettings: Sendable {
     /// macOS 翻译浮窗译文字号；其他平台可忽略该字段。
     public var translationFontSize: Double
 
-    public static let suiteName = "com.gemmatrans.app"
+    public static var suiteName: String {
+#if DEBUG
+        if let suite = ProcessInfo.processInfo.environment["GEMMATRANS_TEST_SUITE"],
+           suite.hasPrefix("com.gemmatrans.ui-test.") { return suite }
+#endif
+        return AppChannel.current.settingsSuite
+    }
 
     public init(
-        port: UInt16 = 8765,
+        port: UInt16 = AppChannel.current.defaultPort,
         targetForChinese: String = "en",
         targetDefault: String = "zh-Hans",
         maxInputChars: Int = 1500,
         autoTuning: Bool = true,
         manualMaxTokens: Int = 2048,
-        apiEnabled: Bool = true,
+        apiEnabled: Bool = AppChannel.current == .production,
         useCNSource: Bool = false,
         selectedModelID: String? = nil,
         appearance: AppAppearance = .system,
@@ -64,6 +70,12 @@ public struct AppSettings: Sendable {
 
     /// 从 UserDefaults 读取（缺省值兜底）。iOS 传 App Group suite 实现主 app/扩展共享。
     public static func load(suiteName: String = Self.suiteName) -> AppSettings {
+#if DEBUG
+        if ProcessInfo.processInfo.environment["GEMMATRANS_SCREENSHOT_SCENE"] != nil {
+            return AppSettings(apiEnabled: false, selectedModelID: "hymt2-1.25bit",
+                appearance: ProcessInfo.processInfo.environment["GEMMATRANS_SCREENSHOT_APPEARANCE"] == "dark" ? .dark : .light)
+        }
+#endif
         guard let d = UserDefaults(suiteName: suiteName) else { return AppSettings() }
         var s = AppSettings()
         if d.integer(forKey: "port") > 0 { s.port = UInt16(d.integer(forKey: "port")) }
