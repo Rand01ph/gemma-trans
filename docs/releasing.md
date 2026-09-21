@@ -1,69 +1,25 @@
-# GemmaTrans macOS 发布指南
+# GemmaTrans 发布执行入口
 
-> 从 macOS 2.2 开始，App Store 包由私有分发仓库构建。本文的公开仓库 MAS 上传步骤仅适用于历史版本；旧入口会明确停止，避免用免费构建覆盖商店包。GitHub 免费版签名、公证和 Release 流程继续使用。参见 [构建装配说明](app-extensions.md)。
+发布必须遵循 [通用开发与发布策略](development/workflow-policy.md) 和 [项目配置及迁移状态](development/project-workflow.md)。本页替代旧的 GitHub Actions 构建、公证及 tag 重建流程。
 
-GemmaTrans 提供两条独立分发链：Developer ID 签名、公证后的 GitHub Release，以及由 Xcode Cloud 归档并上传的 Mac App Store 包。两条链都不依赖个人电脑常驻在线，也不要求安装第三方 `asc` CLI。
+## 发布前
 
-## 版本规则
+1. 查询远端 main、线上版本/tag、当前 PR 和 Cloud 状态；保护未提交工作。
+2. 确认项目配置中的迁移门槛已完成，尤其是 Cloud 必需检查及旧 `v*` 自动构建触发器。
+3. 准备只描述本次修复的中英文更新说明；备份需要替换的后台草稿。
+4. 同步营销版本与 build；验证 Bundle ID、生产配置、签名渠道、模型资源和实际测试结果。
+5. 合并发布 PR 到 main，从其确定 SHA 启动正式 Cloud 构建。
 
-- `MARKETING_VERSION`、`CFBundleShortVersionString` 与 Git tag 必须一致，例如 `2.1.0` / `v2.1.0`。
-- `CURRENT_PROJECT_VERSION` 与 `CFBundleVersion` 必须一致。
-- MAS 上传前先在 App Store Connect 确认最大 build 号，并输入更大的正整数。
-- 不要在签名验收前创建 `v*` 标签；tag 会直接创建公开 GitHub Release。
+## 构建到上线
 
-## 发布凭证
+- Cloud 负责编译、测试、归档和签名。ASC CLI 管理上传后的版本与审核状态；凭证在运行时从授权的 1Password 引用提供。
+- 分别确认 archive 成功、上传成功、Apple 处理成功、安装验收、构建关联及审核结果，不能互相替代。
+- 当前发布采用审核后手动上线。在审核通过、准备上线时，对实际产物源 SHA 创建不可变 `vX.Y.Z` tag；该 SHA 必须属于 main。
+- 复用已验收产物，不因打 tag 重新构建。正式 tag 不是“已经上架”的证明，仍需核实商店可用状态。
+- 发布后同步修复到 develop，记录源 SHA、tag、版本/build、Cloud run、审核和上线结果。
 
-Developer ID 直分发需要在 Repository Settings › Secrets and variables › Actions 配置以下 secrets。证书以带密码的 `.p12` 导出，再进行 base64 编码；私钥同样以 base64 保存。
+## 不可跳过的边界
 
-### GitHub Release / Developer ID
+必需检查失败、源提交不明、签名不匹配、build 冲突、上传/处理未完成或必要真实入口验收缺失时，应明确报告阻塞，不宣称可以发布。出现协议或权限阻塞时报告具体原因；不要修改业务代码来掩盖后台问题。
 
-- `ASC_API_KEY_P8_BASE64`
-- `ASC_API_KEY_ID`
-- `ASC_API_ISSUER_ID`
-- `DEV_ID_CERT_P12_BASE64`
-- `DEV_ID_CERT_PASSWORD`
-
-### Mac App Store / Xcode Cloud
-
-- Xcode Cloud 使用 App Store Connect 中的团队、签名和描述文件，不读取 GitHub Actions Secrets。
-- `App/ci_scripts/ci_post_clone.sh` 负责生成 Xcode 工程并解析依赖。
-- `App/ci_scripts/ci_pre_xcodebuild.sh` 保证 Cloud 使用仓库中的 `CURRENT_PROJECT_VERSION`。
-
-GitHub Secrets 只会写入 Actions 的临时钥匙串或 `$RUNNER_TEMP`，不会进入构建产物或仓库。
-
-## 1. 发布前 CI
-
-PR 的 `CI` workflow 必须通过：
-
-- Swift package tests；
-- `GemmaTrans` 无签名构建；
-- `GemmaTrans-MAS` 无签名构建；
-- GitHub Runner 使用 macOS 15，并选择包含 macOS 26 SDK 的正式版 Xcode；编译产物的 Deployment Target 必须保持 macOS 15.0。
-
-## 2. Developer ID 验收与发布
-
-1. 在 Actions 手动运行 `Release macOS`。
-2. 工作流会生成 Developer ID 签名、Apple 公证并完成 staple 的 ZIP/DMG，但不会创建公开 Release。
-3. 下载 Actions artifact，验证安装、首次启动、模型管理、快捷键、浮窗和本地 API。
-4. 验收通过并合并到 `main` 后，创建 `v2.1.0` tag。
-5. 相同 workflow 会再次构建并把 ZIP/DMG 附加到 GitHub Release。
-
-## 3. Mac App Store
-
-1. 在 App Store Connect 创建或确认 `2.1.0` 版本，并查看当前最大 build 号；当前 macOS 15 兼容候选使用 build 25。
-2. 将 `App/project.yml` 与 `App/GemmaTrans/Info.plist` 中的 build 号同步提高并提交到目标分支。
-3. 在 App Store Connect › Xcode Cloud › 构建版本中启动“发布流水线”，正式发布始终选择 `main`。
-4. 工作流以 `GemmaTrans-MAS` scheme 执行 macOS Archive，并采用 App Store 分发准备。成功后等待 Apple 处理并在 TestFlight 中确认新 build。
-5. 分别在 macOS 15 与 macOS 26 的 TestFlight 验证六款模型、下载续传、两款新模型断网翻译与本地 API 后，把该 build 关联到 2.1.0，更新截图、描述、What's New 和审核备注，再提交审核。
-
-`Scripts/release-mas.sh` 与 GitHub `Release MAS (App Store)` 仅保留为故障时的备用上传路径；当前正式路径是 Xcode Cloud。
-
-## 停止条件
-
-出现以下任一情况时不得合并或打正式 tag：
-
-- PR CI 未通过；
-- Developer ID artifact 未通过 `codesign`、notary、staple 或 Gatekeeper；
-- MAS archive 未使用 Apple Distribution 签名；
-- App Store Connect build number 冲突；
-- TestFlight 安装或首次模型下载流程未验收。
+本地 `Scripts/release*.sh` 是历史工具，不是另一条获准的正式发布流水线。商店外 ZIP/DMG 的签名、公证、验收仍需单独完成；迁移未完成前不得通过旧 tag 自动构建发布。

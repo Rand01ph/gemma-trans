@@ -151,7 +151,11 @@ LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放
 
 第三方依赖、运行时中的上游代码（包括补丁中的第三方内容）和模型权重保留各自的版权声明与许可证，不因本项目采用 MIT 而改变授权。App 安装包不内置模型权重，模型在使用时从上游下载；下载方式不免除适用的模型许可义务。来源与许可证入口见 [第三方声明](THIRD_PARTY_NOTICES.md)。
 
-## 发布
+## 开发与发布
+
+- [AGENTS.md](AGENTS.md)：协作执行入口
+- [通用开发策略](docs/development/workflow-policy.md)：分支、PR、Xcode Cloud、tag 与发布规则
+- [项目流程配置](docs/development/project-workflow.md)：具体配置及迁移清单
 
 - [CHANGELOG.md](CHANGELOG.md)：版本变更记录
 - [docs/release-notes-2.0.md](docs/release-notes-2.0.md)：GemmaTrans 2.0 发布文案与升级说明
@@ -159,7 +163,7 @@ LlamaRuntime      两款策展 Hy-MT2 GGUF 的静态 CPU/NEON 后端；不开放
 - [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)：定制运行时来源与第三方许可证索引
 - [docs/social-launch-2.0.md](docs/social-launch-2.0.md)：小红书首发、连续宣传选题与 V2EX 技术复盘稿
 - [docs/store-listing.md](docs/store-listing.md)：Mac App Store 描述、审核备注与提审清单
-- [docs/releasing.md](docs/releasing.md)：版本、Actions Secrets、签名、公证与 MAS 发布步骤
+- [docs/releasing.md](docs/releasing.md)：基于 main 的 Cloud 构建、签名、审核与发布步骤
 - [docs/app-extensions.md](docs/app-extensions.md)：2.2 的通用提示词接口、共享 App 构建与分发装配
 - `Scripts/release.sh`：Developer ID 签名、公证并生成 ZIP/DMG
 - `Scripts/release-mas.sh`：使用 Xcode 自带工具归档、导出及可选上传 MAS 包，不依赖第三方 `asc` CLI
