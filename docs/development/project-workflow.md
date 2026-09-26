@@ -26,14 +26,14 @@
 | 分支保护 | main/develop 必须经 PR 和两项 Cloud 检查；禁止强推、删除，无绕过名单。已观察到未通过时 BLOCKED、通过后 CLEAN |
 | 构建归属 | Swift、checksum、已有 UI 契约、模型专项测试及应用编译由 Cloud 执行；旧 Actions 构建/发布定义已删除 |
 | 旧 Cloud 入口 | Default、发布流水线、临时 2.1.1 Release 已停用 |
-| 正式发布流程 | 已在 Apple 后台创建，只允许手动 main，目前禁用，无自动分支或 tag 触发 |
+| 正式发布流程 | 已启用，只允许手动 main，无自动分支或 tag 触发；本次用户明确授权带已记录 UI 验收例外继续提审 |
 | 最新图形验收 | 未通过；详见 [UI 验收记录](../releases/2.1.1-ui-acceptance-20260926.md) |
-| 正式归档到上架 | main 正式归档、上传、构建关联、提审、上架均未执行；未打正式 tag |
+| 正式归档到上架 | main 8879add 正式归档成功，build 49 已提交审核，状态 WAITING_FOR_REVIEW；未上架、未打正式 tag |
 
 ## 流水线配置
 
 - 验证：GemmaTrans Validation，ID `c0429264-37cc-4296-9907-7737d1e2f6db`。PR 到 main/develop 和 develop 更新触发。模板见 [xcode-cloud-validation.json](xcode-cloud-validation.json)。
-- 正式发布：GemmaTrans Release，ID `afb3773b-8273-4e82-b80c-c4082dcc1264`。模板见 [xcode-cloud-release.json](xcode-cloud-release.json)，验收前保持禁用。
+- 正式发布：GemmaTrans Release，ID `afb3773b-8273-4e82-b80c-c4082dcc1264`。模板见 [xcode-cloud-release.json](xcode-cloud-release.json)，模板默认禁用；后台已按本次用户授权启用。
 - 必需检查：`GemmaTrans | GemmaTrans Validation` 和 `GemmaTrans | GemmaTrans Validation | Build - macOS`。规则 ID `23774797`；要求解决审阅线程，当前未要求第二位评审者批准。
 - `script/ci_validate.sh` 执行 checksum、Swift tests、已有 UI 契约、存在的模型专项测试及 Developer ID scheme 编译；Cloud 原生动作负责 MAS scheme。缺少 UI 契约的旧开发快照不计为 UI 验收。
 - 正式包编号采用该次 `CI_BUILD_NUMBER`，静态 Info.plist 与其同步；工程本地预设值不能替代 Apple 实际产物编号。
@@ -43,8 +43,8 @@
 
 ## 后续门槛
 
-1. 修复并通过最新固定图形环境验收，不自动更新基线或跳过失败项。
-2. 明确 main 源 SHA，完成发布前检查，再启用手动发布流程并归档。
+1. 最新固定图形环境验收仍有未通过项；本次用户授权例外详见 [验收记录](../releases/2.1.1-ui-acceptance-20260926.md)。后续须修复，不自动更新基线或跳过失败项。
+2. main 8879add 的 build 49 已提交审核；[操作记录](../releases/2.1.1-submission-20260926.md)分别记录构建和提审结果。
 3. 分别核实上传、处理、安装验收、审核与上线，按通用策略创建不可变 tag。
 4. 后续版本发布时显式恢复 develop 中此次从 main 撤回的产品改动，不能假设 merge 自动恢复。现有修复/维护分支是过渡分支，不能成为永久发布主线。
 
