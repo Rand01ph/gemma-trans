@@ -129,6 +129,7 @@ struct GTSettingsTextFieldRow: View {
                 Spacer(minLength: GTGlassTokens.Space.m)
 
                 TextField(label, text: $text, prompt: Text(prompt))
+                    .gtUIElement("settings.field.\(label)", text: text)
                     .textFieldStyle(.roundedBorder)
                     .controlSize(.regular)
                     .font(usesMonospacedDigits ? .body.monospacedDigit() : .body)
@@ -156,6 +157,7 @@ struct GTPanelToggleRow: View {
     var body: some View {
         GTPanelRow(title: title, subtitle: subtitle) {
             Toggle("", isOn: $isOn)
+                .gtUIElement("settings.toggle.\(title)", text: String(isOn))
                 .labelsHidden()
                 .toggleStyle(.switch)
         }

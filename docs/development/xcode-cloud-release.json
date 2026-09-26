@@ -1,0 +1,59 @@
+{
+  "data": {
+    "type": "ciWorkflows",
+    "attributes": {
+      "actions": [
+        {
+          "name": "Archive - macOS",
+          "actionType": "ARCHIVE",
+          "destination": "ANY_MAC",
+          "buildDistributionAudience": "APP_STORE_ELIGIBLE",
+          "scheme": "GemmaTrans-MAS",
+          "platform": "MACOS",
+          "isRequiredToPass": true
+        }
+      ],
+      "isEnabled": false,
+      "clean": true,
+      "containerFilePath": "App/GemmaTrans.xcodeproj",
+      "name": "GemmaTrans Release",
+      "description": "Manual main-only MAS archive. Enable after release acceptance.",
+      "manualBranchStartCondition": {
+        "source": {
+          "patterns": [
+            {
+              "pattern": "main",
+              "isPrefix": false
+            }
+          ]
+        }
+      }
+    },
+    "relationships": {
+      "product": {
+        "data": {
+          "type": "ciProducts",
+          "id": "90dce81c-6fc8-42e6-a714-d086a0660475"
+        }
+      },
+      "repository": {
+        "data": {
+          "type": "scmRepositories",
+          "id": "84f8eb7a-8e4f-49ed-9677-18fb0b975e99"
+        }
+      },
+      "xcodeVersion": {
+        "data": {
+          "type": "ciXcodeVersions",
+          "id": "42533094-17d3-46b2-ada5-1f94ceb94b61"
+        }
+      },
+      "macOsVersion": {
+        "data": {
+          "type": "ciMacOsVersions",
+          "id": "c538a952-ac84-4277-bea4-b9dab48bb96c"
+        }
+      }
+    }
+  }
+}

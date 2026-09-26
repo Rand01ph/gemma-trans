@@ -1,0 +1,8 @@
+1. panel.action: 翻译
+2. panel.close: 关闭
+3. panel.pin: 固定浮窗位置
+4. panel.result: First translated paragraph.
+
+翻译未完成：测试错误
+5. panel.retry: 重试
+6. panel.status:

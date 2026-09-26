@@ -49,3 +49,7 @@
 - 必需检查：`GemmaTrans | GemmaTrans Validation` 与 `GemmaTrans | GemmaTrans Validation | Build - macOS`。旧 Actions 已远端停用；迁移中新提交仍须重新通过 Cloud。
 - 当前工作流定义见 `xcode-cloud-validation.json`；正式 main 归档、develop 实际集成验证及固定环境 UI 验收尚未完成。
 - 监控优先读取 GitHub 回传；仅在实际需要 Apple API 操作时使用凭证，并批量执行，避免每次进度查询都调用 1Password。
+
+2026-09-22：策略 PR #20 已合并 main（120a301）。三个旧 public Cloud 入口均已停用；开发同步 PR #22 进行中。日志确认首轮 Swift 142 项测试、5 项 XCTest、2 项模型专项测试及 Developer ID 编译通过。正式流程模板见 `xcode-cloud-release.json`，默认禁用；仅允许 main 的手动 GemmaTrans Release 归档，Cloud build 号为正式包编号。启用前必须完成发布验收。
+
+74 张原始 UI 截图已补传并逐张校验 SHA-256，纳入主线发布源码 PR #21。正式发布工作流的 JSON 模板已提交，但 Apple 后台创建因 1Password 授权超时尚未执行，不得将模板视为已部署流程。

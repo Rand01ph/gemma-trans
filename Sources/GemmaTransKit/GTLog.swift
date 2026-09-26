@@ -6,7 +6,7 @@ import os
 public enum GTLog {
     public static let logFileURL = FileManager.default
         .urls(for: .libraryDirectory, in: .userDomainMask)[0]
-        .appendingPathComponent("Logs/GemmaTrans/gemmatrans.log")
+        .appendingPathComponent("Logs/" + AppChannel.current.displayName + "/gemmatrans.log")
 
     private static let osLog = Logger(subsystem: "com.gemmatrans.app", category: "engine")
     private static let queue = DispatchQueue(label: "com.gemmatrans.log")

@@ -1,0 +1,5 @@
+1. settings.field.端口: 8765
+2. settings.integrations: 集成
+3. settings.services: 系统设置…
+4. settings.shortcut: 翻译剪贴板
+5. settings.toggle.启用本地 API: false

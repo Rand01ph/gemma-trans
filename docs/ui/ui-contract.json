@@ -1,0 +1,575 @@
+{
+  "version": "2.1.1",
+  "sourceTag": "v2.1.0",
+  "scenes": [
+    "panel-idle",
+    "panel-running",
+    "panel-completed",
+    "panel-failed",
+    "panel-cancelled",
+    "panel-long",
+    "main-idle",
+    "main-running",
+    "main-completed",
+    "main-failed",
+    "main-cancelled",
+    "main-long",
+    "settings-general",
+    "settings-models",
+    "settings-integrations",
+    "menu"
+  ],
+  "appearances": [
+    "light",
+    "dark"
+  ],
+  "elements": [
+    {
+      "id": "panel.action",
+      "scenes": [
+        "panel-idle",
+        "panel-running",
+        "panel-completed",
+        "panel-failed",
+        "panel-cancelled",
+        "panel-long"
+      ],
+      "purpose": "翻译",
+      "fullyVisible": true,
+      "interaction": "read",
+      "contains": "翻译"
+    },
+    {
+      "id": "panel.pin",
+      "scenes": [
+        "panel-idle",
+        "panel-running",
+        "panel-completed",
+        "panel-failed",
+        "panel-cancelled",
+        "panel-long"
+      ],
+      "purpose": "固定浮窗位置",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "固定浮窗位置"
+    },
+    {
+      "id": "panel.close",
+      "scenes": [
+        "panel-idle",
+        "panel-running",
+        "panel-completed",
+        "panel-failed",
+        "panel-cancelled",
+        "panel-long"
+      ],
+      "purpose": "关闭",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "关闭"
+    },
+    {
+      "id": "panel.status",
+      "scenes": [
+        "panel-idle",
+        "panel-running",
+        "panel-completed",
+        "panel-failed",
+        "panel-cancelled",
+        "panel-long"
+      ],
+      "purpose": "翻译阶段",
+      "fullyVisible": true,
+      "interaction": "read"
+    },
+    {
+      "id": "panel.result",
+      "scenes": [
+        "panel-idle",
+        "panel-running",
+        "panel-completed",
+        "panel-failed",
+        "panel-cancelled",
+        "panel-long"
+      ],
+      "purpose": "译文与未完成错误",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "panel.direction",
+      "scenes": [
+        "panel-completed",
+        "panel-long"
+      ],
+      "purpose": "语言方向",
+      "fullyVisible": true,
+      "interaction": "read",
+      "contains": "zh-Hans → en"
+    },
+    {
+      "id": "panel.rate",
+      "scenes": [
+        "panel-completed",
+        "panel-long"
+      ],
+      "purpose": "右下角的请求级生成速率",
+      "fullyVisible": true,
+      "interaction": "read",
+      "contains": "72.4 tok/s"
+    },
+    {
+      "id": "panel.copy",
+      "scenes": [
+        "panel-completed",
+        "panel-long",
+        "panel-cancelled"
+      ],
+      "purpose": "复制译文",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "复制译文"
+    },
+    {
+      "id": "panel.speak",
+      "scenes": [
+        "panel-completed",
+        "panel-long",
+        "panel-cancelled"
+      ],
+      "purpose": "朗读译文",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "朗读译文"
+    },
+    {
+      "id": "panel.stop",
+      "scenes": [
+        "panel-running"
+      ],
+      "purpose": "停止",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "停止"
+    },
+    {
+      "id": "panel.retry",
+      "scenes": [
+        "panel-failed"
+      ],
+      "purpose": "重试",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "重试"
+    },
+    {
+      "id": "main.input",
+      "scenes": [
+        "main-idle",
+        "main-running",
+        "main-completed",
+        "main-failed",
+        "main-cancelled",
+        "main-long"
+      ],
+      "purpose": "原文",
+      "fullyVisible": true,
+      "interaction": "edit"
+    },
+    {
+      "id": "main.result",
+      "scenes": [
+        "main-idle",
+        "main-running",
+        "main-completed",
+        "main-failed",
+        "main-cancelled",
+        "main-long"
+      ],
+      "purpose": "译文",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "main.clear",
+      "scenes": [
+        "main-idle",
+        "main-running",
+        "main-completed",
+        "main-failed",
+        "main-cancelled",
+        "main-long"
+      ],
+      "purpose": "清空原文",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "清空原文"
+    },
+    {
+      "id": "main.translate",
+      "scenes": [
+        "main-idle",
+        "main-running",
+        "main-completed",
+        "main-failed",
+        "main-cancelled",
+        "main-long"
+      ],
+      "purpose": "翻译",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "翻译"
+    },
+    {
+      "id": "main.copy",
+      "scenes": [
+        "main-idle",
+        "main-running",
+        "main-completed",
+        "main-failed",
+        "main-cancelled",
+        "main-long"
+      ],
+      "purpose": "复制译文",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "复制译文"
+    },
+    {
+      "id": "main.rate",
+      "scenes": [
+        "main-completed",
+        "main-long"
+      ],
+      "purpose": "请求级生成速率",
+      "fullyVisible": true,
+      "interaction": "read",
+      "contains": "72.4 tok/s"
+    },
+    {
+      "id": "main.stop",
+      "scenes": [
+        "main-running"
+      ],
+      "purpose": "停止翻译",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "停止"
+    },
+    {
+      "id": "settings.general",
+      "scenes": [
+        "settings-general"
+      ],
+      "purpose": "设置页",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.models",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "设置页",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.integrations",
+      "scenes": [
+        "settings-integrations"
+      ],
+      "purpose": "设置页",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.appearance",
+      "scenes": [
+        "settings-general"
+      ],
+      "purpose": "外观设置",
+      "fullyVisible": true,
+      "interaction": "edit"
+    },
+    {
+      "id": "settings.fontSize",
+      "scenes": [
+        "settings-general"
+      ],
+      "purpose": "外观设置",
+      "fullyVisible": true,
+      "interaction": "edit"
+    },
+    {
+      "id": "settings.field.中文翻译为",
+      "scenes": [
+        "settings-general"
+      ],
+      "purpose": "语言设置",
+      "fullyVisible": true,
+      "interaction": "edit"
+    },
+    {
+      "id": "settings.field.其他语言翻译为",
+      "scenes": [
+        "settings-general"
+      ],
+      "purpose": "语言设置",
+      "fullyVisible": true,
+      "interaction": "edit"
+    },
+    {
+      "id": "settings.field.端口",
+      "scenes": [
+        "settings-integrations"
+      ],
+      "purpose": "API 端口",
+      "fullyVisible": true,
+      "interaction": "edit",
+      "contains": "8765"
+    },
+    {
+      "id": "settings.toggle.启用本地 API",
+      "scenes": [
+        "settings-integrations"
+      ],
+      "purpose": "本地 API 开关",
+      "fullyVisible": true,
+      "interaction": "toggle",
+      "contains": "false"
+    },
+    {
+      "id": "settings.engine",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "引擎状态",
+      "fullyVisible": true,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.model.gemma-e4b-4bit",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型管理行",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.model.gemma-e2b-4bit",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型管理行",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.model.hymt2-4bit",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型管理行",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.model.hymt2-8bit",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型管理行",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.model.hymt2-1.25bit",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型管理行",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "settings.model.hymt2-2bit",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型管理行",
+      "fullyVisible": false,
+      "interaction": "read"
+    },
+    {
+      "id": "menu.show",
+      "scenes": [
+        "menu"
+      ],
+      "purpose": "显示窗口",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "显示窗口"
+    },
+    {
+      "id": "menu.settings",
+      "scenes": [
+        "menu"
+      ],
+      "purpose": "设置…",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "设置…"
+    },
+    {
+      "id": "menu.quit",
+      "scenes": [
+        "menu"
+      ],
+      "purpose": "退出",
+      "fullyVisible": true,
+      "interaction": "click",
+      "contains": "退出"
+    },
+    {
+      "id": "settings.model.gemma-e4b-4bit.download",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型下载按钮",
+      "interaction": "click",
+      "fullyVisible": false,
+      "contains": "下载"
+    },
+    {
+      "id": "settings.model.gemma-e2b-4bit.download",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型下载按钮",
+      "interaction": "click",
+      "fullyVisible": false,
+      "contains": "下载"
+    },
+    {
+      "id": "settings.model.hymt2-4bit.download",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型下载按钮",
+      "interaction": "click",
+      "fullyVisible": false,
+      "contains": "下载"
+    },
+    {
+      "id": "settings.model.hymt2-8bit.download",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型下载按钮",
+      "interaction": "click",
+      "fullyVisible": false,
+      "contains": "下载"
+    },
+    {
+      "id": "settings.model.hymt2-2bit.download",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "模型下载按钮",
+      "interaction": "click",
+      "fullyVisible": false,
+      "contains": "下载"
+    },
+    {
+      "id": "settings.model.hymt2-1.25bit.download",
+      "scenes": [
+        "settings-models"
+      ],
+      "purpose": "下载模型",
+      "interaction": "click",
+      "fullyVisible": false,
+      "contains": "下载"
+    },
+    {
+      "id": "settings.shortcut",
+      "scenes": [
+        "settings-integrations"
+      ],
+      "purpose": "翻译剪贴板",
+      "interaction": "click",
+      "fullyVisible": true,
+      "contains": "翻译剪贴板"
+    },
+    {
+      "id": "settings.services",
+      "scenes": [
+        "settings-integrations"
+      ],
+      "purpose": "系统设置…",
+      "interaction": "click",
+      "fullyVisible": true,
+      "contains": "系统设置…"
+    },
+    {
+      "id": "menu.api",
+      "scenes": [
+        "menu"
+      ],
+      "purpose": "本地 API",
+      "interaction": "click",
+      "fullyVisible": true,
+      "contains": "本地 API"
+    },
+    {
+      "id": "menu.apiStatus",
+      "scenes": [
+        "menu"
+      ],
+      "purpose": "API：已关闭",
+      "interaction": "read",
+      "fullyVisible": true,
+      "contains": "API：已关闭"
+    }
+  ],
+  "relations": [
+    {
+      "first": "panel.speak",
+      "second": "panel.rate",
+      "axis": "x",
+      "scenes": [
+        "panel-completed",
+        "panel-long"
+      ]
+    },
+    {
+      "first": "panel.copy",
+      "second": "panel.rate",
+      "axis": "centerY",
+      "scenes": [
+        "panel-completed",
+        "panel-long"
+      ]
+    },
+    {
+      "first": "panel.result",
+      "second": "panel.rate",
+      "axis": "y",
+      "scenes": [
+        "panel-completed"
+      ]
+    }
+  ],
+  "menu": {
+    "identifiers": [
+      "menu.show",
+      "menu.settings",
+      "menu.quit",
+      "menu.api",
+      "menu.apiStatus"
+    ],
+    "validation": "native XCUITest menu interaction and screenshot"
+  }
+}

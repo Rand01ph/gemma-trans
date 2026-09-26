@@ -1,10 +1,12 @@
 import AppKit
+import GemmaTransKit
 import KeyboardShortcuts
 
 extension KeyboardShortcuts.Name {
     // 名字字符串保持 "translateSelection" 不变：用户此前录制的快捷键按此键持久化，
     // 改键会丢用户设置。语义已从「读取选中」变为「翻译剪贴板」。
-    static let translateSelection = Self("translateSelection", default: .init(.d, modifiers: [.option]))
+    static let translateSelection = Self("translateSelection", default: AppChannel.current == .production ? .init(.d, modifiers: [.option]) :
+        (AppChannel.current == .qa ? .init(.d, modifiers: [.control, .option]) : nil))
 }
 
 @MainActor

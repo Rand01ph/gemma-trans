@@ -1,0 +1,67 @@
+{
+  "appearance" : "dark",
+  "elements" : [
+    {
+      "enabled" : true,
+      "frame" : [
+        372,
+        263.996826171875,
+        232,
+        24.00634765625
+      ],
+      "id" : "settings.field.端口",
+      "text" : "8765"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        0,
+        96,
+        640,
+        492
+      ],
+      "id" : "settings.integrations",
+      "text" : "集成"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        512,
+        406,
+        92,
+        28
+      ],
+      "id" : "settings.services",
+      "text" : "系统设置…"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        474,
+        363,
+        130,
+        24
+      ],
+      "id" : "settings.shortcut",
+      "text" : "翻译剪贴板"
+    },
+    {
+      "enabled" : true,
+      "frame" : [
+        550,
+        219,
+        54,
+        24
+      ],
+      "id" : "settings.toggle.启用本地 API",
+      "text" : "false"
+    }
+  ],
+  "font" : ".AppleSystemUIFont",
+  "height" : 1176,
+  "os" : "Version 27.0 (Build 26A428)",
+  "scale" : 2,
+  "scene" : "settings-integrations",
+  "width" : 1280,
+  "windowNumber" : 3029
+}

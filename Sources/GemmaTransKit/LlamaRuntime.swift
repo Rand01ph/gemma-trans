@@ -123,23 +123,6 @@ actor LlamaRuntime {
 #endif
     }
 
-    func validatePrompt(_ prompt: String, maxTokens: Int) throws {
-#if os(macOS)
-        guard let model else { throw TranslationError.modelNotLoaded }
-        var error = Self.errorBuffer()
-        let status = prompt.withCString { text in
-            error.withUnsafeMutableBufferPointer { buffer in
-                gt_llama_validate_prompt(model.pointer, text, Int32(min(1024, max(1, maxTokens))),
-                                         buffer.baseAddress, buffer.count)
-            }
-        }
-        if status == 1 { throw TranslationError.promptTooLong }
-        if status != 0 { throw LlamaRuntimeError.generationSetup(Self.errorMessage(error)) }
-#else
-        throw LlamaRuntimeError.unavailablePlatform
-#endif
-    }
-
     func generate(
         userPrompt: String,
         maxTokens: Int,
@@ -198,8 +181,9 @@ actor LlamaRuntime {
                     }
                 }
             case GT_LLAMA_STEP_EOG:
-                try utf8.finish()
                 let metrics = gt_llama_generation_metrics(generation)
+                // A length stop may leave a partial UTF-8 scalar: retry before decoding it.
+                if metrics.generated_tokens < sampling.max_tokens { try utf8.finish() }
                 return LlamaGenerationMetrics(
                     promptTokens: Int(metrics.prompt_tokens),
                     generatedTokens: Int(metrics.generated_tokens),
@@ -214,6 +198,18 @@ actor LlamaRuntime {
 #else
         throw LlamaRuntimeError.unavailablePlatform
 #endif
+    }
+
+    /// Buffer within this actor so failed attempts never leak partial text to callers.
+    func translateSegment(prompt: String, maxTokens: Int) throws -> TranslationSegment {
+        let cap = min(1024, max(1, maxTokens))
+        guard prompt.utf8.count <= 4096 - cap - 256 else { throw SegmentLimit.context }
+        let buffer = SegmentBuffer()
+        let metrics = try generate(userPrompt: prompt, maxTokens: cap, onChunk: { buffer.append($0) })
+        guard metrics.generatedTokens < cap else { throw SegmentLimit.output }
+        let seconds = max(0, metrics.totalSeconds - metrics.firstTokenSeconds)
+        return TranslationSegment(text: buffer.text, metrics: TranslationMetrics(
+            generatedTokens: metrics.generatedTokens, generationSeconds: seconds))
     }
 
     func unload() {
@@ -239,4 +235,12 @@ actor LlamaRuntime {
         }
     }
 #endif
+}
+
+/// The C callback is synchronous; the lock also makes the Sendable contract explicit.
+private final class SegmentBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var value = ""
+    func append(_ text: String) { lock.withLock { value += text } }
+    var text: String { lock.withLock { value } }
 }

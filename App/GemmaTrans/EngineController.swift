@@ -38,6 +38,16 @@ final class EngineController {
     }
 
     func start() {
+#if DEBUG
+        if GTDebugScreenshotFixture.scene != nil {
+            settings = AppSettings(apiEnabled: false, selectedModelID: "hymt2-1.25bit")
+            selectedModelID = settings.selectedModelID
+            engineStatus = .ready
+            apiStatus = .disabled
+            return
+        }
+#endif
+
         engineStatus = .loading("正在准备…")
         // 重读设置：模型、参数和 API 偏好可能已在设置页修改。
         settings = AppSettings.load()
@@ -74,8 +84,7 @@ final class EngineController {
                 GTLog.error("startup aborted: another GemmaTrans on \(settings.port)")
                 return
             }
-            let engine = TranslationEngine(settings: settings,
-                                           promptProvider: AppFeatureRegistry.current.promptProvider)
+            let engine = TranslationEngine(settings: settings)
             // start() 已确认快照完整；这里的进度状态只处理下载完成与加载之间的兼容回调。
             let progressHandler: @Sendable (DownloadProgress) -> Void = { progress in
                 Task { @MainActor in
