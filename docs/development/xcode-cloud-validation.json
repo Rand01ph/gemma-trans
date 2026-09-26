@@ -1,0 +1,83 @@
+{
+  "data": {
+    "type": "ciWorkflows",
+    "attributes": {
+      "actions": [
+        {
+          "name": "Build - macOS",
+          "actionType": "BUILD",
+          "destination": "ANY_MAC",
+          "testConfiguration": null,
+          "scheme": "GemmaTrans-MAS",
+          "platform": "MACOS",
+          "isRequiredToPass": true
+        }
+      ],
+      "isEnabled": true,
+      "clean": true,
+      "containerFilePath": "App/GemmaTrans.xcodeproj",
+      "name": "GemmaTrans Validation",
+      "description": "Swift, runtime, model, UI contract and both app schemes. No distribution.",
+      "manualBranchStartCondition": {
+        "source": {
+          "isAllMatch": true
+        }
+      },
+      "pullRequestStartCondition": {
+        "source": {
+          "isAllMatch": true
+        },
+        "destination": {
+          "patterns": [
+            {
+              "pattern": "main",
+              "isPrefix": false
+            },
+            {
+              "pattern": "develop",
+              "isPrefix": false
+            }
+          ]
+        },
+        "autoCancel": true
+      },
+      "branchStartCondition": {
+        "source": {
+          "patterns": [
+            {
+              "pattern": "develop",
+              "isPrefix": false
+            }
+          ]
+        },
+        "autoCancel": true
+      }
+    },
+    "relationships": {
+      "product": {
+        "data": {
+          "type": "ciProducts",
+          "id": "90dce81c-6fc8-42e6-a714-d086a0660475"
+        }
+      },
+      "repository": {
+        "data": {
+          "type": "scmRepositories",
+          "id": "84f8eb7a-8e4f-49ed-9677-18fb0b975e99"
+        }
+      },
+      "xcodeVersion": {
+        "data": {
+          "type": "ciXcodeVersions",
+          "id": "42533094-17d3-46b2-ada5-1f94ceb94b61"
+        }
+      },
+      "macOsVersion": {
+        "data": {
+          "type": "ciMacOsVersions",
+          "id": "c538a952-ac84-4277-bea4-b9dab48bb96c"
+        }
+      }
+    }
+  }
+}
